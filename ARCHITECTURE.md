@@ -52,7 +52,7 @@ Exécuté avec succès sur le code du dépôt :
 - `bun test` : 16 tests (`@qcm/core`, `@qcm/ui`).
 - `bun run typecheck` : 0 erreur sur les 4 workspaces (`tsc`, `vue-tsc`, `astro check`).
 - `cargo test` et `cargo clippy --all-targets -- -D warnings` sous Linux : 5 tests, 0 avertissement.
-- `bun run build:web` : 4 pages ; parcours éditeur → aperçu → clavier → export `.qcm` vérifié dans Chromium, thèmes clair et sombre.
+- `bun run build:web` : 5 pages ; parcours éditeur → aperçu → clavier → export `.qcm` vérifié dans Chromium, thèmes clair et sombre.
 - PocketBase 0.40.6 : image Docker, migration, hooks de démarrage et de création, règles d'accès anonymes, export du schéma (4 collections).
 
 **Jamais exécuté** (c'est l'objet de `TASKS.md`) : PocketBase (usage depuis le site web, hook de moyenne) ; l'installateur Windows, l'association `.qcm` et la mise à jour automatique (Windows uniquement) ; le workflow GitHub Actions ; la connexion Google.
@@ -132,7 +132,7 @@ qcm/
 │           ├── layouts/Base.astro
 │           ├── lib/{pb,editorDraft}.ts
 │           ├── components/{HeaderControls,LibraryBrowser,QcmDetail,QcmEditor}.vue
-│           └── pages/{index,bibliotheque,qcm,editeur}.astro
+│           └── pages/{index,bibliotheque,qcm,editeur,admin}.astro
 └── backend/
     ├── Dockerfile
     ├── entrypoint.sh
@@ -210,13 +210,14 @@ Les clés inconnues sont refusées (`z.strictObject`).
 | `correctIndexOf(question)` | Index de la bonne réponse |
 | `imageToWebp(blob, options?)` | Navigateur uniquement : image → WebP, 1280 px au plus, qualité 0.82 |
 | `fitWithin`, `mediaPathFor`, `qcmFileName`, `isWebp` | Utilitaires |
+| `QCM_AI_PROMPT`, `extractQcmYaml(text)`, `aiCorrectionMessage(details)` | Prompt IA (identique à `docs/skill-ingestion-cours.md`, vérifié par un test), nettoyage d'un texte collé (bloc Markdown, phrases autour), message de correction à renvoyer à l'assistant |
 | `QcmFormatError`, `QcmErrorCode`, `QCM_ERROR_CODES` | Erreur unique : `code` stable + `details` lisibles |
 
 Codes d'erreur : `E_OPEN`, `E_NOT_ZIP`, `E_NO_DATA`, `E_TOO_BIG`, `E_YAML`, `E_SCHEMA`, `E_MEDIA_MISSING`, `E_MEDIA_INVALID`, `E_IMAGE`.
 
 ### 2.3 Fichiers
 
-`packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/src/schema.ts`, `packages/core/src/errors.ts`, `packages/core/src/archive.ts`, `packages/core/src/webp.ts`, `packages/core/src/index.ts`, `packages/core/scripts/pack.ts`, `packages/core/test/core.test.ts`
+`packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/src/schema.ts`, `packages/core/src/errors.ts`, `packages/core/src/archive.ts`, `packages/core/src/webp.ts`, `packages/core/src/aiPrompt.ts`, `packages/core/src/index.ts`, `packages/core/scripts/pack.ts`, `packages/core/test/core.test.ts`
 
 ---
 
@@ -240,7 +241,9 @@ Codes d'erreur : `E_OPEN`, `E_NOT_ZIP`, `E_NO_DATA`, `E_TOO_BIG`, `E_YAML`, `E_S
 | `--qcm-focus` | `outline-focus` | `#3d5a80` | `#a9c7e8` | Anneau de focus |
 | `--qcm-badge-a` … `-d` | `bg-badge-a` … `bg-badge-d` | `#bfd7ea` `#f7d6bf` `#cfe6cf` `#dcd3f5` | `#3a5874` `#6b4a36` `#2f5540` `#4b4472` | Pastilles A, B, C, D |
 
-Classes de composant fournies par `theme.css` : `qcm-card`, `qcm-block`, `qcm-block-primary`, `qcm-block-quiet`, `qcm-icon-button`, `qcm-key`.
+Classes de composant fournies par `theme.css` : `qcm-card`, `qcm-block`, `qcm-block-primary`, `qcm-block-quiet`, `qcm-block-sm` (bloc compact), `qcm-panel` (grande surface de mise en page : bordure fine `--qcm-line-soft`, ombre diffuse `--qcm-soft-shadow`), `qcm-chip` (étiquette), `qcm-icon-button`, `qcm-key`.
+
+Règle d'usage : la bordure nette et l'ombre décalée (`qcm-card`, `qcm-block`) sont réservées au lecteur et aux éléments cliquables ; les surfaces de mise en page du site et de l'accueil de l'application utilisent `qcm-panel`.
 
 Police : Atkinson Hyperlegible Next (variable), embarquée par `@fontsource-variable/atkinson-hyperlegible-next` : aucune requête vers un CDN.
 
@@ -387,7 +390,7 @@ La migration `pb_migrations/1760000000_init_qcm.js` est la **source de vérité*
 | `ratings` | `user = @request.auth.id` | connecté, `user` = soi, QCM publié | auteur ; `user` et `qcm` non modifiables | auteur |
 | `comments` | `hidden = false \|\| user = @request.auth.id` | connecté, `user` = soi, QCM publié, `hidden` interdit | auteur ; `user`, `qcm`, `hidden` non modifiables | auteur |
 
-Les règles exactes (chaînes de filtre PocketBase) sont dans la migration. Modération (migration `1760000001_moderation.js`) : un QCM publié par un membre a le statut `pending`. Un administrateur (compte Google dont l'e-mail est `PB_SUPERUSER_EMAIL`) le valide ou le masque depuis la fiche du site (boutons « Valider » / « Masquer ») ; la bibliothèque propose pour lui le filtre « à valider ». Un superuser contourne toutes les règles : il masque un QCM en passant `status` à `hidden`, ou un commentaire en cochant `hidden`, depuis le tableau de bord `/_/`.
+Les règles exactes (chaînes de filtre PocketBase) sont dans la migration. Modération (migration `1760000001_moderation.js`) : un QCM publié par un membre a le statut `pending`. Un administrateur (compte Google dont l'e-mail est `PB_SUPERUSER_EMAIL`) le relit sur la page `/admin` (onglets « À valider », « Publiés », « Masqués » ; relecture question par question ; « Valider et publier », « Refuser (masquer) », « Supprimer », annulation de la dernière décision). Les boutons « Valider » / « Masquer » restent disponibles sur la fiche. Un superuser contourne toutes les règles : il masque un QCM en passant `status` à `hidden`, ou un commentaire en cochant `hidden`, depuis le tableau de bord `/_/`.
 
 Hooks serveur (`pb_hooks/main.pb.js`) :
 
@@ -420,6 +423,8 @@ Le prompt système complet, prêt à copier, est dans `docs/skill-ingestion-cour
 
 Boucle d'utilisation : réponse du LLM → `mon-cours/data.yaml` → `bun run pack mon-cours` → en cas d'erreur `E_SCHEMA` / `E_YAML`, renvoyer les lignes d'erreur au LLM.
 
+Sans ligne de commande : l'éditeur du site (étape « Départ », choix « Coller un texte ») affiche ce même prompt avec un bouton de copie, accepte la réponse du LLM collée telle quelle et, en cas d'erreur, propose de copier le message de correction. Le prompt est exporté par `@qcm/core` (`QCM_AI_PROMPT`) : toute modification doit être faite dans `docs/skill-ingestion-cours.md` **et** `packages/core/src/aiPrompt.ts` (un test échoue s'ils diffèrent).
+
 ---
 
 ## 7. `apps/web` (Astro statique + îlots Vue)
@@ -428,10 +433,11 @@ Boucle d'utilisation : réponse du LLM → `mon-cours/data.yaml` → `bun run pa
 
 | Route | Fichier | Contenu |
 |---|---|---|
-| `/` | `pages/index.astro` | Vitrine, bouton « Télécharger pour Windows » (vers `PUBLIC_RELEASES_URL`), engagements |
+| `/` | `pages/index.astro` | Vitrine, bouton « Télécharger pour Windows » (vers `PUBLIC_RELEASES_URL`), étapes, QCM de démonstration jouable (`DemoPlayer.vue`, `client:visible`), engagements |
 | `/bibliotheque` | `pages/bibliotheque.astro` + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct |
 | `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`), note 1 à 5, commentaires |
-| `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur sans code : questions, images déposées converties en WebP, aperçu, export local, publication |
+| `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur guidé en 4 étapes (Départ, Informations, Questions, Finaliser) avec sommaire fixé à l'écran (à droite, ou en bas sur mobile). Départ : page vide, texte collé (sortie d'une IA, prompt fourni) ou fichier `.qcm`. Une question à la fois, images converties en WebP, aperçu, export local, copie au format texte, publication |
+| `/admin` | `pages/admin.astro` + `AdminModeration.vue` | Modération réservée aux administrateurs (voir §5.1) ; lien « Modération » et nombre de QCM en attente dans le bandeau |
 
 Tous les îlots sont montés avec `client:only="vue"` (ils utilisent `localStorage`, le SDK PocketBase et la Canvas API). L'export local fonctionne sans compte ; la publication demande une connexion Google.
 
@@ -443,12 +449,12 @@ Fichiers : `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/astro.co
 
 ### 7.3 Bibliothèques
 
-Fichiers : `apps/web/src/lib/pb.ts`, `apps/web/src/lib/editorDraft.ts`, `apps/web/scripts/seed.ts`
+Fichiers : `apps/web/src/lib/pb.ts`, `apps/web/src/lib/editorDraft.ts`, `apps/web/src/lib/subjects.ts`, `apps/web/src/lib/demoQcm.ts`, `apps/web/scripts/seed.ts`
 
 ### 7.4 Mise en page et pages
 
-Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm.astro`, `apps/web/src/pages/editeur.astro`
+Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm.astro`, `apps/web/src/pages/editeur.astro`, `apps/web/src/pages/admin.astro`
 
 ### 7.5 Îlots Vue
 
-Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmEditor.vue`
+Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmEditor.vue`, `apps/web/src/components/AdminModeration.vue`, `apps/web/src/components/DemoPlayer.vue`

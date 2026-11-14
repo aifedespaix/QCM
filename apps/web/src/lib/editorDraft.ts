@@ -3,8 +3,11 @@ import {
   LIMITS,
   QCM_FORMAT_VERSION,
   correctIndexOf,
+  extractQcmYaml,
   imageToWebp,
   mediaPathFor,
+  parseQcmYaml,
+  stringifyQcmYaml,
   validateQcm,
   writeQcmArchive,
   type Level,
@@ -73,8 +76,24 @@ export function createDraft(): Draft {
   })
 }
 
-export function addQuestion(draft: Draft): void {
-  if (draft.questions.length < LIMITS.maxQuestions) draft.questions.push(emptyQuestion())
+/** Ajoute une question vide à la fin et renvoie son index (ou `-1` si la limite est atteinte). */
+export function addQuestion(draft: Draft): number {
+  if (draft.questions.length >= LIMITS.maxQuestions) return -1
+  draft.questions.push(emptyQuestion())
+  return draft.questions.length - 1
+}
+
+/** Copie une question juste après l'originale (sans l'image) et renvoie l'index de la copie. */
+export function duplicateQuestion(draft: Draft, index: number): number {
+  const source = draft.questions[index]
+  if (!source || draft.questions.length >= LIMITS.maxQuestions) return -1
+  draft.questions.splice(index + 1, 0, {
+    ...source,
+    key: nextKey++,
+    choices: source.choices.map((choice) => ({ text: choice.text })),
+    image: null,
+  })
+  return index + 1
 }
 
 export function removeQuestion(draft: Draft, index: number): void {
@@ -194,4 +213,54 @@ export function loadArchiveIntoDraft(draft: Draft, archive: QcmArchive): void {
 /** Table `chemin → URL blob:` pour l'aperçu `QcmPlayer` dans l'éditeur. */
 export function draftMediaResolver(draft: Draft): (path: string) => string | undefined {
   return (path) => draft.questions.find((question) => question.image?.path === path)?.image?.url
+}
+
+// ---------------------------------------------------------------- Texte (YAML) et contrôle
+
+/** Remplace le brouillon par un QCM collé en texte (sortie d'un assistant IA). Lance `QcmFormatError`. */
+export function loadTextIntoDraft(draft: Draft, text: string): void {
+  const data = parseQcmYaml(extractQcmYaml(text))
+  // Un texte ne transporte pas d'images : les chemins `image` éventuels sont ignorés.
+  loadArchiveIntoDraft(draft, { data, media: new Map() })
+}
+
+/** Texte `data.yaml` du brouillon (sans les images). Lance `QcmFormatError` si le brouillon est incomplet. */
+export function draftToText(draft: Draft): string {
+  const data = draftToData(draft)
+  return stringifyQcmYaml({ ...data, questions: data.questions.map(({ image: _image, ...question }) => question) })
+}
+
+/** `true` tant que rien n'a été saisi : un import peut remplacer le brouillon sans confirmation. */
+export function isDraftEmpty(draft: Draft): boolean {
+  const first = draft.questions[0]
+  return (
+    !draft.title.trim() &&
+    !draft.chapter.trim() &&
+    !draft.description.trim() &&
+    draft.questions.length === 1 &&
+    !!first &&
+    !first.prompt.trim() &&
+    !first.explanation.trim() &&
+    !first.image &&
+    first.choices.every((choice) => !choice.text.trim())
+  )
+}
+
+/** Points à compléter dans les informations générales (phrases affichables). */
+export function metaIssues(draft: Draft): string[] {
+  const issues: string[] = []
+  if (!draft.title.trim()) issues.push('Le titre est vide.')
+  if (!draft.chapter.trim()) issues.push('Le chapitre est vide.')
+  return issues
+}
+
+/** Points à compléter dans une question (phrases affichables). Liste vide = question prête. */
+export function questionIssues(question: DraftQuestion): string[] {
+  const issues: string[] = []
+  if (!question.prompt.trim()) issues.push('La question est vide.')
+  const texts = question.choices.map((choice) => choice.text.trim().toLocaleLowerCase('fr'))
+  if (texts.some((value) => !value)) issues.push('Une réponse est vide.')
+  if (new Set(texts.filter(Boolean)).size < texts.filter(Boolean).length) issues.push('Deux réponses ont le même texte.')
+  if (!question.explanation.trim()) issues.push('L\'explication est vide.')
+  return issues
 }

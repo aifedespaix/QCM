@@ -85,8 +85,6 @@ export interface QcmQuery {
   level?: Level | ''
   sort?: QcmSort
   page?: number
-  /** `pending` : file de validation, réservée aux administrateurs (le serveur filtre déjà). */
-  status?: 'published' | 'pending'
 }
 
 const SORTS: Record<QcmSort, string> = {
@@ -98,7 +96,7 @@ const SORTS: Record<QcmSort, string> = {
 export const PAGE_SIZE = 24
 
 export function listQcms(query: QcmQuery = {}) {
-  const parts = [pb.filter('status = {:status}', { status: query.status ?? 'published' })]
+  const parts = ['status = "published"']
   const search = query.search?.trim()
   if (search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: search }))
   if (query.subject) parts.push(pb.filter('subject = {:subject}', { subject: query.subject }))
@@ -121,9 +119,32 @@ export function getQcm(id: string) {
   return pb.collection('qcms').getOne<QcmRecord>(id, { expand: 'owner' })
 }
 
+// ---------------------------------------------------------------- Modération
+
+export type QcmStatus = QcmRecord['status']
+
+export const MODERATION_PAGE_SIZE = 30
+
+/**
+ * File de modération, réservée aux administrateurs (le serveur filtre déjà).
+ * Les QCM à valider sortent du plus ancien au plus récent ; les autres, du plus récemment modifié.
+ */
+export function listQcmsByStatus(status: QcmStatus, page = 1) {
+  return pb.collection('qcms').getList<QcmRecord>(page, MODERATION_PAGE_SIZE, {
+    filter: pb.filter('status = {:status}', { status }),
+    sort: status === 'pending' ? 'created' : '-updated',
+    expand: 'owner',
+  })
+}
+
+export async function countQcmsByStatus(status: QcmStatus): Promise<number> {
+  const result = await pb.collection('qcms').getList(1, 1, { filter: pb.filter('status = {:status}', { status }), fields: 'id' })
+  return result.totalItems
+}
+
 /** Réservé aux administrateurs : le serveur refuse l'appel pour tout autre compte. */
-export function setQcmStatus(id: string, status: 'published' | 'hidden') {
-  return pb.collection('qcms').update<QcmRecord>(id, { status })
+export function setQcmStatus(id: string, status: QcmStatus) {
+  return pb.collection('qcms').update<QcmRecord>(id, { status }, { expand: 'owner' })
 }
 
 export function deleteQcm(id: string) {

@@ -26,6 +26,8 @@
   --qcm-badge-b: #f7d6bf;
   --qcm-badge-c: #cfe6cf;
   --qcm-badge-d: #dcd3f5;
+  --qcm-line-soft: #d8cdb6;   /* bordure fine des panneaux et des champs */
+  --qcm-soft-shadow: 0 1px 0 rgb(43 45 66 / 0.04), 0 18px 40px -22px rgb(43 45 66 / 0.35);
 }
 
 [data-theme="dark"] {
@@ -48,6 +50,8 @@
   --qcm-badge-b: #6b4a36;
   --qcm-badge-c: #2f5540;
   --qcm-badge-d: #4b4472;
+  --qcm-line-soft: #444959;
+  --qcm-soft-shadow: 0 1px 0 rgb(0 0 0 / 0.2), 0 18px 40px -22px rgb(0 0 0 / 0.7);
 }
 
 @theme inline {
@@ -70,9 +74,11 @@
   --color-badge-b: var(--qcm-badge-b);
   --color-badge-c: var(--qcm-badge-c);
   --color-badge-d: var(--qcm-badge-d);
+  --color-line-soft: var(--qcm-line-soft);
 
   --shadow-block: 4px 4px 0 0 var(--qcm-shadow);
   --shadow-block-sm: 2px 2px 0 0 var(--qcm-shadow);
+  --shadow-soft: var(--qcm-soft-shadow);
 }
 
 @layer base {
@@ -156,6 +162,47 @@
     box-shadow: var(--shadow-block-sm);
     font-weight: 600;
     text-align: center;
+  }
+
+  /* Bloc compact : barres d'outils, navigation, actions secondaires. */
+  .qcm-block-sm {
+    min-height: 48px;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-block-sm);
+    font-size: 1rem;
+  }
+
+  .qcm-block-sm:hover:not(:disabled) {
+    box-shadow: 3px 3px 0 0 var(--qcm-shadow);
+  }
+
+  .qcm-block:disabled:not([role="radio"]) {
+    opacity: 0.5;
+    box-shadow: none;
+  }
+
+  /* Panneau : grande surface calme, bordure fine et ombre diffuse (mise en page, pas d'action). */
+  .qcm-panel {
+    background-color: var(--qcm-surface);
+    border: 1.5px solid var(--qcm-line-soft);
+    border-radius: var(--radius-3xl);
+    box-shadow: var(--qcm-soft-shadow);
+  }
+
+  /* Étiquette courte : matière, niveau, état. */
+  .qcm-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.7rem;
+    background-color: var(--qcm-sunken);
+    color: var(--qcm-ink);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
   }
 
   /* Petit bouton rond de barre d'outils (son, thème). */

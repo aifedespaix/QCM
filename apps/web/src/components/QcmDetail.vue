@@ -17,6 +17,7 @@ import {
   type CommentRecord,
   type QcmRecord,
 } from '../lib/pb.ts'
+import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 
 const { user } = useAuth()
 const state = ref<'loading' | 'ready' | 'missing'>('loading')
@@ -113,95 +114,98 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <p v-if="state === 'loading'" role="status" class="text-lg font-bold text-ink-soft">Chargement du QCM…</p>
+  <div v-if="state === 'loading'" role="status" aria-label="Chargement du QCM" class="qcm-panel flex flex-col gap-4 p-7">
+    <div class="qcm-skeleton h-9 w-2/3" />
+    <div class="qcm-skeleton h-5 w-1/3" />
+    <div class="qcm-skeleton h-16 w-full" />
+  </div>
 
-  <section v-else-if="state === 'missing' || !record" class="qcm-card flex flex-col gap-4 p-7">
+  <section v-else-if="state === 'missing' || !record" class="qcm-panel flex flex-col items-center gap-4 p-10 text-center">
     <h1 class="text-3xl font-extrabold">Ce QCM est introuvable.</h1>
-    <a href="/bibliotheque" class="qcm-block qcm-block-primary no-underline sm:w-fit">Retour à la bibliothèque</a>
+    <p class="text-lg text-ink-soft">Il a peut-être été retiré, ou le lien est incomplet.</p>
+    <a href="/bibliotheque" class="qcm-block qcm-block-primary no-underline">Retour à la bibliothèque</a>
   </section>
 
   <div v-else-if="playing && archive" class="flex flex-col gap-5">
-    <button type="button" class="qcm-block qcm-block-quiet min-h-12 self-start px-4 py-2 text-base" @click="playing = false">Quitter le QCM</button>
+    <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm self-start" @click="playing = false">← Quitter le QCM</button>
     <QcmPlayer :qcm="archive.data" :resolve-media="resolveMedia" closable @close="playing = false" />
   </div>
 
-  <div v-else class="flex flex-col gap-8">
-    <section class="qcm-card flex flex-col gap-5 p-7">
-      <h1 class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ record.title }}</h1>
-      <p class="text-lg font-semibold text-ink-soft">
-        {{ SUBJECT_LABELS[record.subject] }} · {{ LEVEL_LABELS[record.level] }} · {{ record.chapter }}
+  <div v-else class="mx-auto flex max-w-4xl flex-col gap-6">
+    <a href="/bibliotheque" class="qcm-text-button self-start">← Bibliothèque</a>
+
+    <p v-if="record.status === 'pending'" role="status" class="qcm-note qcm-note-retry">
+      En attente de validation : ce QCM n'est pas encore visible dans la bibliothèque.
+    </p>
+    <p v-else-if="record.status === 'hidden'" role="status" class="qcm-note qcm-note-retry">Ce QCM est masqué de la bibliothèque.</p>
+
+    <section class="qcm-panel flex flex-col gap-5 p-6 sm:p-9">
+      <p class="flex flex-wrap gap-1.5">
+        <span class="qcm-chip" :class="SUBJECT_TONES[record.subject]">{{ SUBJECT_LABELS[record.subject] }}</span>
+        <span class="qcm-chip">{{ LEVEL_LABELS[record.level] }}</span>
+        <span class="qcm-chip">{{ questionCountLabel(record.question_count) }}</span>
+        <span class="qcm-chip">{{ record.has_images ? 'Avec images' : 'Sans image' }}</span>
+        <span v-if="record.rating_count > 0" class="qcm-chip" :aria-label="`Note ${record.rating_avg.toFixed(1)} sur 5`">★ {{ record.rating_avg.toFixed(1) }} ({{ record.rating_count }})</span>
       </p>
+      <div>
+        <h1 class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ record.title }}</h1>
+        <p class="mt-2 text-lg font-semibold text-ink-soft">
+          {{ record.chapter }}<template v-if="record.expand?.owner?.name"> · Proposé par {{ record.expand.owner.name }}</template>
+        </p>
+      </div>
       <p v-if="record.description" class="text-lg">{{ record.description }}</p>
-      <p class="text-base text-ink-soft">
-        {{ record.question_count === 1 ? '1 question' : `${record.question_count} questions` }}
-        · {{ record.has_images ? 'Avec images' : 'Sans image' }}
-        <template v-if="record.expand?.owner?.name"> · Proposé par {{ record.expand.owner.name }}</template>
-        <template v-if="record.rating_count > 0"> · Note {{ record.rating_avg.toFixed(1) }} sur 5 ({{ record.rating_count }})</template>
-      </p>
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <a :href="qcmDownloadUrl(record)" class="qcm-block qcm-block-primary text-xl no-underline">Télécharger le fichier .qcm</a>
-        <button type="button" class="qcm-block qcm-block-quiet text-xl" @click="play">Essayer en ligne</button>
+        <button type="button" class="qcm-block qcm-block-primary text-xl" @click="play">Essayer en ligne</button>
+        <a :href="qcmDownloadUrl(record)" class="qcm-block qcm-block-quiet text-xl no-underline">Télécharger le fichier .qcm</a>
       </div>
-      <p v-if="playError" role="alert" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 font-medium text-retry-ink">{{ playError }}</p>
-      <p v-if="record.status === 'pending'" role="status" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 text-lg font-bold text-retry-ink">
-        En attente de validation : ce QCM n'est pas encore visible dans la bibliothèque.
-      </p>
-      <p v-else-if="record.status === 'hidden'" role="status" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 text-lg font-bold text-retry-ink">
-        Ce QCM est masqué de la bibliothèque.
-      </p>
-      <div v-if="isAdmin" class="flex flex-wrap gap-3">
-        <button v-if="record.status !== 'published'" type="button" class="qcm-block qcm-block-primary min-h-12 px-4 py-2 text-base" @click="moderate('published')">
-          Valider ce QCM
-        </button>
-        <button v-if="record.status !== 'hidden'" type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="moderate('hidden')">
-          Masquer ce QCM
-        </button>
+      <p v-if="playError" role="alert" class="qcm-note qcm-note-retry">{{ playError }}</p>
+
+      <div v-if="isOwner || isAdmin" class="flex flex-wrap items-center gap-2 border-t-[1.5px] border-line-soft pt-4">
+        <template v-if="isAdmin">
+          <button v-if="record.status !== 'published'" type="button" class="qcm-block qcm-block-primary qcm-block-sm" @click="moderate('published')">Valider</button>
+          <button v-if="record.status !== 'hidden'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="moderate('hidden')">Masquer</button>
+          <a href="/admin" class="qcm-text-button underline">Ouvrir la modération</a>
+        </template>
+        <button type="button" class="qcm-text-button ml-auto underline" @click="removeQcm">{{ isOwner ? 'Supprimer mon QCM' : 'Supprimer ce QCM' }}</button>
       </div>
-      <button v-if="isOwner || isAdmin" type="button" class="qcm-block qcm-block-quiet min-h-12 self-start px-4 py-2 text-base" @click="removeQcm">
-        {{ isOwner ? 'Supprimer mon QCM' : 'Supprimer ce QCM' }}
-      </button>
     </section>
 
-    <section class="qcm-card flex flex-col gap-4 p-7" aria-labelledby="rating-title">
+    <section class="qcm-panel flex flex-col gap-4 p-6 sm:p-9" aria-labelledby="rating-title">
       <h2 id="rating-title" class="text-2xl font-extrabold">Noter ce QCM</h2>
       <p v-if="!user" class="text-lg text-ink-soft">Connecte-toi pour donner une note.</p>
-      <div v-else class="flex flex-wrap gap-3" role="group" aria-label="Note de 1 à 5">
+      <div v-else class="flex flex-wrap gap-2" role="group" aria-label="Note de 1 à 5">
         <button
           v-for="value in 5"
           :key="value"
           type="button"
-          class="qcm-block qcm-block-quiet min-w-16"
-          :class="myRating === value ? 'bg-selected' : ''"
+          class="qcm-block qcm-block-quiet qcm-block-sm min-w-14 text-2xl"
+          :class="value <= myRating ? 'bg-retry text-retry-ink' : ''"
           :aria-pressed="myRating === value"
+          :aria-label="`${value} sur 5`"
           @click="rate(value)"
         >
-          {{ value }}
+          {{ value <= myRating ? '★' : '☆' }}
         </button>
       </div>
       <p v-if="notice" role="status" class="text-base font-semibold text-correct-ink">{{ notice }}</p>
     </section>
 
-    <section class="qcm-card flex flex-col gap-4 p-7" aria-labelledby="comments-title">
+    <section class="qcm-panel flex flex-col gap-4 p-6 sm:p-9" aria-labelledby="comments-title">
       <h2 id="comments-title" class="text-2xl font-extrabold">Commentaires</h2>
       <form v-if="user" class="flex flex-col gap-3" @submit.prevent="sendComment">
-        <label class="qcm-label" for="comment-text">Ton commentaire (500 caractères au plus)</label>
+        <label class="qcm-label" for="comment-text">Ton commentaire <span class="qcm-label-aside">{{ commentText.length }} / 500</span></label>
         <textarea id="comment-text" v-model="commentText" class="qcm-field" rows="3" maxlength="500" required />
-        <button type="submit" class="qcm-block qcm-block-primary sm:w-fit">Envoyer</button>
+        <button type="submit" class="qcm-block qcm-block-primary qcm-block-sm sm:w-fit sm:px-8">Envoyer</button>
       </form>
       <p v-else class="text-lg text-ink-soft">Connecte-toi pour écrire un commentaire.</p>
       <p v-if="comments.length === 0" class="text-lg text-ink-soft">Aucun commentaire pour le moment.</p>
       <ul v-else class="flex flex-col gap-3">
-        <li v-for="comment in comments" :key="comment.id" class="rounded-2xl border-2 border-line bg-bg px-5 py-4">
+        <li v-for="comment in comments" :key="comment.id" class="rounded-2xl border-[1.5px] border-line-soft bg-bg px-5 py-4">
           <p class="text-sm font-bold text-ink-soft">
             {{ comment.expand?.user?.name || 'Membre' }} · {{ new Date(comment.created).toLocaleDateString('fr-FR') }}
           </p>
           <p class="mt-1 text-lg whitespace-pre-line">{{ comment.text }}</p>
-          <button
-            v-if="user && comment.user === user.id"
-            type="button"
-            class="mt-2 text-sm font-bold underline"
-            @click="removeComment(comment.id)"
-          >
+          <button v-if="user && comment.user === user.id" type="button" class="qcm-text-button mt-1 -ml-2 underline" @click="removeComment(comment.id)">
             Supprimer mon commentaire
           </button>
         </li>

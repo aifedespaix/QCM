@@ -26,7 +26,7 @@ Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contra
     bun run build:web
     cd apps/desktop/src-tauri && cargo test && cargo clippy --all-targets -- -D warnings
     ```
-    Attendu : 16 tests Bun, 0 erreur de types sur 4 workspaces, 4 pages générées, 5 tests Rust, 0 avertissement.
+    Attendu : 19 tests Bun, 0 erreur de types sur 4 workspaces, 5 pages générées, 5 tests Rust, 0 avertissement.
 
 ---
 

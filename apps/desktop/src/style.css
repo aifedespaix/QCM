@@ -8,3 +8,10 @@ body {
   overscroll-behavior: none;
   user-select: none;
 }
+
+/* Écran d'accueil : grandes taches pastel, immobiles. */
+.home-glow {
+  background:
+    radial-gradient(34rem 22rem at 90% 0%, color-mix(in srgb, var(--qcm-badge-d) 55%, transparent), transparent 70%),
+    radial-gradient(30rem 22rem at 0% 100%, color-mix(in srgb, var(--qcm-badge-a) 50%, transparent), transparent 70%);
+}

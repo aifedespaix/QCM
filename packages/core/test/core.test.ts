@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test'
 import { zipSync, strToU8 } from 'fflate'
 import {
+  QCM_AI_PROMPT,
   QcmFormatError,
+  aiCorrectionMessage,
+  extractQcmYaml,
   correctIndexOf,
   fitWithin,
   isWebp,
@@ -150,5 +153,25 @@ describe('webp', () => {
     expect(mediaPathFor('q3', 'Schéma Cellule.PNG')).toBe('media/q3_schema-cellule.webp')
     expect(mediaPathFor('q3', 'Schéma Cellule.PNG', ['media/q3_schema-cellule.webp'])).toBe('media/q3_schema-cellule-2.webp')
     expect(mediaPathFor('q1', '???.jpg')).toBe('media/q1_image.webp')
+  })
+})
+
+describe('prompt IA', () => {
+  test('le prompt de @qcm/core est identique à celui de la documentation', async () => {
+    const doc = await Bun.file(new URL('../../../docs/skill-ingestion-cours.md', import.meta.url)).text()
+    const block = /```text\n([\s\S]*?)\n```/.exec(doc.replace(/\r\n/g, '\n'))?.[1]
+    expect(block).toBeDefined()
+    expect(QCM_AI_PROMPT).toBe(block as string)
+  })
+
+  test('extractQcmYaml retire le bloc de code et les phrases autour', () => {
+    const pasted = `Voici ton questionnaire :\n\n\`\`\`yaml\n${EXAMPLE.trim()}\n\`\`\`\n\nBonne révision.`
+    expect(parseQcmYaml(extractQcmYaml(pasted)).questions).toHaveLength(5)
+    expect(parseQcmYaml(extractQcmYaml(`Bien sûr.\n${EXAMPLE}`)).meta.title).toBe('Les fractions : comparer et simplifier')
+    expect(extractQcmYaml(EXAMPLE)).toBe(EXAMPLE.trim())
+  })
+
+  test('aiCorrectionMessage liste les points à corriger', () => {
+    expect(aiCorrectionMessage(['questions[0].choices : trop court'])).toContain('- questions[0].choices : trop court')
   })
 })

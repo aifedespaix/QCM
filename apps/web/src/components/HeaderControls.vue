@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { QcmSoundToggle, QcmThemeToggle } from '@qcm/ui'
-import { useAuth } from '../lib/pb.ts'
+import { countQcmsByStatus, useAuth } from '../lib/pb.ts'
 
 const { user, loginWithGoogle, logout } = useAuth()
 const error = ref('')
+const pendingCount = ref(0)
+const onAdminPage = window.location.pathname.startsWith('/admin')
+
+const initial = computed(() => (user.value?.name?.trim()[0] ?? '?').toLocaleUpperCase('fr'))
 
 function login(): void {
   error.value = ''
@@ -13,17 +17,35 @@ function login(): void {
     error.value = 'La connexion n\'a pas abouti.'
   })
 }
+
+watch(
+  () => user.value?.admin === true,
+  (admin) => {
+    pendingCount.value = 0
+    if (admin) {
+      countQcmsByStatus('pending')
+        .then((count) => (pendingCount.value = count))
+        .catch(() => {})
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <a v-if="user?.admin" href="/admin" class="site-nav-link" :aria-current="onAdminPage ? 'page' : undefined">
+      Modération
+      <span v-if="pendingCount > 0" class="qcm-chip bg-retry text-retry-ink" :aria-label="`${pendingCount} QCM à valider`">{{ pendingCount }}</span>
+    </a>
     <template v-if="user">
-      <span class="max-w-40 truncate text-base font-bold">{{ user.name || 'Mon compte' }}</span>
-      <button type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="logout">Se déconnecter</button>
+      <span class="flex items-center gap-2 pr-1" :title="user.name || 'Mon compte'">
+        <span class="flex size-10 items-center justify-center rounded-full border-2 border-line bg-selected text-base font-extrabold" aria-hidden="true">{{ initial }}</span>
+        <span class="hidden max-w-36 truncate text-base font-bold md:inline">{{ user.name || 'Mon compte' }}</span>
+      </span>
+      <button type="button" class="qcm-text-button" @click="logout">Se déconnecter</button>
     </template>
-    <button v-else type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="login">
-      Se connecter avec Google
-    </button>
+    <button v-else type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="login">Se connecter</button>
     <QcmSoundToggle />
     <QcmThemeToggle />
     <p v-if="error" role="alert" class="w-full text-sm font-semibold text-retry-ink">{{ error }}</p>

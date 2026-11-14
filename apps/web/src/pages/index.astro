@@ -1,42 +1,175 @@
 ---
+import DemoPlayer from '../components/DemoPlayer.vue'
 import Base from '../layouts/Base.astro'
 
 const releasesUrl = import.meta.env.PUBLIC_RELEASES_URL || 'https://github.com/aifedespaix/qcm/releases/latest'
+
+const steps = [
+  { title: 'Choisis un QCM', text: 'Dans la bibliothèque, ou un fichier .qcm reçu d\'un professeur ou d\'un parent.' },
+  { title: 'Réponds à ton rythme', text: 'Une seule question à l\'écran. Rien ne bouge, rien ne presse.' },
+  { title: 'Comprends chaque réponse', text: 'Une explication courte s\'affiche. Tu peux réessayer autant que tu veux.' },
+]
+
 const promises = [
-  { title: 'Calme', text: 'Pas de publicité, pas de chronomètre, pas de score. Une question à la fois.' },
-  { title: 'Hors-ligne', text: 'Le lecteur Windows fonctionne sans Internet. Un double-clic sur un fichier .qcm suffit.' },
-  { title: 'Prévisible', text: 'Chaque QCM annonce son titre, sa matière, son chapitre et son nombre de questions avant de commencer.' },
-  { title: 'Sans culpabilité', text: 'Une erreur affiche une explication calme. On peut réessayer ou voir la réponse.' },
+  {
+    title: 'Calme',
+    text: 'Pas de publicité, pas de chronomètre, pas de score. Une question à la fois.',
+    tone: 'bg-badge-a',
+    icon: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM8.5 14.5c1 1.2 2.2 1.8 3.5 1.8s2.5-.6 3.5-1.8M9 10h.01M15 10h.01',
+  },
+  {
+    title: 'Hors-ligne',
+    text: 'Le lecteur Windows fonctionne sans Internet. Un double-clic sur un fichier .qcm suffit.',
+    tone: 'bg-badge-b',
+    icon: 'M4 5h16v11H4zM9 20h6M12 16v4',
+  },
+  {
+    title: 'Prévisible',
+    text: 'Chaque QCM annonce son titre, sa matière, son chapitre et son nombre de questions avant de commencer.',
+    tone: 'bg-badge-c',
+    icon: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
+  },
+  {
+    title: 'Sans culpabilité',
+    text: 'Une erreur affiche une explication calme. On peut réessayer ou voir la réponse.',
+    tone: 'bg-badge-d',
+    icon: 'M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20z',
+  },
+]
+
+const creatorPoints = [
+  'Un parcours guidé en 4 étapes, avec le sommaire toujours visible.',
+  'Tu peux coller un QCM écrit par un assistant IA : le prompt est fourni.',
+  'Tu enregistres un fichier .qcm ou tu le proposes à la bibliothèque.',
+]
+
+const mockChoices = [
+  { letter: 'A', text: '2/4', tone: 'bg-badge-a', correct: true },
+  { letter: 'B', text: '1/3', tone: 'bg-badge-b', correct: false },
+  { letter: 'C', text: '3/4', tone: 'bg-badge-c', correct: false },
+  { letter: 'D', text: '2/3', tone: 'bg-badge-d', correct: false },
 ]
 ---
 
-<Base title="Réviser au calme">
-  <section class="qcm-card flex flex-col gap-6 p-7 sm:p-10">
-    <h1 class="max-w-3xl text-4xl leading-tight font-extrabold sm:text-5xl">Réviser au calme, une question à la fois.</h1>
-    <p class="max-w-2xl text-xl text-ink-soft">
-      QCM est un lecteur de questionnaires pensé pour les élèves qui ont besoin d'un cadre clair : grands boutons, couleurs douces, aucune distraction.
-    </p>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <a href={releasesUrl} class="qcm-block qcm-block-primary text-xl no-underline" rel="noopener">Télécharger pour Windows</a>
-      <a href="/bibliotheque" class="qcm-block qcm-block-quiet text-xl no-underline">Parcourir la bibliothèque</a>
+<Base title="Réviser au calme" bodyClass="home-glow bg-no-repeat">
+  <section class="grid items-center gap-10 pt-4 lg:grid-cols-[1.05fr_1fr] lg:pt-10">
+    <div class="flex flex-col gap-6">
+      <p class="qcm-chip self-start border-2 border-line bg-surface px-4 py-1.5 text-sm">Gratuit · Sans publicité · Sans chronomètre</p>
+      <h1 class="text-4xl leading-[1.1] font-extrabold sm:text-6xl">
+        Réviser au calme,<br />
+        <span class="rounded-2xl bg-primary box-decoration-clone px-2">une question à la fois.</span>
+      </h1>
+      <p class="max-w-xl text-xl text-ink-soft">
+        QCM est un lecteur de questionnaires pensé pour les élèves qui ont besoin d'un cadre clair : grands boutons, couleurs douces, aucune distraction.
+      </p>
+      <div id="telecharger" class="flex flex-col gap-4 sm:flex-row">
+        <a href={releasesUrl} class="qcm-block qcm-block-primary px-7 text-xl no-underline" rel="noopener">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+          Télécharger pour Windows
+        </a>
+        <a href="#demo" class="qcm-block qcm-block-quiet px-7 text-xl no-underline">Essayer tout de suite</a>
+      </div>
+      <p class="text-base text-ink-soft">Windows 10 et 11 · Installateur .exe ou .msi · Aucun compte demandé</p>
     </div>
-    <p class="text-base text-ink-soft">Windows 10 et 11 · Gratuit · Installateur .exe ou .msi</p>
+
+    <!-- Aperçu figé du lecteur : purement décoratif. -->
+    <div class="relative mx-auto w-full max-w-lg lg:rotate-1" aria-hidden="true">
+      <div class="qcm-card flex flex-col gap-4 p-5 sm:p-6">
+        <p class="text-sm font-bold text-ink-soft">Question 2 sur 5</p>
+        <div class="flex gap-1.5">
+          <span class="h-2.5 flex-1 rounded-full border-2 border-line bg-correct"></span>
+          <span class="h-2.5 flex-1 rounded-full border-2 border-line bg-primary"></span>
+          <span class="h-2.5 flex-1 rounded-full border-2 border-line bg-sunken"></span>
+          <span class="h-2.5 flex-1 rounded-full border-2 border-line bg-sunken"></span>
+          <span class="h-2.5 flex-1 rounded-full border-2 border-line bg-sunken"></span>
+        </div>
+        <p class="text-xl font-extrabold sm:text-2xl">Quelle fraction est égale à 1/2 ?</p>
+        <div class="grid grid-cols-2 gap-3">
+          {
+            mockChoices.map((choice) => (
+              <div
+                class:list={[
+                  'flex min-h-14 items-center gap-3 rounded-2xl border-2 border-line px-3 py-2 font-bold',
+                  choice.correct ? 'bg-correct text-correct-ink shadow-block-sm' : 'bg-surface opacity-60',
+                ]}
+              >
+                <span class:list={['qcm-key', choice.tone]}>{choice.letter}</span>
+                {choice.text}
+              </div>
+            ))
+          }
+        </div>
+        <div class="rounded-2xl border-2 border-line bg-correct px-4 py-3 text-correct-ink">
+          <p class="text-lg font-extrabold">Bonne réponse.</p>
+          <p class="font-medium">1/2 = 2/4, car 1 × 2 = 2 et 2 × 2 = 4.</p>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <section class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2" aria-label="Les engagements de QCM">
-    {
-      promises.map((promise) => (
-        <article class="qcm-card p-6">
-          <h2 class="text-2xl font-extrabold">{promise.title}</h2>
-          <p class="mt-2 text-lg text-ink-soft">{promise.text}</p>
-        </article>
-      ))
-    }
+  <section class="mt-20" aria-labelledby="etapes-titre">
+    <h2 id="etapes-titre" class="text-3xl font-extrabold sm:text-4xl">Comment ça marche</h2>
+    <ol class="mt-6 grid gap-5 md:grid-cols-3">
+      {
+        steps.map((step, index) => (
+          <li class="qcm-panel flex flex-col gap-3 p-6">
+            <span class="qcm-key self-start bg-primary text-lg" aria-hidden="true">{index + 1}</span>
+            <h3 class="text-xl font-extrabold">{step.title}</h3>
+            <p class="text-ink-soft">{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
   </section>
 
-  <section class="qcm-card mt-10 flex flex-col gap-4 p-7">
-    <h2 class="text-2xl font-extrabold">Créer ses propres QCM</h2>
-    <p class="text-lg text-ink-soft">L'éditeur en ligne fonctionne sans compte. Tu écris tes questions, tu ajoutes des images, puis tu enregistres le fichier .qcm.</p>
-    <a href="/editeur" class="qcm-block qcm-block-primary no-underline sm:w-fit">Ouvrir l'éditeur</a>
+  <section id="demo" class="mt-20" aria-labelledby="demo-titre">
+    <div class="qcm-panel bg-sunken/60 p-5 sm:p-10">
+      <div class="mx-auto mb-7 max-w-2xl text-center">
+        <h2 id="demo-titre" class="text-3xl font-extrabold sm:text-4xl">Essaie ici, sans rien installer</h2>
+        <p class="mt-2 text-lg text-ink-soft">Trois questions sur les fractions. Tu peux te tromper : rien n'est compté.</p>
+      </div>
+      <DemoPlayer client:visible />
+    </div>
+  </section>
+
+  <section class="mt-20" aria-labelledby="engagements-titre">
+    <h2 id="engagements-titre" class="text-3xl font-extrabold sm:text-4xl">Ce que QCM promet</h2>
+    <div class="mt-6 grid gap-5 sm:grid-cols-2">
+      {
+        promises.map((promise) => (
+          <article class="qcm-panel flex gap-4 p-6">
+            <span class:list={['qcm-tile', promise.tone]} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d={promise.icon} /></svg>
+            </span>
+            <div>
+              <h3 class="text-xl font-extrabold">{promise.title}</h3>
+              <p class="mt-1 text-ink-soft">{promise.text}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="qcm-card mt-20 grid gap-8 bg-selected p-7 sm:p-10 lg:grid-cols-[1.2fr_1fr] lg:items-center" aria-labelledby="creer-titre">
+    <div class="flex flex-col gap-4">
+      <p class="qcm-chip self-start border-2 border-line bg-surface">Pour les parents et les professeurs</p>
+      <h2 id="creer-titre" class="text-3xl font-extrabold sm:text-4xl">Créer un QCM en quelques minutes</h2>
+      <ul class="flex flex-col gap-3 text-lg font-medium">
+        {
+          creatorPoints.map((point) => (
+            <li class="flex items-start gap-3">
+              <svg class="mt-1 flex-none" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+              {point}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="flex flex-col gap-4">
+      <a href="/editeur" class="qcm-block qcm-block-primary text-xl no-underline">Ouvrir l'éditeur</a>
+      <a href="/bibliotheque" class="qcm-block qcm-block-quiet text-xl no-underline">Parcourir la bibliothèque</a>
+      <p class="text-base font-medium">L'éditeur fonctionne sans compte.</p>
+    </div>
   </section>
 </Base>

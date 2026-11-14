@@ -3,7 +3,10 @@ import QcmEditor from '../components/QcmEditor.vue'
 import Base from '../layouts/Base.astro'
 ---
 
-<Base title="Créer un QCM" description="Éditeur de QCM sans code : questions, images, export .qcm.">
-  <h1 class="mb-6 text-4xl font-extrabold">Créer un QCM</h1>
+<Base title="Créer un QCM" description="Éditeur de QCM guidé : informations, questions, import d'un texte écrit par une IA, export .qcm." wide>
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold sm:text-4xl">Créer un QCM</h1>
+    <p class="mt-1 text-lg text-ink-soft">Quatre étapes. Tu peux revenir en arrière à tout moment, rien n'est envoyé avant la fin.</p>
+  </header>
   <QcmEditor client:only="vue" />
 </Base>

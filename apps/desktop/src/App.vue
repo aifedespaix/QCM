@@ -11,7 +11,14 @@ import {
   takePendingFile,
   type OpenedQcm,
 } from './lib/qcmFile.ts'
+import logoUrl from '../app-icon.svg'
 import { checkForUpdate, installUpdate, type AvailableUpdate } from './lib/updater.ts'
+
+const TIPS = [
+  { keys: ['A', 'B', 'C', 'D'], text: 'Choisir une réponse' },
+  { keys: ['Entrée'], text: 'Valider et continuer' },
+  { keys: ['.qcm'], text: 'Double-clic sur un fichier pour l\'ouvrir' },
+] as const
 
 type View = 'home' | 'loading' | 'player' | 'error'
 
@@ -105,7 +112,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <main class="flex flex-1 items-center justify-center px-6 pb-10">
+    <main class="flex flex-1 items-center justify-center px-6 pb-10" :class="view === 'home' ? 'home-glow' : ''">
       <QcmPlayer
         v-if="view === 'player' && opened"
         :key="openCount"
@@ -115,21 +122,38 @@ onBeforeUnmount(() => {
         @close="goHome"
       />
 
-      <div v-else-if="view === 'home'" class="flex w-full max-w-xl flex-col gap-6">
-        <section class="qcm-card flex flex-col gap-6 p-8 text-center">
-          <h1 class="text-3xl font-extrabold">QCM</h1>
-          <p class="text-lg text-ink-soft">Ouvre un fichier .qcm pour commencer. Tu peux aussi le glisser ici.</p>
+      <div v-else-if="view === 'home'" class="flex w-full max-w-2xl flex-col gap-6">
+        <section class="qcm-panel flex flex-col items-center gap-6 p-8 text-center sm:p-10">
+          <img :src="logoUrl" alt="" width="88" height="88" />
+          <div>
+            <h1 class="text-4xl font-extrabold">Prêt à réviser ?</h1>
+            <p class="mt-2 text-lg text-ink-soft">Ouvre un fichier .qcm pour commencer. Tu peux aussi le glisser dans cette fenêtre.</p>
+          </div>
           <button
             type="button"
-            class="qcm-block qcm-block-primary w-full text-xl"
+            class="qcm-block qcm-block-primary w-full max-w-md text-xl"
             :disabled="updateState === 'installing'"
             @click="chooseFile"
           >
             Ouvrir un QCM
           </button>
+          <ul class="flex flex-wrap justify-center gap-2" aria-label="Ce que QCM garantit">
+            <li class="qcm-chip bg-badge-a">Une question à la fois</li>
+            <li class="qcm-chip bg-badge-c">Sans chronomètre</li>
+            <li class="qcm-chip bg-badge-d">Sans score</li>
+          </ul>
         </section>
 
-        <section v-if="update" class="rounded-2xl border-2 border-line bg-selected p-6" aria-labelledby="update-title">
+        <section class="grid gap-4 sm:grid-cols-3" aria-label="Raccourcis clavier">
+          <div v-for="tip in TIPS" :key="tip.text" class="qcm-panel flex flex-col items-center gap-2 p-4 text-center">
+            <p class="flex gap-1.5" aria-hidden="true">
+              <span v-for="key in tip.keys" :key="key" class="qcm-key bg-surface">{{ key }}</span>
+            </p>
+            <p class="text-base font-semibold text-ink-soft">{{ tip.text }}</p>
+          </div>
+        </section>
+
+        <section v-if="update" class="qcm-card bg-selected p-6" aria-labelledby="update-title">
           <h2 id="update-title" class="text-xl font-extrabold">Une nouvelle version de QCM est prête.</h2>
           <p class="mt-1 text-base font-medium">Version {{ update.version }}. L'installation prend environ une minute, puis QCM se rouvre.</p>
           <p v-if="updateState === 'installing'" role="status" class="mt-4 text-lg font-bold">
