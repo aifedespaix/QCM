@@ -3,8 +3,8 @@
     "id": "_pb_users_auth_",
     "listRule": "id = @request.auth.id",
     "viewRule": "",
-    "createRule": "",
-    "updateRule": "id = @request.auth.id",
+    "createRule": "@request.body.admin:isset = false",
+    "updateRule": "id = @request.auth.id && @request.body.admin:isset = false",
     "deleteRule": "id = @request.auth.id",
     "name": "users",
     "type": "auth",
@@ -140,14 +140,24 @@
         "presentable": false,
         "system": false,
         "type": "autodate"
+      },
+      {
+        "help": "",
+        "hidden": false,
+        "id": "bool2282622326",
+        "name": "admin",
+        "presentable": false,
+        "required": false,
+        "system": false,
+        "type": "bool"
       }
     ],
     "indexes": [
       "CREATE UNIQUE INDEX `idx_tokenKey__pb_users_auth_` ON `users` (`tokenKey`)",
       "CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users` (`email`) WHERE `email` != ''"
     ],
-    "created": "2026-11-14 17:24:30.917Z",
-    "updated": "2026-11-14 17:24:31.089Z",
+    "created": "2026-11-14 17:53:42.960Z",
+    "updated": "2026-11-14 17:55:16.778Z",
     "system": false,
     "authRule": "",
     "manageRule": null,
@@ -218,11 +228,11 @@
   },
   {
     "id": "pbcqcms00000001",
-    "listRule": "status = \"published\" || owner = @request.auth.id",
-    "viewRule": "status = \"published\" || owner = @request.auth.id",
+    "listRule": "status = \"published\" || owner = @request.auth.id || @request.auth.admin = true",
+    "viewRule": "status = \"published\" || owner = @request.auth.id || @request.auth.admin = true",
     "createRule": "@request.auth.id != \"\" && owner = @request.auth.id && @request.body.status:isset = false && @request.body.rating_avg:isset = false && @request.body.rating_count:isset = false",
-    "updateRule": "owner = @request.auth.id && @request.body.owner:changed = false && @request.body.status:changed = false && @request.body.rating_avg:changed = false && @request.body.rating_count:changed = false",
-    "deleteRule": "owner = @request.auth.id",
+    "updateRule": "(owner = @request.auth.id && @request.body.owner:changed = false && @request.body.status:changed = false && @request.body.rating_avg:changed = false && @request.body.rating_count:changed = false) || @request.auth.admin = true",
+    "deleteRule": "owner = @request.auth.id || @request.auth.admin = true",
     "name": "qcms",
     "type": "base",
     "fields": [
@@ -431,6 +441,7 @@
         "system": false,
         "type": "select",
         "values": [
+          "pending",
           "published",
           "hidden"
         ]
@@ -487,8 +498,8 @@
       "CREATE INDEX idx_qcms_owner ON qcms (owner)",
       "CREATE INDEX idx_qcms_created ON qcms (created)"
     ],
-    "created": "2026-11-14 17:24:31.093Z",
-    "updated": "2026-11-14 17:24:31.093Z",
+    "created": "2026-11-14 17:53:43.118Z",
+    "updated": "2026-11-14 17:53:43.136Z",
     "system": false
   },
   {
@@ -581,8 +592,8 @@
     "indexes": [
       "CREATE UNIQUE INDEX idx_ratings_unique ON ratings (qcm, user)"
     ],
-    "created": "2026-11-14 17:24:31.098Z",
-    "updated": "2026-11-14 17:24:31.098Z",
+    "created": "2026-11-14 17:53:43.120Z",
+    "updated": "2026-11-14 17:53:43.120Z",
     "system": false
   },
   {
@@ -687,8 +698,8 @@
     "indexes": [
       "CREATE INDEX idx_comments_qcm ON comments (qcm, created)"
     ],
-    "created": "2026-11-14 17:24:31.100Z",
-    "updated": "2026-11-14 17:24:31.100Z",
+    "created": "2026-11-14 17:53:43.125Z",
+    "updated": "2026-11-14 17:53:43.125Z",
     "system": false
   }
 ]

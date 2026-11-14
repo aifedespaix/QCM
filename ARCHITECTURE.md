@@ -383,17 +383,18 @@ La migration `pb_migrations/1760000000_init_qcm.js` est la **source de vérité*
 | Collection | List / View | Create | Update | Delete |
 |---|---|---|---|---|
 | `users` (auth) | List : `id = @request.auth.id` · View : public (nom, avatar ; l'e-mail reste masqué) | public (nécessaire à OAuth2) | `id = @request.auth.id` | `id = @request.auth.id` |
-| `qcms` | `status = "published" \|\| owner = @request.auth.id` | connecté, `owner` = soi ; `status`, `rating_avg`, `rating_count` interdits dans la requête | propriétaire ; `owner`, `status`, `rating_*` non modifiables | propriétaire |
+| `qcms` | `status = "published" \|\| owner = @request.auth.id \|\| @request.auth.admin = true` | connecté, `owner` = soi ; `status`, `rating_avg`, `rating_count` interdits dans la requête (statut initial `pending`) | propriétaire (`owner`, `status`, `rating_*` non modifiables) ou administrateur | propriétaire ou administrateur |
 | `ratings` | `user = @request.auth.id` | connecté, `user` = soi, QCM publié | auteur ; `user` et `qcm` non modifiables | auteur |
 | `comments` | `hidden = false \|\| user = @request.auth.id` | connecté, `user` = soi, QCM publié, `hidden` interdit | auteur ; `user`, `qcm`, `hidden` non modifiables | auteur |
 
-Les règles exactes (chaînes de filtre PocketBase) sont dans la migration. Un administrateur (superuser) contourne toutes les règles : il masque un QCM en passant `status` à `hidden`, ou un commentaire en cochant `hidden`, depuis le tableau de bord `/_/`.
+Les règles exactes (chaînes de filtre PocketBase) sont dans la migration. Modération (migration `1760000001_moderation.js`) : un QCM publié par un membre a le statut `pending`. Un administrateur (compte Google dont l'e-mail est `PB_SUPERUSER_EMAIL`) le valide ou le masque depuis la fiche du site (boutons « Valider » / « Masquer ») ; la bibliothèque propose pour lui le filtre « à valider ». Un superuser contourne toutes les règles : il masque un QCM en passant `status` à `hidden`, ou un commentaire en cochant `hidden`, depuis le tableau de bord `/_/`.
 
 Hooks serveur (`pb_hooks/main.pb.js`) :
 
 1. `onBootstrap` : active le fournisseur Google à partir de `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
-2. `onRecordCreateRequest` sur `qcms` : force `status = "published"`, `rating_avg = 0`, `rating_count = 0`.
-3. Après création, modification ou suppression d'une note : recalcule `rating_avg` (1 décimale) et `rating_count` du QCM.
+2. `onRecordCreateRequest` sur `qcms` : force `status = "pending"` (QCM à valider, invisible de la bibliothèque), `rating_avg = 0`, `rating_count = 0`. Les QCM d'un administrateur ou d'un superuser (seed) sont publiés directement.
+3. `onRecordAuthRequest` sur `users` : à chaque connexion, le champ `admin` vaut `true` si l'e-mail du compte (Google) est celui de `PB_SUPERUSER_EMAIL`, sinon `false`. Le champ est refusé dans toute requête client.
+4. Après création, modification ou suppression d'une note : recalcule `rating_avg` (1 décimale) et `rating_count` du QCM.
 
 Limite connue : PocketBase ne peut pas ouvrir le ZIP côté serveur. Le fichier `.qcm` publié est limité à 20 Mo et au type `application/zip` ; son contenu est toujours revalidé par `@qcm/core` (web) et par Rust (desktop) avant affichage.
 

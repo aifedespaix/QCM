@@ -24,13 +24,27 @@ onBootstrap((e) => {
   e.app.save(users)
 })
 
-// 2. Création d'un QCM : statut et compteurs imposés par le serveur.
+// 2. Création d'un QCM : compteurs imposés par le serveur ; statut « pending » (à valider),
+//    sauf pour un administrateur dont les QCM sont publiés directement.
 onRecordCreateRequest((e) => {
-  e.record.set("status", "published")
+  const isAdmin = e.hasSuperuserAuth() || (e.auth && e.auth.get("admin") === true)
+  e.record.set("status", isAdmin ? "published" : "pending")
   e.record.set("rating_avg", 0)
   e.record.set("rating_count", 0)
   e.next()
 }, "qcms")
+
+// 2 bis. À chaque connexion : le compte dont l'e-mail est PB_SUPERUSER_EMAIL devient administrateur.
+onRecordAuthRequest((e) => {
+  const adminEmail = ($os.getenv("PB_SUPERUSER_EMAIL") || "").trim().toLowerCase()
+  const email = String(e.record.get("email") || "").trim().toLowerCase()
+  const shouldBeAdmin = adminEmail !== "" && email === adminEmail
+  if (e.record.get("admin") !== shouldBeAdmin) {
+    e.record.set("admin", shouldBeAdmin)
+    e.app.save(e.record)
+  }
+  e.next()
+}, "users")
 
 // 3. Après chaque note créée, modifiée ou supprimée : recalcule la moyenne du QCM.
 onRecordAfterCreateSuccess((e) => {

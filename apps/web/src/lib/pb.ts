@@ -18,6 +18,8 @@ pb.autoCancellation(false)
 export interface UserRecord extends RecordModel {
   name: string
   avatar: string
+  /** Posé par le serveur pour le compte dont l'e-mail est celui de l'administrateur. */
+  admin?: boolean
 }
 
 export interface QcmRecord extends RecordModel {
@@ -32,7 +34,7 @@ export interface QcmRecord extends RecordModel {
   has_images: boolean
   file: string
   thumbnail: string
-  status: 'published' | 'hidden'
+  status: 'pending' | 'published' | 'hidden'
   rating_avg: number
   rating_count: number
   created: string
@@ -83,6 +85,8 @@ export interface QcmQuery {
   level?: Level | ''
   sort?: QcmSort
   page?: number
+  /** `pending` : file de validation, réservée aux administrateurs (le serveur filtre déjà). */
+  status?: 'published' | 'pending'
 }
 
 const SORTS: Record<QcmSort, string> = {
@@ -94,7 +98,7 @@ const SORTS: Record<QcmSort, string> = {
 export const PAGE_SIZE = 24
 
 export function listQcms(query: QcmQuery = {}) {
-  const parts = ['status = "published"']
+  const parts = [pb.filter('status = {:status}', { status: query.status ?? 'published' })]
   const search = query.search?.trim()
   if (search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: search }))
   if (query.subject) parts.push(pb.filter('subject = {:subject}', { subject: query.subject }))
@@ -115,6 +119,11 @@ export function listMyQcms(userId: string) {
 
 export function getQcm(id: string) {
   return pb.collection('qcms').getOne<QcmRecord>(id, { expand: 'owner' })
+}
+
+/** Réservé aux administrateurs : le serveur refuse l'appel pour tout autre compte. */
+export function setQcmStatus(id: string, status: 'published' | 'hidden') {
+  return pb.collection('qcms').update<QcmRecord>(id, { status })
 }
 
 export function deleteQcm(id: string) {

@@ -25,6 +25,7 @@ Interdits :
 - Supprimer, ignorer (`skip`) ou affaiblir un test pour le faire passer.
 - Ajouter une couleur, un son, une animation, un score ou un chronomètre (`ARCHITECTURE.md` §0.4).
 - Lire, afficher ou écrire une clé privée ou un mot de passe réel.
+- Créer une branche parallèle ou ouvrir une Pull Request.
 
 ## 3. Validation stricte
 
@@ -34,14 +35,16 @@ Interdits :
 
 ## 4. Clôture
 
-1. Si **toutes** les validations sont passées : remplace `- [ ]` par `- [x]` sur la ligne de la tâche dans `TASKS.md`. Ne coche rien d'autre.
-2. Si tu as corrigé un comportement décrit dans `ARCHITECTURE.md`, mets à jour la phrase concernée. Retire de §0.3 (« Jamais exécuté ») ce que ta tâche vient de valider.
-3. Affiche un rapport de **5 lignes au plus** :
-   ```text
+1. Si **toutes** les validations sont passées :
+   - Remplace `- [ ]` par `- [x]` sur la ligne de la tâche dans `TASKS.md`. Ne coche rien d'autre.
+   - Si tu as corrigé un comportement décrit dans `ARCHITECTURE.md`, mets à jour la phrase concernée. Retire de §0.3 (« Jamais exécuté ») ce que ta tâche vient de valider.
+   - Assure-toi d'être sur la branche `main`, fais un commit clair des changements (incluant `TASKS.md` et `ARCHITECTURE.md` si modifiés) et exécute `git push origin main` directement (sans passer par une Pull Request).
+2. Affiche un rapport de **5 lignes au plus** :
+   ````text
    Tâche N : terminée | non terminée
    Fichiers modifiés : aucun | <liste courte>
    Validations : <commandes passées> / <commandes prévues>
    Corrections : aucune | <fichier : correction en une phrase>
-   Non vérifié : rien | <quoi et pourquoi>
-   ```
-4. **Arrête-toi immédiatement.** Ne commence pas la tâche suivante, ne propose pas d'amélioration, ne fais pas de commit sauf si on te l'a demandé.
+   Non vérifié : rien | <quoi et pourquoi>```
+   ````
+3. **Arrête-toi immédiatement.** Ne commence pas la tâche suivante, ne propose pas d'amélioration, ne fais pas de commit sauf si on te l'a demandé.

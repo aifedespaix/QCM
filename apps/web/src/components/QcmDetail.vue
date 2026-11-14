@@ -12,6 +12,7 @@ import {
   listComments,
   qcmDownloadUrl,
   rateQcm,
+  setQcmStatus,
   useAuth,
   type CommentRecord,
   type QcmRecord,
@@ -29,6 +30,7 @@ const commentText = ref('')
 const notice = ref('')
 const mediaUrls = new Map<string, string>()
 
+const isAdmin = computed(() => user.value?.admin === true)
 const isOwner = computed(() => !!user.value && record.value?.owner === user.value.id)
 
 function resolveMedia(path: string): string | undefined {
@@ -76,6 +78,12 @@ async function sendComment(): Promise<void> {
 async function removeComment(id: string): Promise<void> {
   await deleteComment(id)
   comments.value = comments.value.filter((comment) => comment.id !== id)
+}
+
+async function moderate(status: 'published' | 'hidden'): Promise<void> {
+  if (!record.value) return
+  record.value = await setQcmStatus(record.value.id, status)
+  notice.value = status === 'published' ? 'QCM validé : il est visible dans la bibliothèque.' : 'QCM masqué de la bibliothèque.'
 }
 
 async function removeQcm(): Promise<void> {
@@ -135,8 +143,22 @@ onBeforeUnmount(() => {
         <button type="button" class="qcm-block qcm-block-quiet text-xl" @click="play">Essayer en ligne</button>
       </div>
       <p v-if="playError" role="alert" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 font-medium text-retry-ink">{{ playError }}</p>
-      <button v-if="isOwner" type="button" class="qcm-block qcm-block-quiet min-h-12 self-start px-4 py-2 text-base" @click="removeQcm">
-        Supprimer mon QCM
+      <p v-if="record.status === 'pending'" role="status" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 text-lg font-bold text-retry-ink">
+        En attente de validation : ce QCM n'est pas encore visible dans la bibliothèque.
+      </p>
+      <p v-else-if="record.status === 'hidden'" role="status" class="rounded-2xl border-2 border-line bg-retry px-5 py-4 text-lg font-bold text-retry-ink">
+        Ce QCM est masqué de la bibliothèque.
+      </p>
+      <div v-if="isAdmin" class="flex flex-wrap gap-3">
+        <button v-if="record.status !== 'published'" type="button" class="qcm-block qcm-block-primary min-h-12 px-4 py-2 text-base" @click="moderate('published')">
+          Valider ce QCM
+        </button>
+        <button v-if="record.status !== 'hidden'" type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="moderate('hidden')">
+          Masquer ce QCM
+        </button>
+      </div>
+      <button v-if="isOwner || isAdmin" type="button" class="qcm-block qcm-block-quiet min-h-12 self-start px-4 py-2 text-base" @click="removeQcm">
+        {{ isOwner ? 'Supprimer mon QCM' : 'Supprimer ce QCM' }}
       </button>
     </section>
 

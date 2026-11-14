@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
-import { listQcms, qcmDownloadUrl, qcmThumbnailUrl, type QcmRecord, type QcmSort } from '../lib/pb.ts'
+import { listQcms, qcmDownloadUrl, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
 
-const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; sort: QcmSort }>({
+const { user } = useAuth()
+
+const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; sort: QcmSort; pending: boolean }>({
+  pending: false,
   search: '',
   subject: '',
   level: '',
@@ -19,7 +22,7 @@ let debounce: ReturnType<typeof setTimeout> | undefined
 async function load(): Promise<void> {
   state.value = 'loading'
   try {
-    const result = await listQcms({ ...filters, page: page.value })
+    const result = await listQcms({ ...filters, status: filters.pending && user.value?.admin ? 'pending' : 'published', page: page.value })
     items.value = result.items
     totalPages.value = Math.max(1, result.totalPages)
     totalItems.value = result.totalItems
@@ -74,6 +77,10 @@ onMounted(load)
           <option value="title">Titre (A à Z)</option>
         </select>
       </div>
+      <label v-if="user?.admin" class="flex items-center gap-3 text-lg font-bold sm:col-span-2 lg:col-span-4">
+        <input v-model="filters.pending" type="checkbox" class="h-6 w-6" />
+        Afficher seulement les QCM à valider
+      </label>
     </form>
 
     <p v-if="state === 'loading'" role="status" class="text-lg font-bold text-ink-soft">Chargement de la bibliothèque…</p>

@@ -77,7 +77,10 @@ async function publish(): Promise<void> {
   try {
     const record = await publishQcm(built)
     publishedId.value = record.id
-    notice.value = 'Ton QCM est publié dans la bibliothèque.'
+    notice.value =
+      record.status === 'published'
+        ? 'Ton QCM est publié dans la bibliothèque.'
+        : 'Ton QCM est envoyé. Il apparaîtra dans la bibliothèque après validation.'
   } catch (error) {
     report(error)
   } finally {
