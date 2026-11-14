@@ -9,7 +9,7 @@ Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contra
 
 ---
 
-- [ ] **Tâche 1 : Contrôle de l'installation locale**
+- [x] **Tâche 1 : Contrôle de l'installation locale**
 
   - **Dépendances :** aucune.
   - **Sections `ARCHITECTURE.md` à lire :** §0.2, §1.2.
