@@ -1,0 +1,9 @@
+---
+import LibraryBrowser from '../components/LibraryBrowser.vue'
+import Base from '../layouts/Base.astro'
+---
+
+<Base title="Bibliothèque" description="Des QCM partagés par la communauté, à télécharger ou à essayer en ligne.">
+  <h1 class="mb-6 text-4xl font-extrabold">Bibliothèque</h1>
+  <LibraryBrowser client:only="vue" />
+</Base>

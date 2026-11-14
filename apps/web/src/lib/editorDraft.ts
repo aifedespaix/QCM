@@ -1,0 +1,197 @@
+import { reactive } from 'vue'
+import {
+  LIMITS,
+  QCM_FORMAT_VERSION,
+  correctIndexOf,
+  imageToWebp,
+  mediaPathFor,
+  validateQcm,
+  writeQcmArchive,
+  type Level,
+  type QcmArchive,
+  type QcmData,
+  type Subject,
+} from '@qcm/core'
+
+export interface DraftImage {
+  /** Chemin dans l'archive : `media/xxx.webp`. */
+  path: string
+  bytes: Uint8Array
+  /** URL `blob:` pour l'aperçu. */
+  url: string
+}
+
+export interface DraftQuestion {
+  /** Clé stable pour `v-for` (l'identifiant `q1`, `q2`... est attribué à l'export). */
+  key: number
+  prompt: string
+  choices: { text: string }[]
+  correctIndex: number
+  hint: string
+  explanation: string
+  image: DraftImage | null
+}
+
+export interface Draft {
+  title: string
+  subject: Subject
+  level: Level
+  chapter: string
+  author: string
+  description: string
+  questions: DraftQuestion[]
+}
+
+let nextKey = 1
+
+function blobUrl(bytes: Uint8Array): string {
+  const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  return URL.createObjectURL(new Blob([buffer], { type: 'image/webp' }))
+}
+
+export function emptyQuestion(): DraftQuestion {
+  return {
+    key: nextKey++,
+    prompt: '',
+    choices: [{ text: '' }, { text: '' }],
+    correctIndex: 0,
+    hint: '',
+    explanation: '',
+    image: null,
+  }
+}
+
+export function createDraft(): Draft {
+  return reactive<Draft>({
+    title: '',
+    subject: 'maths',
+    level: '6e',
+    chapter: '',
+    author: '',
+    description: '',
+    questions: [emptyQuestion()],
+  })
+}
+
+export function addQuestion(draft: Draft): void {
+  if (draft.questions.length < LIMITS.maxQuestions) draft.questions.push(emptyQuestion())
+}
+
+export function removeQuestion(draft: Draft, index: number): void {
+  if (draft.questions.length <= 1) return
+  const [removed] = draft.questions.splice(index, 1)
+  if (removed?.image) URL.revokeObjectURL(removed.image.url)
+}
+
+/** Déplace une question d'un cran (`-1` vers le haut, `1` vers le bas). */
+export function moveQuestion(draft: Draft, index: number, direction: -1 | 1): void {
+  const target = index + direction
+  const current = draft.questions[index]
+  const other = draft.questions[target]
+  if (!current || !other) return
+  draft.questions[index] = other
+  draft.questions[target] = current
+}
+
+export function addChoice(question: DraftQuestion): void {
+  if (question.choices.length < LIMITS.maxChoices) question.choices.push({ text: '' })
+}
+
+export function removeChoice(question: DraftQuestion, index: number): void {
+  if (question.choices.length <= LIMITS.minChoices) return
+  question.choices.splice(index, 1)
+  if (question.correctIndex === index) question.correctIndex = 0
+  else if (question.correctIndex > index) question.correctIndex -= 1
+}
+
+/** Convertit l'image déposée en WebP (1280 px max) et l'attache à la question. */
+export async function setQuestionImage(draft: Draft, question: DraftQuestion, file: Blob, fileName: string): Promise<void> {
+  const { bytes } = await imageToWebp(file)
+  const taken = draft.questions.flatMap((item) => (item.image && item !== question ? [item.image.path] : []))
+  if (question.image) URL.revokeObjectURL(question.image.url)
+  question.image = { path: mediaPathFor('img', fileName, taken), bytes, url: blobUrl(bytes) }
+}
+
+export function removeQuestionImage(question: DraftQuestion): void {
+  if (question.image) URL.revokeObjectURL(question.image.url)
+  question.image = null
+}
+
+export interface BuiltQcm {
+  data: QcmData
+  media: Map<string, Uint8Array>
+  /** Octets du fichier `.qcm`. */
+  bytes: Uint8Array
+  /** Première image, utilisée comme miniature à la publication. */
+  thumbnail?: Uint8Array
+}
+
+/** Brouillon → données validées (lance `QcmFormatError('E_SCHEMA')` avec le détail des champs à corriger). */
+export function draftToData(draft: Draft): QcmData {
+  return validateQcm({
+    version: QCM_FORMAT_VERSION,
+    meta: {
+      title: draft.title,
+      subject: draft.subject,
+      level: draft.level,
+      chapter: draft.chapter,
+      language: 'fr',
+      ...(draft.author.trim() ? { author: draft.author } : {}),
+      ...(draft.description.trim() ? { description: draft.description } : {}),
+    },
+    questions: draft.questions.map((question, index) => ({
+      id: `q${index + 1}`,
+      prompt: question.prompt,
+      ...(question.image ? { image: question.image.path } : {}),
+      choices: question.choices.map((choice, choiceIndex) => ({
+        text: choice.text,
+        correct: choiceIndex === question.correctIndex,
+      })),
+      ...(question.hint.trim() ? { hint: question.hint } : {}),
+      explanation: question.explanation,
+    })),
+  })
+}
+
+/** Brouillon → fichier `.qcm` complet. */
+export function buildQcm(draft: Draft): BuiltQcm {
+  const data = draftToData(draft)
+  const media = new Map<string, Uint8Array>()
+  for (const question of draft.questions) {
+    if (question.image) media.set(question.image.path, question.image.bytes)
+  }
+  const bytes = writeQcmArchive({ data, media })
+  const first = draft.questions.find((question) => question.image)?.image?.bytes
+  return { data, media, bytes, ...(first ? { thumbnail: first } : {}) }
+}
+
+/** Recharge un `.qcm` existant dans l'éditeur. */
+export function loadArchiveIntoDraft(draft: Draft, archive: QcmArchive): void {
+  for (const question of draft.questions) {
+    if (question.image) URL.revokeObjectURL(question.image.url)
+  }
+  const { meta, questions } = archive.data
+  draft.title = meta.title
+  draft.subject = meta.subject
+  draft.level = meta.level
+  draft.chapter = meta.chapter
+  draft.author = meta.author ?? ''
+  draft.description = meta.description ?? ''
+  draft.questions = questions.map((question) => {
+    const bytes = question.image ? archive.media.get(question.image) : undefined
+    return {
+      key: nextKey++,
+      prompt: question.prompt,
+      choices: question.choices.map((choice) => ({ text: choice.text })),
+      correctIndex: correctIndexOf(question),
+      hint: question.hint ?? '',
+      explanation: question.explanation,
+      image: question.image && bytes ? { path: question.image, bytes, url: blobUrl(bytes) } : null,
+    }
+  })
+}
+
+/** Table `chemin → URL blob:` pour l'aperçu `QcmPlayer` dans l'éditeur. */
+export function draftMediaResolver(draft: Draft): (path: string) => string | undefined {
+  return (path) => draft.questions.find((question) => question.image?.path === path)?.image?.url
+}

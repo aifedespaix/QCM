@@ -1,0 +1,200 @@
+/*
+ * Thème QCM — « brutalité douce ».
+ * À importer APRÈS `@import "tailwindcss";` dans le CSS d'entrée de chaque application.
+ * Les couleurs changent via l'attribut `data-theme="light" | "dark"` posé sur <html>.
+ */
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --qcm-bg: #f6f1e7;          /* fond crème */
+  --qcm-surface: #fffaf0;     /* cartes */
+  --qcm-sunken: #ece4d3;      /* zones en creux, barre de progression vide */
+  --qcm-ink: #2b2d42;         /* texte principal, bordures */
+  --qcm-ink-soft: #565973;    /* texte secondaire */
+  --qcm-line: #2b2d42;        /* bordures 2px */
+  --qcm-shadow: #2b2d42;      /* ombre décalée */
+  --qcm-primary: #bfd7ea;     /* bouton principal, bleu brume */
+  --qcm-selected: #dcd3f5;    /* réponse sélectionnée, lavande */
+  --qcm-correct: #cfe6cf;     /* bonne réponse, sauge */
+  --qcm-correct-ink: #1f4d2e;
+  --qcm-retry: #f5e3b5;       /* « pas encore », ambre doux */
+  --qcm-retry-ink: #5c4208;
+  --qcm-focus: #3d5a80;       /* anneau de focus clavier */
+  --qcm-badge-a: #bfd7ea;
+  --qcm-badge-b: #f7d6bf;
+  --qcm-badge-c: #cfe6cf;
+  --qcm-badge-d: #dcd3f5;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --qcm-bg: #23262f;          /* ardoise douce */
+  --qcm-surface: #2c303b;
+  --qcm-sunken: #1c1f26;
+  --qcm-ink: #ece7db;
+  --qcm-ink-soft: #b7b4c2;
+  --qcm-line: #8a8fa3;
+  --qcm-shadow: #14161b;
+  --qcm-primary: #3a5874;
+  --qcm-selected: #4b4472;
+  --qcm-correct: #2f5540;
+  --qcm-correct-ink: #d3ecd6;
+  --qcm-retry: #5a4720;
+  --qcm-retry-ink: #f5e3b5;
+  --qcm-focus: #a9c7e8;
+  --qcm-badge-a: #3a5874;
+  --qcm-badge-b: #6b4a36;
+  --qcm-badge-c: #2f5540;
+  --qcm-badge-d: #4b4472;
+}
+
+@theme inline {
+  --font-sans: "Atkinson Hyperlegible Next Variable", "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+
+  --color-bg: var(--qcm-bg);
+  --color-surface: var(--qcm-surface);
+  --color-sunken: var(--qcm-sunken);
+  --color-ink: var(--qcm-ink);
+  --color-ink-soft: var(--qcm-ink-soft);
+  --color-line: var(--qcm-line);
+  --color-primary: var(--qcm-primary);
+  --color-selected: var(--qcm-selected);
+  --color-correct: var(--qcm-correct);
+  --color-correct-ink: var(--qcm-correct-ink);
+  --color-retry: var(--qcm-retry);
+  --color-retry-ink: var(--qcm-retry-ink);
+  --color-focus: var(--qcm-focus);
+  --color-badge-a: var(--qcm-badge-a);
+  --color-badge-b: var(--qcm-badge-b);
+  --color-badge-c: var(--qcm-badge-c);
+  --color-badge-d: var(--qcm-badge-d);
+
+  --shadow-block: 4px 4px 0 0 var(--qcm-shadow);
+  --shadow-block-sm: 2px 2px 0 0 var(--qcm-shadow);
+}
+
+@layer base {
+  html {
+    background-color: var(--qcm-bg);
+    color: var(--qcm-ink);
+    font-family: var(--font-sans);
+    font-size: 18px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--qcm-focus);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background-color: var(--qcm-selected);
+    color: var(--qcm-ink);
+  }
+}
+
+@layer components {
+  /* Carte : surface, bordure nette 2px, coins très arrondis, ombre décalée. */
+  .qcm-card {
+    background-color: var(--qcm-surface);
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-block);
+  }
+
+  /* Bloc cliquable : 64px minimum, s'enfonce au clic. */
+  .qcm-block {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 64px;
+    padding: 0.75rem 1.25rem;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-block);
+    font-family: inherit;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 120ms ease-out, box-shadow 120ms ease-out, background-color 120ms ease-out;
+  }
+
+  .qcm-block:hover:not(:disabled) {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 0 var(--qcm-shadow);
+  }
+
+  .qcm-block:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 var(--qcm-shadow);
+  }
+
+  .qcm-block:disabled {
+    cursor: default;
+  }
+
+  .qcm-block-primary {
+    justify-content: center;
+    background-color: var(--qcm-primary);
+    text-align: center;
+  }
+
+  .qcm-block-quiet {
+    justify-content: center;
+    box-shadow: var(--shadow-block-sm);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* Petit bouton rond de barre d'outils (son, thème). */
+  .qcm-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: 9999px;
+    box-shadow: var(--shadow-block-sm);
+    cursor: pointer;
+  }
+
+  /* Touche clavier affichée dans un bloc (A, B, C, D, Entrée). */
+  .qcm-key {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 0.5rem;
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-xl);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

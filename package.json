@@ -1,0 +1,19 @@
+{
+  "name": "qcm-monorepo",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun test",
+    "pack": "bun packages/core/scripts/pack.ts",
+    "dev:desktop": "bun run --filter @qcm/desktop tauri dev",
+    "build:desktop": "bun run --filter @qcm/desktop tauri build",
+    "dev:web": "bun run --filter @qcm/web dev",
+    "build:web": "bun run --filter @qcm/web build"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "typescript": "6.0.3"
+  }
+}
