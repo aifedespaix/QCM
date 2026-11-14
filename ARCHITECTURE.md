@@ -43,7 +43,7 @@ Règles :
 | crate zip | 9.5 |
 | Astro / @astrojs/vue / @astrojs/check | 7.4.12 / 7.1.6 / 0.9.12 |
 | SDK pocketbase (npm) | 0.29.0 |
-| PocketBase (serveur) | 0.42.2 |
+| PocketBase (serveur) | 0.40.6 |
 
 ### 0.3 État de validation
 
@@ -53,8 +53,9 @@ Exécuté avec succès sur le code du dépôt :
 - `bun run typecheck` : 0 erreur sur les 4 workspaces (`tsc`, `vue-tsc`, `astro check`).
 - `cargo test` et `cargo clippy --all-targets -- -D warnings` sous Linux : 5 tests, 0 avertissement.
 - `bun run build:web` : 4 pages ; parcours éditeur → aperçu → clavier → export `.qcm` vérifié dans Chromium, thèmes clair et sombre.
+- PocketBase 0.40.6 : image Docker, migration, hooks de démarrage et de création, règles d'accès anonymes, export du schéma (4 collections).
 
-**Jamais exécuté** (c'est l'objet de `TASKS.md`) : PocketBase (migration, hooks, Docker) ; l'installateur Windows, l'association `.qcm` et la mise à jour automatique (Windows uniquement) ; le workflow GitHub Actions ; la connexion Google.
+**Jamais exécuté** (c'est l'objet de `TASKS.md`) : PocketBase (usage depuis le site web, hook de moyenne) ; l'installateur Windows, l'association `.qcm` et la mise à jour automatique (Windows uniquement) ; le workflow GitHub Actions ; la connexion Google.
 
 ### 0.4 Règles UX non négociables
 

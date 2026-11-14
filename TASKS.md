@@ -30,7 +30,7 @@ Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contra
 
 ---
 
-- [ ] **Tâche 2 : Premier démarrage réel de PocketBase**
+- [x] **Tâche 2 : Premier démarrage réel de PocketBase**
 
   - **Dépendances :** Tâche 1 `[x]`. Docker installé.
   - **Sections `ARCHITECTURE.md` à lire :** §5.1, §5.2.
