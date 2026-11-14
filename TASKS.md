@@ -1,159 +1,120 @@
-# TASKS.md — Plan d'exécution QCM
+# TASKS.md — Ce qui reste à faire
 
-Cinq tâches, à faire dans l'ordre. Tout le code est déjà écrit dans `ARCHITECTURE.md` : chaque titre `#### \`chemin\`` y désigne un fichier, et le bloc de code qui suit est son contenu complet. Une tâche consiste à créer ces fichiers à l'identique, puis à faire passer les commandes de validation.
+Tout le code est écrit et dans le dépôt. Ce qui a déjà été validé est listé dans `ARCHITECTURE.md` §0.3. Les tâches ci-dessous couvrent **uniquement ce qui n'a jamais tourné** : PocketBase, Windows, la mise à jour automatique et le déploiement.
 
-Règle commune : toutes les commandes se lancent depuis la racine du dépôt, sauf mention contraire. Une commande « doit retourner 0 » = code de sortie 0, sans erreur.
+- Les tâches 1 à 3 sont faisables par un agent.
+- Les tâches 4 et 5 demandent une action du propriétaire du dépôt (clé de signature, comptes GitHub, Google et Dokploy). Elles sont marquées **HUMAIN**.
+
+Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contraire.
 
 ---
 
-- [ ] **Tâche 1 : Initialisation Monorepo & Package `@qcm/core`**
+- [ ] **Tâche 1 : Contrôle de l'installation locale**
 
   - **Dépendances :** aucune.
-  - **Sections `ARCHITECTURE.md` à copier/appliquer :** §1.2 (fichiers racine), §2.3 (fichiers `@qcm/core`), §6 (skill IA).
-  - **Périmètre de fichiers :**
-    - `package.json`, `tsconfig.base.json`, `.gitignore`
-    - `examples/fractions/data.yaml`
-    - `packages/core/package.json`, `packages/core/tsconfig.json`
-    - `packages/core/src/schema.ts`, `errors.ts`, `archive.ts`, `webp.ts`, `index.ts`
-    - `packages/core/scripts/pack.ts`
-    - `packages/core/test/core.test.ts`
-    - `docs/skill-ingestion-cours.md`
-    - `examples/fractions/les-fractions-comparer-et-simplifier.qcm` (généré)
-    - `bun.lock` (généré)
-  - **Instructions d'assemblage rapide :**
-    1. Créer chaque fichier du périmètre avec le contenu exact de son bloc dans `ARCHITECTURE.md`.
-    2. Le fichier racine `package.json` déclare les workspaces `packages/*` et `apps/*` : les dossiers `apps/` n'existent pas encore, c'est normal.
-    3. Ne rien ajouter : pas de README de package, pas de script de build (les packages sont consommés en source).
+  - **Sections `ARCHITECTURE.md` à lire :** §0.2, §1.2.
+  - **Périmètre de fichiers :** aucun fichier à modifier. Si une commande échoue, corriger uniquement le fichier désigné par le message d'erreur.
+  - **Instructions :**
+    1. Vérifier les outils : `bun --version` (1.4 ou plus), `cargo --version`.
+    2. Sous Linux, installer d'abord les paquets système de `ARCHITECTURE.md` §4.4.
+    3. Lancer les validations. Elles ont déjà réussi avant livraison : un échec signale un problème d'environnement, pas de code.
   - **Commandes de validation obligatoires :**
     ```bash
-    bun install
-    bun test packages/core
-    bun run --filter @qcm/core typecheck
-    bun run pack examples/fractions
-    ```
-    Attendu : 14 tests réussis ; la dernière commande affiche `OK examples/fractions/les-fractions-comparer-et-simplifier.qcm (5 questions, 0 image(s))`. Ce fichier d'exemple est conservé dans le dépôt.
-
----
-
-- [ ] **Tâche 2 : Design System `@qcm/ui` & Moteur Audio**
-
-  - **Dépendances :** Tâche 1 `[x]`.
-  - **Sections `ARCHITECTURE.md` à copier/appliquer :** §0.4 (règles UX), §3.1, §3.2, §3.3.
-  - **Périmètre de fichiers :**
-    - `packages/ui/package.json`, `packages/ui/tsconfig.json`
-    - `packages/ui/src/index.ts`
-    - `packages/ui/src/styles/theme.css`
-    - `packages/ui/src/composables/useQcmSound.ts`, `useQcmTheme.ts`, `useQcmPlayer.ts`
-    - `packages/ui/src/components/QcmIntroCard.vue`, `QcmQuestionCard.vue`, `QcmChoiceGrid.vue`, `QcmFeedbackBanner.vue`, `QcmCompletionScreen.vue`, `QcmPlayer.vue`, `QcmSoundToggle.vue`, `QcmThemeToggle.vue`
-    - `packages/ui/test/player.test.ts`
-    - `bun.lock` (mis à jour)
-  - **Instructions d'assemblage rapide :**
-    1. Créer chaque fichier du périmètre avec le contenu exact de son bloc dans `ARCHITECTURE.md` §3.3.
-    2. Ne pas créer de fichier `.mp3`, `.wav` ou `.ogg` : tous les sons viennent de `useQcmSound.ts`.
-    3. Ne pas ajouter de couleur hors des jetons de `theme.css`. Ne pas utiliser `#fff`, `#000`, `white`, `black`, ni aucune classe Tailwind `red-*`.
-    4. Le rendu visuel sera contrôlé à la Tâche 3 (desktop) et à la Tâche 5 (web) : ce package n'a pas de serveur de démonstration.
-  - **Commandes de validation obligatoires :**
-    ```bash
-    bun install
+    bun install --frozen-lockfile
     bun test
-    bun run --filter @qcm/ui typecheck
+    bun run typecheck
+    bun run build:web
+    cd apps/desktop/src-tauri && cargo test && cargo clippy --all-targets -- -D warnings
     ```
-    Attendu : 16 tests réussis (14 `core` + 2 `ui`).
+    Attendu : 16 tests Bun, 0 erreur de types sur 4 workspaces, 4 pages générées, 5 tests Rust, 0 avertissement.
 
 ---
 
-- [ ] **Tâche 3 : Application Desktop `apps/desktop` (Tauri 2 Windows 11)**
+- [ ] **Tâche 2 : Premier démarrage réel de PocketBase**
 
-  - **Dépendances :** Tâches 1 et 2 `[x]`.
-  - **Sections `ARCHITECTURE.md` à copier/appliquer :** §4.1, §4.2, §4.3, §4.4.
-  - **Périmètre de fichiers :**
-    - `apps/desktop/package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`, `app-icon.svg`
-    - `apps/desktop/src/main.ts`, `style.css`, `App.vue`
-    - `apps/desktop/src/lib/qcmFile.ts`
-    - `apps/desktop/src-tauri/Cargo.toml`, `build.rs`, `tauri.conf.json`
-    - `apps/desktop/src-tauri/capabilities/default.json`
-    - `apps/desktop/src-tauri/src/main.rs`, `lib.rs`
-    - `apps/desktop/src-tauri/icons/*` (généré), `apps/desktop/src-tauri/Cargo.lock` (généré)
-    - `.github/workflows/release-desktop.yml`
-    - `bun.lock` (mis à jour)
-  - **Instructions d'assemblage rapide :**
-    1. Créer chaque fichier du périmètre avec le contenu exact de son bloc dans `ARCHITECTURE.md` §4.2, §4.3 et §4.4.
-    2. `bun install`, puis depuis `apps/desktop` : `bun run tauri icon app-icon.svg`. Supprimer `src-tauri/icons/android` et `src-tauri/icons/ios`.
-    3. Sous Linux, installer d'abord les paquets système listés en §4.4.
-    4. Ne pas ajouter `serde_yaml` ni aucun autre crate : Rust ne lit pas le YAML (§0.1).
-    5. Dans `lib.rs`, `tauri_plugin_single_instance` doit rester le premier `.plugin(...)`.
-    6. Si la machine est sous Windows 11 : lancer aussi `bun run build:desktop`, installer le `.exe` produit et faire les 3 vérifications manuelles de la fin de §4.4. Sinon, l'écrire dans le rapport : « installateur Windows non vérifié ».
-  - **Commandes de validation obligatoires :**
-    ```bash
-    bun install
-    bun run --filter @qcm/desktop typecheck
-    bun run --filter @qcm/desktop build
-    cd apps/desktop/src-tauri && cargo check && cargo test && cargo clippy --all-targets -- -D warnings
-    ```
-    Attendu : 5 tests Rust réussis, 0 avertissement clippy, dossier `apps/desktop/dist/` créé.
-
----
-
-- [ ] **Tâche 4 : Backend PocketBase & Docker Dokploy**
-
-  - **Dépendances :** Tâche 1 `[x]`.
-  - **Sections `ARCHITECTURE.md` à copier/appliquer :** §5.1, §5.2, §5.3.
-  - **Périmètre de fichiers :**
-    - `backend/Dockerfile`, `backend/entrypoint.sh`, `backend/.env.example`
-    - `backend/pb_migrations/1760000000_init_qcm.js`
-    - `backend/pb_hooks/main.pb.js`
-    - `backend/pb_schema.json`
-    - `backend/scripts/export-schema.sh`
-    - `docker-compose.yml`
-  - **Instructions d'assemblage rapide :**
-    1. Créer chaque fichier du périmètre avec le contenu exact de son bloc dans `ARCHITECTURE.md` §5.2.
-    2. Cette section est la seule de `ARCHITECTURE.md` qui n'a pas été exécutée avant rédaction (§0.3). La validation ci-dessous est donc le premier démarrage réel.
-    3. Si PocketBase affiche une erreur au démarrage dans la migration ou dans un hook : corriger uniquement l'instruction fautive d'après le message d'erreur. Ne pas changer les noms de collections, les champs, ni les règles d'accès du tableau §5.1.
-    4. Le service `web` de `docker-compose.yml` ne se construit qu'après la Tâche 5 : ici, ne construire et démarrer que `pocketbase`.
-    5. Une fois PocketBase démarré sans erreur, régénérer `backend/pb_schema.json` avec `backend/scripts/export-schema.sh` (remplace la version écrite à la main par l'export réel, qui inclut `users`).
+  - **Dépendances :** Tâche 1 `[x]`. Docker installé.
+  - **Sections `ARCHITECTURE.md` à lire :** §5.1, §5.2.
+  - **Périmètre de fichiers :** `backend/pb_migrations/1760000000_init_qcm.js`, `backend/pb_hooks/main.pb.js`, `backend/Dockerfile`, `backend/entrypoint.sh`, `backend/pb_schema.json`.
+  - **Instructions :**
+    1. Ces fichiers ont été écrits d'après la documentation de PocketBase mais n'ont jamais été exécutés. Construire l'image et démarrer le conteneur avec les commandes ci-dessous.
+    2. Lire `docker logs qcm-pb-test`. Pour chaque erreur de migration ou de hook : corriger uniquement l'instruction fautive, reconstruire, redémarrer (`docker rm -f qcm-pb-test` avant de relancer).
+    3. Ne pas changer les noms de collections, les champs, ni les règles d'accès du tableau §5.1. Si une règle est refusée par PocketBase, corriger sa syntaxe en gardant le même sens.
+    4. Si le téléchargement de PocketBase échoue dans le `Dockerfile` (version introuvable), prendre la dernière version stable publiée sur la page Releases de `pocketbase/pocketbase` et mettre le même numéro dans `backend/Dockerfile`, `docker-compose.yml` et `ARCHITECTURE.md` §0.2.
+    5. Une fois tout au vert, lancer l'export : il remplace `backend/pb_schema.json` par l'export réel (4 collections).
+    6. Laisser le conteneur tourner à la fin : la Tâche 3 l'utilise.
   - **Commandes de validation obligatoires :**
     ```bash
     docker compose config -q
     docker build -t qcm-pocketbase ./backend
     docker run -d --name qcm-pb-test -p 8090:8090 -e PB_SUPERUSER_EMAIL=admin@qcm.local -e PB_SUPERUSER_PASSWORD=motdepasse-test-1234 -e PB_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef qcm-pocketbase
     sleep 5 && curl -fsS http://127.0.0.1:8090/api/health
-    curl -fsS "http://127.0.0.1:8090/api/collections/qcms/records"
-    curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:8090/api/collections/qcms/records -H "Content-Type: application/json" -d "{}"
+    curl -fsS http://127.0.0.1:8090/api/collections/qcms/records
+    curl -s -o /dev/null -w "%{http_code}\n" -X POST http://127.0.0.1:8090/api/collections/qcms/records -H "Content-Type: application/json" -d "{}"
     PB_SUPERUSER_EMAIL=admin@qcm.local PB_SUPERUSER_PASSWORD=motdepasse-test-1234 sh backend/scripts/export-schema.sh
-    docker logs qcm-pb-test 2>&1 | grep -ci "error" ; docker rm -f qcm-pb-test
+    docker logs qcm-pb-test 2>&1 | grep -ci "error"
     ```
-    Attendu : `/api/health` répond avec `"code":200` ; la liste `qcms` répond avec `"items":[]` ; le `POST` anonyme affiche `400` (création refusée sans connexion) ; l'export affiche `OK backend/pb_schema.json` et le fichier contient les 4 collections `users`, `qcms`, `ratings`, `comments` ; le compteur d'erreurs des journaux affiche `0`.
+    Attendu : `/api/health` contient `"code":200` ; la liste `qcms` contient `"items":[]` ; le `POST` anonyme affiche `400` ; l'export affiche `OK backend/pb_schema.json` et le fichier contient `users`, `qcms`, `ratings`, `comments` ; le compteur d'erreurs affiche `0`.
 
 ---
 
-- [ ] **Tâche 5 : Plateforme Web `apps/web` (Astro + Vue 3)**
+- [ ] **Tâche 3 : Site web branché sur PocketBase**
 
-  - **Dépendances :** Tâches 1, 2 et 4 `[x]`.
-  - **Sections `ARCHITECTURE.md` à copier/appliquer :** §7.1, §7.2, §7.3, §7.4, §7.5.
-  - **Périmètre de fichiers :**
-    - `apps/web/package.json`, `tsconfig.json`, `astro.config.mjs`, `Dockerfile`, `nginx.conf`
-    - `apps/web/public/favicon.svg` (copie de `apps/desktop/app-icon.svg`)
-    - `apps/web/scripts/seed.ts`
-    - `apps/web/src/env.d.ts`
-    - `apps/web/src/styles/global.css`
-    - `apps/web/src/layouts/Base.astro`
-    - `apps/web/src/lib/pb.ts`, `editorDraft.ts`
-    - `apps/web/src/components/HeaderControls.vue`, `LibraryBrowser.vue`, `QcmDetail.vue`, `QcmEditor.vue`
-    - `apps/web/src/pages/index.astro`, `bibliotheque.astro`, `qcm.astro`, `editeur.astro`
-    - `bun.lock` (mis à jour)
-  - **Instructions d'assemblage rapide :**
-    1. Créer chaque fichier du périmètre avec le contenu exact de son bloc dans `ARCHITECTURE.md` §7.2 à §7.5.
-    2. Ne pas ajouter d'adaptateur Astro (`@astrojs/node`, etc.) : le site est statique (§0.1).
-    3. Garder `client:only="vue"` sur les 4 îlots.
-    4. Contrôle fonctionnel avec PocketBase local (conteneur de la Tâche 4 relancé sur le port 8090) : lancer le seed, puis `PUBLIC_PB_URL=http://127.0.0.1:8090 bun run dev:web`, ouvrir `/bibliotheque` et vérifier que « Les fractions : comparer et simplifier » apparaît ; ouvrir `/editeur`, remplir une question, cliquer « Essayer le QCM » puis « Enregistrer le fichier .qcm ».
-    5. La connexion Google ne se teste qu'avec de vrais identifiants OAuth (§5.3) : sans eux, l'écrire dans le rapport : « connexion Google non vérifiée ».
+  - **Dépendances :** Tâche 2 `[x]`, conteneur `qcm-pb-test` démarré.
+  - **Sections `ARCHITECTURE.md` à lire :** §5.1, §7.1, §7.3.
+  - **Périmètre de fichiers :** `apps/web/src/lib/pb.ts`, `apps/web/scripts/seed.ts`, `apps/web/src/components/*.vue`, `apps/web/Dockerfile`, `backend/pb_hooks/main.pb.js`.
+  - **Instructions :**
+    1. Lancer le seed : il crée un utilisateur de démonstration et publie le QCM d'exemple.
+    2. Vérifier par l'API que le QCM est listé, que `status` vaut `published` et que le fichier se télécharge.
+    3. Vérifier le hook de moyenne : créer une note avec le compte administrateur, puis relire le QCM (`rating_count` doit valoir `1`). Commandes dans le bloc ci-dessous.
+    4. Lancer `PUBLIC_PB_URL=http://127.0.0.1:8090 bun run dev:web`, ouvrir `/bibliotheque` : « Les fractions : comparer et simplifier » doit apparaître ; ouvrir sa fiche, cliquer « Essayer en ligne » : le lecteur doit démarrer.
+    5. Toute erreur vient d'un écart entre `pb.ts` et le comportement réel de PocketBase : corriger `pb.ts` (ou le hook), pas le modèle de données.
+    6. La connexion Google ne se teste pas ici (Tâche 5). L'écrire dans le rapport.
+    7. À la fin : `docker rm -f qcm-pb-test`.
   - **Commandes de validation obligatoires :**
     ```bash
-    bun install
-    bun run typecheck
-    bun test
-    bun run build:web
     PB_SUPERUSER_EMAIL=admin@qcm.local PB_SUPERUSER_PASSWORD=motdepasse-test-1234 bun run --filter @qcm/web seed
+    curl -fsS "http://127.0.0.1:8090/api/collections/qcms/records?fields=id,title,status,question_count,rating_count"
+    bun run typecheck
+    bun run build:web
     docker compose build web
     ```
-    Attendu : `typecheck` à 0 erreur sur les 4 workspaces ; 16 tests réussis ; 4 pages générées dans `apps/web/dist/` ; le seed affiche `OK QCM publié : ...`.
+    Attendu : le seed affiche `OK QCM publié : ...` ; la liste contient 1 QCM avec `"status":"published"` et `"question_count":5` ; types et build à 0 erreur ; l'image `web` se construit.
+
+---
+
+- [ ] **Tâche 4 (HUMAIN) : Clé de signature, installateur Windows et mise à jour en un clic**
+
+  - **Dépendances :** Tâche 1 `[x]`. Branche fusionnée dans `main`.
+  - **Sections `ARCHITECTURE.md` à lire :** §4.1, §4.4, §4.5.
+  - **Périmètre de fichiers :** `apps/desktop/src-tauri/tauri.conf.json` (clé publique, numéro de version), `apps/desktop/package.json` et `apps/desktop/src-tauri/Cargo.toml` (numéro de version).
+  - **Instructions :**
+    1. Générer la clé de signature et créer les 2 secrets GitHub : étapes exactes en §4.5. La clé privée ne va ni dans le dépôt, ni dans une conversation avec un agent.
+    2. Remplacer `REMPLACER_PAR_LA_CLE_PUBLIQUE` dans `tauri.conf.json`, commiter, pousser.
+    3. Pousser le tag `v0.1.0`. Attendre la fin du workflow `release-desktop`, puis publier le brouillon de Release.
+    4. Sur un PC Windows 11 : télécharger et installer le `.exe`, puis faire les vérifications (1) à (3) de la fin de §4.5.
+    5. Tester la mise à jour : passer la version à `0.1.1` dans les 3 fichiers, pousser le tag `v0.1.1`, publier la Release, relancer QCM 0.1.0 → vérification (4) de §4.5.
+    6. Si le workflow échoue, donner le journal de l'étape en erreur à un agent avec la consigne : « corrige uniquement `.github/workflows/release-desktop.yml` ».
+  - **Commandes de validation obligatoires :**
+    ```bash
+    grep -c "REMPLACER_PAR_LA_CLE_PUBLIQUE" apps/desktop/src-tauri/tauri.conf.json
+    curl -fsSL https://github.com/aifedespaix/qcm/releases/latest/download/latest.json
+    ```
+    Attendu : le `grep` affiche `0` ; le `curl` renvoie un JSON avec `version` et une entrée `windows-x86_64` signée.
+
+---
+
+- [ ] **Tâche 5 (HUMAIN) : Déploiement Dokploy et connexion Google**
+
+  - **Dépendances :** Tâches 2 et 3 `[x]`.
+  - **Sections `ARCHITECTURE.md` à lire :** §5.3.
+  - **Périmètre de fichiers :** aucun (réglages dans Dokploy et dans la console Google Cloud).
+  - **Instructions :**
+    1. Suivre les 5 étapes de §5.3.
+    2. Sur le site en ligne : se connecter avec Google, créer un QCM dans l'éditeur, le publier, le retrouver dans la bibliothèque, le noter, le commenter, puis le supprimer.
+    3. Dans le tableau de bord PocketBase (`/_/`) : vérifier qu'un administrateur peut passer un QCM en `hidden` et qu'il disparaît de la bibliothèque.
+  - **Commandes de validation obligatoires :**
+    ```bash
+    curl -fsS https://<domaine pocketbase>/api/health
+    curl -fsS -o /dev/null -w "%{http_code}\n" https://<domaine web>/bibliotheque
+    ```
+    Attendu : `"code":200` puis `200`.

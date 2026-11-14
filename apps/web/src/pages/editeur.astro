@@ -1,0 +1,9 @@
+---
+import QcmEditor from '../components/QcmEditor.vue'
+import Base from '../layouts/Base.astro'
+---
+
+<Base title="Créer un QCM" description="Éditeur de QCM sans code : questions, images, export .qcm.">
+  <h1 class="mb-6 text-4xl font-extrabold">Créer un QCM</h1>
+  <QcmEditor client:only="vue" />
+</Base>

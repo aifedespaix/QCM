@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro'
+
+const releasesUrl = import.meta.env.PUBLIC_RELEASES_URL || 'https://github.com/aifedespaix/qcm/releases/latest'
+const promises = [
+  { title: 'Calme', text: 'Pas de publicité, pas de chronomètre, pas de score. Une question à la fois.' },
+  { title: 'Hors-ligne', text: 'Le lecteur Windows fonctionne sans Internet. Un double-clic sur un fichier .qcm suffit.' },
+  { title: 'Prévisible', text: 'Chaque QCM annonce son titre, sa matière, son chapitre et son nombre de questions avant de commencer.' },
+  { title: 'Sans culpabilité', text: 'Une erreur affiche une explication calme. On peut réessayer ou voir la réponse.' },
+]
+---
+
+<Base title="Réviser au calme">
+  <section class="qcm-card flex flex-col gap-6 p-7 sm:p-10">
+    <h1 class="max-w-3xl text-4xl leading-tight font-extrabold sm:text-5xl">Réviser au calme, une question à la fois.</h1>
+    <p class="max-w-2xl text-xl text-ink-soft">
+      QCM est un lecteur de questionnaires pensé pour les élèves qui ont besoin d'un cadre clair : grands boutons, couleurs douces, aucune distraction.
+    </p>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <a href={releasesUrl} class="qcm-block qcm-block-primary text-xl no-underline" rel="noopener">Télécharger pour Windows</a>
+      <a href="/bibliotheque" class="qcm-block qcm-block-quiet text-xl no-underline">Parcourir la bibliothèque</a>
+    </div>
+    <p class="text-base text-ink-soft">Windows 10 et 11 · Gratuit · Installateur .exe ou .msi</p>
+  </section>
+
+  <section class="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2" aria-label="Les engagements de QCM">
+    {
+      promises.map((promise) => (
+        <article class="qcm-card p-6">
+          <h2 class="text-2xl font-extrabold">{promise.title}</h2>
+          <p class="mt-2 text-lg text-ink-soft">{promise.text}</p>
+        </article>
+      ))
+    }
+  </section>
+
+  <section class="qcm-card mt-10 flex flex-col gap-4 p-7">
+    <h2 class="text-2xl font-extrabold">Créer ses propres QCM</h2>
+    <p class="text-lg text-ink-soft">L'éditeur en ligne fonctionne sans compte. Tu écris tes questions, tu ajoutes des images, puis tu enregistres le fichier .qcm.</p>
+    <a href="/editeur" class="qcm-block qcm-block-primary no-underline sm:w-fit">Ouvrir l'éditeur</a>
+  </section>
+</Base>

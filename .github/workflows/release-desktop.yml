@@ -1,0 +1,43 @@
+name: release-desktop
+
+# Pousser un tag `v0.1.0` construit les installateurs Windows (.exe NSIS et .msi)
+# et `latest.json` (manifeste de mise à jour), puis les attache à un brouillon de Release GitHub.
+# Les applications installées ne voient la nouvelle version qu'une fois le brouillon publié.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Clé privée de signature des mises à jour (voir ARCHITECTURE.md §4.5).
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          tauriScript: bun run tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: QCM ${{ github.ref_name }}
+          releaseDraft: true
+          includeUpdaterJson: true
+          updaterJsonPreferNsis: true
+          prerelease: false

@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@qcm/ui/theme.css";
+@source "../../../packages/ui/src";
+
+/* Application de bureau : pas de sélection de texte accidentelle ni de défilement élastique. */
+html,
+body {
+  overscroll-behavior: none;
+  user-select: none;
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+target/
+apps/desktop/src-tauri/gen/
+backend/pb_data/
+*.qcm
+!examples/**/*.qcm
+.env
+.DS_Store

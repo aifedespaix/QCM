@@ -1,0 +1,37 @@
+# Déploiement Dokploy (type « Compose »). Les domaines et le HTTPS se règlent dans
+# Dokploy > Compose > Domains : `pocketbase` sur le port 8090, `web` sur le port 80.
+services:
+  pocketbase:
+    build:
+      context: ./backend
+      args:
+        PB_VERSION: "0.42.2"
+    restart: unless-stopped
+    environment:
+      PB_SUPERUSER_EMAIL: ${PB_SUPERUSER_EMAIL}
+      PB_SUPERUSER_PASSWORD: ${PB_SUPERUSER_PASSWORD}
+      PB_ENCRYPTION_KEY: ${PB_ENCRYPTION_KEY}
+      PB_ALLOWED_ORIGINS: ${PB_ALLOWED_ORIGINS:-*}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      - pb_data:/pb/pb_data
+    expose:
+      - "8090"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        PUBLIC_PB_URL: ${PUBLIC_PB_URL}
+        PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
+        PUBLIC_RELEASES_URL: ${PUBLIC_RELEASES_URL}
+    restart: unless-stopped
+    depends_on:
+      - pocketbase
+    expose:
+      - "80"
+
+volumes:
+  pb_data:

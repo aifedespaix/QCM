@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@import "@qcm/ui/theme.css";
+@source "../../../../packages/ui/src";
+
+@layer components {
+  /* Champ de formulaire de l'éditeur : mêmes codes visuels que les blocs QCM. */
+  .qcm-field {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-xl);
+    font: inherit;
+    font-weight: 600;
+  }
+
+  .qcm-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--qcm-ink-soft);
+  }
+}
