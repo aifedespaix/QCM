@@ -1,31 +1,79 @@
 name: release-desktop
 
-# Pousser un tag `v0.1.0` construit les installateurs Windows (.exe NSIS et .msi)
-# et `latest.json` (manifeste de mise à jour), puis les attache à un brouillon de Release GitHub.
-# Les applications installées ne voient la nouvelle version qu'une fois le brouillon publié.
+# Chaque push sur `main` construit les installateurs Windows (.exe NSIS et .msi) et
+# `latest.json` (manifeste de mise à jour), puis publie une Release GitHub.
+# Le numéro de version est calculé automatiquement : patch +1 sur le dernier tag `vX.Y.Z`
+# (premier build : v0.1.0). Pour un saut mineur/majeur, poser soi-même un tag `v0.2.0` / `v1.0.0`
+# sur main : le build suivant repartira de celui-ci.
+# La version est injectée au moment du build uniquement : aucun commit retour, pas de boucle.
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - ".serena/**"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+# Une seule release à la fois : évite deux builds qui calculent le même numéro.
+concurrency:
+  group: release-desktop
+  cancel-in-progress: false
+
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # nécessaire pour lire les tags existants
+
+      - name: Calculer la version
+        id: version
+        shell: bash
+        run: |
+          git fetch --tags --force
+          last=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          if [ -z "$last" ]; then
+            next="0.1.0"
+          else
+            IFS=. read -r major minor patch <<< "${last#v}"
+            next="$major.$minor.$((patch + 1))"
+          fi
+          echo "Dernier tag : ${last:-aucun} -> nouvelle version : $next"
+          echo "version=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Injecter la version dans la config Tauri
+        shell: bash
+        run: |
+          sed -i -E 's/^  "version": "[^"]+"/  "version": "${{ steps.version.outputs.version }}"/' apps/desktop/src-tauri/tauri.conf.json
+          grep -n '"version"' apps/desktop/src-tauri/tauri.conf.json
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
+
+      # Cache des paquets bun (téléchargés), clé = lockfile.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
       - uses: dtolnay/rust-toolchain@stable
+
+      # Cache de ~/.cargo et de target/ : c'est lui qui évite de recompiler Tauri à chaque push.
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/desktop/src-tauri
+
       - run: bun install --frozen-lockfile
       - run: bun test
       - run: bun run typecheck
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,9 +83,10 @@ jobs:
         with:
           projectPath: apps/desktop
           tauriScript: bun run tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: QCM ${{ github.ref_name }}
-          releaseDraft: true
+          tagName: v${{ steps.version.outputs.version }}
+          releaseName: QCM v${{ steps.version.outputs.version }}
+          releaseBody: "Build automatique du commit ${{ github.sha }}."
+          releaseDraft: false
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
           prerelease: false
