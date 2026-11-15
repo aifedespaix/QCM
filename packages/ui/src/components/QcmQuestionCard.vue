@@ -23,7 +23,7 @@ defineProps<{
       </div>
     </header>
 
-    <h2 id="qcm-question-prompt" class="text-2xl leading-snug font-extrabold text-ink">{{ prompt }}</h2>
+    <h2 id="qcm-question-prompt" class="qcm-enter text-2xl leading-snug font-extrabold text-ink">{{ prompt }}</h2>
 
     <img
       v-if="imageUrl"

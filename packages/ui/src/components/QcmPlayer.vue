@@ -3,9 +3,9 @@ import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { summarizeQcm, type QcmData } from '@qcm/core'
 import { useQcmPlayer } from '../composables/useQcmPlayer.ts'
 import { useQcmSound } from '../composables/useQcmSound.ts'
+import QcmAnswerDock from './QcmAnswerDock.vue'
 import QcmChoiceGrid from './QcmChoiceGrid.vue'
 import QcmCompletionScreen from './QcmCompletionScreen.vue'
-import QcmFeedbackBanner from './QcmFeedbackBanner.vue'
 import QcmIntroCard from './QcmIntroCard.vue'
 import QcmQuestionCard from './QcmQuestionCard.vue'
 
@@ -37,15 +37,25 @@ const imageUrl = computed(() => {
   return path ? props.resolveMedia?.(path) : undefined
 })
 const resolved = computed(() => phase.value === 'correct' || phase.value === 'revealed')
-const feedbackText = computed(() => (phase.value === 'retry' ? question.value?.hint : question.value?.explanation))
+const LETTERS = ['A', 'B', 'C', 'D'] as const
+
+// Le bouton principal ne bouge pas entre « Valider » et « Continuer » : un double-clic
+// involontaire ne doit pas faire sauter l'explication. Court délai après chaque changement d'état.
+let lockedUntil = 0
+function guarded(action: () => void): void {
+  if (Date.now() < lockedUntil) return
+  action()
+}
 
 // Un nouveau fichier remet le lecteur sur l'écran d'accueil.
 watch(() => props.qcm, () => player.restart())
 watch(phase, (value) => {
+  lockedUntil = Date.now() + 450
   if (value === 'done') emit('complete')
 })
 
 function onKeydown(event: KeyboardEvent): void {
+  if ((event.key === 'Enter' || event.key === ' ') && Date.now() < lockedUntil) return
   if (player.handleKey(event)) event.preventDefault()
 }
 
@@ -90,26 +100,18 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         @select="player.select($event)"
       />
 
-      <QcmFeedbackBanner
-        v-if="phase !== 'answering'"
-        :kind="phase === 'retry' ? 'retry' : phase === 'correct' ? 'correct' : 'revealed'"
-        :text="feedbackText"
+      <QcmAnswerDock
+        :kind="phase === 'retry' ? 'retry' : phase === 'correct' ? 'correct' : phase === 'revealed' ? 'revealed' : 'answering'"
+        :selected-letter="selectedIndex === null ? null : LETTERS[selectedIndex]"
+        :has-tried="triedIndexes.length > 0"
+        :hint="question.hint"
+        :explanation="question.explanation"
         :is-last="isLast"
-        @continue="player.next()"
-        @retry="player.retry()"
+        :show-keys="keyboard"
+        @validate="guarded(player.validate)"
+        @continue="guarded(player.next)"
         @reveal="player.reveal()"
       />
-      <button
-        v-else
-        type="button"
-        class="qcm-block qcm-block-primary w-full"
-        :class="selectedIndex === null ? 'opacity-55 shadow-none' : ''"
-        :disabled="selectedIndex === null"
-        @click="player.validate()"
-      >
-        Valider
-        <span class="qcm-key" aria-hidden="true">Entrée</span>
-      </button>
     </QcmQuestionCard>
   </div>
 </template>

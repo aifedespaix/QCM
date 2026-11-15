@@ -100,7 +100,7 @@ qcm/
 │       ├── src/index.ts
 │       ├── src/styles/theme.css
 │       ├── src/composables/{useQcmSound,useQcmTheme,useQcmPlayer}.ts
-│       ├── src/components/Qcm{IntroCard,QuestionCard,ChoiceGrid,FeedbackBanner,CompletionScreen,Player,SoundToggle,ThemeToggle}.vue
+│       ├── src/components/Qcm{IntroCard,QuestionCard,ChoiceGrid,AnswerDock,Logo,CompletionScreen,Player,SoundToggle,ThemeToggle}.vue
 │       └── test/player.test.ts
 ├── apps/
 │   ├── desktop/                     @qcm/desktop (Tauri 2)
@@ -262,11 +262,13 @@ Chaque application importe le thème ainsi dans son CSS d'entrée (le chemin `@s
 | `QcmIntroCard` | `meta: QcmMeta`, `questionCount: number`, `hasImages: boolean` | `start` | — |
 | `QcmQuestionCard` | `index: number` (base 0), `total: number`, `prompt: string`, `imageUrl?: string` | — | défaut : grille + feedback |
 | `QcmChoiceGrid` | `choices: readonly { text: string }[]`, `selectedIndex: number \| null`, `triedIndexes: readonly number[]`, `correctIndex: number \| null`, `locked?: boolean` | `select(index: number)` | — |
-| `QcmFeedbackBanner` | `kind: 'correct' \| 'retry' \| 'revealed'`, `text?: string`, `isLast?: boolean` | `continue`, `retry`, `reveal` | — |
+| `QcmAnswerDock` | `kind: 'answering' \| 'retry' \| 'correct' \| 'revealed'`, `selectedLetter?: string \| null`, `hasTried?: boolean`, `hint?: string`, `explanation?: string`, `isLast?: boolean`, `showKeys?: boolean` | `validate`, `continue`, `reveal` | — |
 | `QcmCompletionScreen` | `title: string`, `questionCount: number`, `closable?: boolean` | `restart`, `close` | — |
 | `QcmPlayer` | `qcm: QcmData`, `resolveMedia?: (path: string) => string \| undefined`, `closable?: boolean` (défaut `false`), `keyboard?: boolean` (défaut `true`) | `close`, `complete` | — |
 | `QcmSoundToggle` | — | — | — |
 | `QcmThemeToggle` | — | — | — |
+
+`QcmAnswerDock` : barre d'action à position fixe (état à gauche, bouton principal à droite) ; l'indice ou l'explication se déplie sous la barre, le bouton ne bouge jamais.
 
 `QcmChoiceGrid` : grille 1 colonne sous 640 px, 2 colonnes (2×2) au-delà. `correctIndex` non nul = bonne réponse mise en avant et grille figée.
 
@@ -284,7 +286,7 @@ Sons (`useQcmSound`) : `playSelect` (choix d'une réponse), `playCorrect` (bonne
 
 ### 3.3 Fichiers
 
-`packages/ui/package.json`, `packages/ui/tsconfig.json`, `packages/ui/src/styles/theme.css`, `packages/ui/src/composables/useQcmSound.ts`, `packages/ui/src/composables/useQcmTheme.ts`, `packages/ui/src/composables/useQcmPlayer.ts`, `packages/ui/src/components/QcmIntroCard.vue`, `packages/ui/src/components/QcmQuestionCard.vue`, `packages/ui/src/components/QcmChoiceGrid.vue`, `packages/ui/src/components/QcmFeedbackBanner.vue`, `packages/ui/src/components/QcmCompletionScreen.vue`, `packages/ui/src/components/QcmPlayer.vue`, `packages/ui/src/components/QcmSoundToggle.vue`, `packages/ui/src/components/QcmThemeToggle.vue`, `packages/ui/src/index.ts`, `packages/ui/test/player.test.ts`
+`packages/ui/package.json`, `packages/ui/tsconfig.json`, `packages/ui/src/styles/theme.css`, `packages/ui/src/composables/useQcmSound.ts`, `packages/ui/src/composables/useQcmTheme.ts`, `packages/ui/src/composables/useQcmPlayer.ts`, `packages/ui/src/components/QcmIntroCard.vue`, `packages/ui/src/components/QcmQuestionCard.vue`, `packages/ui/src/components/QcmChoiceGrid.vue`, `packages/ui/src/components/QcmAnswerDock.vue`, `packages/ui/src/components/QcmCompletionScreen.vue`, `packages/ui/src/components/QcmPlayer.vue`, `packages/ui/src/components/QcmSoundToggle.vue`, `packages/ui/src/components/QcmThemeToggle.vue`, `packages/ui/src/index.ts`, `packages/ui/test/player.test.ts`
 
 ---
 

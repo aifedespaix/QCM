@@ -236,6 +236,41 @@
   }
 }
 
+/* Dépliage en hauteur (indice, explication) : la grille passe de 0 à sa hauteur naturelle. */
+.qcm-unfold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms ease-out;
+}
+
+.qcm-unfold-open {
+  grid-template-rows: 1fr;
+}
+
+/* Petite apparition d'une marque d'état (coche, flèche). */
+.qcm-pop {
+  animation: qcm-pop 240ms ease-out;
+}
+
+@keyframes qcm-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+/* Arrivée d'une nouvelle question. */
+.qcm-enter {
+  animation: qcm-enter 220ms ease-out;
+}
+
+@keyframes qcm-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

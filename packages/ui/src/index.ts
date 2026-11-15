@@ -1,7 +1,7 @@
 export { default as QcmIntroCard } from './components/QcmIntroCard.vue'
 export { default as QcmQuestionCard } from './components/QcmQuestionCard.vue'
 export { default as QcmChoiceGrid } from './components/QcmChoiceGrid.vue'
-export { default as QcmFeedbackBanner } from './components/QcmFeedbackBanner.vue'
+export { default as QcmAnswerDock } from './components/QcmAnswerDock.vue'
 export { default as QcmCompletionScreen } from './components/QcmCompletionScreen.vue'
 export { default as QcmPlayer } from './components/QcmPlayer.vue'
 export { default as QcmSoundToggle } from './components/QcmSoundToggle.vue'
