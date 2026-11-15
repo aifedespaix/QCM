@@ -240,6 +240,146 @@
   }
 }
 
+/* Fiche d'un QCM : étoiles, pastilles de membre, actions en icône, zone de commentaire. */
+@layer components {
+  /* Étoile vide : simple contour. Pleine : forme pleine, ambre foncé en clair et ambre pâle en sombre. */
+  .site-star {
+    fill: none;
+    stroke: var(--qcm-ink-soft);
+  }
+
+  .site-star-on {
+    fill: var(--qcm-retry-ink);
+    stroke: var(--qcm-retry-ink);
+  }
+
+  .site-star-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    transition: transform 120ms ease-out;
+  }
+
+  .site-star-button:hover:not(:disabled) {
+    transform: scale(1.12);
+  }
+
+  .site-star-button:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  .site-star-button:disabled {
+    cursor: default;
+    opacity: 0.55;
+  }
+
+  /* Pastille ronde avec l'initiale d'un membre. */
+  .site-avatar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--qcm-line);
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  /* Action en icône seule (modifier, supprimer un commentaire) : discrète au repos, colorée au survol. */
+  .site-icon-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-xl);
+    color: var(--qcm-ink-soft);
+    cursor: pointer;
+    transition: background-color 120ms ease-out, color 120ms ease-out;
+  }
+
+  .site-icon-action:hover {
+    background-color: var(--qcm-primary);
+    color: var(--qcm-ink);
+  }
+
+  .site-icon-action-warn:hover {
+    background-color: var(--qcm-retry);
+    color: var(--qcm-retry-ink);
+  }
+
+  /* Zone d'écriture d'un commentaire : le champ et sa barre d'envoi dans un seul cadre. */
+  .site-composer {
+    overflow: hidden;
+    background-color: var(--qcm-surface);
+    border: 2px solid var(--qcm-line-soft);
+    border-radius: var(--radius-2xl);
+    transition: border-color 120ms ease-out, box-shadow 120ms ease-out;
+  }
+
+  .site-composer:focus-within {
+    border-color: var(--qcm-line);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--qcm-focus) 45%, transparent);
+  }
+
+  .site-composer textarea {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    background-color: transparent;
+    color: var(--qcm-ink);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.45;
+    resize: none;
+    outline: none;
+  }
+
+  .site-composer textarea::placeholder {
+    color: var(--qcm-ink-soft);
+    font-weight: 500;
+    opacity: 0.75;
+  }
+
+  /* Message bref en bas d'écran, au-dessus de la barre du bas. */
+  .site-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--site-tabbar) + 1rem);
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    max-width: calc(100vw - 2rem);
+    padding: 0.7rem 1.1rem;
+    background-color: var(--qcm-correct);
+    color: var(--qcm-correct-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-block-sm);
+    font-weight: 700;
+    transform: translateX(-50%);
+  }
+
+  .site-toast-enter-active,
+  .site-toast-leave-active {
+    transition: opacity 140ms ease-out, transform 140ms ease-out;
+  }
+
+  .site-toast-enter-from,
+  .site-toast-leave-to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+
 /* Fond décoratif de la page d'accueil : grandes taches pastel, immobiles. */
 .home-glow {
   background:

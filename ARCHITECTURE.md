@@ -132,7 +132,7 @@ qcm/
 │           ├── styles/global.css
 │           ├── layouts/Base.astro
 │           ├── lib/{pb,editorDraft}.ts
-│           ├── components/{HeaderControls,LibraryBrowser,QcmDetail,QcmEditor}.vue
+│           ├── components/{HeaderControls,LibraryBrowser,QcmDetail,QcmReviews,ConfirmDialog,UiIcon,QcmEditor}.vue
 │           └── pages/{index,bibliotheque,qcm,editeur,admin}.astro
 └── backend/
     ├── Dockerfile
@@ -467,7 +467,7 @@ Sans ligne de commande : l'éditeur du site (étape « Départ », choix « Coll
 |---|---|---|
 | `/` | `pages/index.astro` | Vitrine, bouton « Télécharger pour Windows » (vers `PUBLIC_RELEASES_URL`), étapes, QCM de démonstration jouable (`DemoPlayer.vue`, `client:visible`), engagements |
 | `/bibliotheque` | `pages/bibliotheque.astro` + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct. Connecté : bascule « Mes QCM » (`?mes=1`), avec le statut de chaque QCM et un bouton « Modifier » |
-| `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`, résultat enregistré dans le suivi local ; `&jouer=1` démarre tout de suite), « Modifier mon QCM » ou « Modifier une copie », note 1 à 5, commentaires |
+| `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`, résultat enregistré dans le suivi local ; `&jouer=1` démarre tout de suite), « Modifier une copie », lien à copier ; cadre « Gérer mon QCM » / « Modération » (modifier, valider, masquer, supprimer avec confirmation) ; section « Avis » (`QcmReviews.vue`) : moyenne, note 1 à 5 modifiable ou retirable, commentaires (publier, modifier, supprimer les siens) |
 | `/statistiques` | `pages/statistiques.astro` + `StatsPage.vue` | Suivi des révisions pour les parents (`QcmStatsDashboard`), à partir des QCM faits sur le site avec cet appareil |
 | `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur guidé en 4 étapes (Départ, Informations, Questions, Finaliser) avec sommaire fixé à l'écran (à droite, ou en bas sur mobile). Départ : page vide, texte collé (sortie d'une IA, prompt fourni) ou fichier `.qcm`. Une question à la fois, images converties en WebP, aperçu, export local, copie au format texte, publication. `/editeur?id=<id>` charge un QCM de la bibliothèque : celui du membre connecté est **mis à jour** (puis revalidé), celui d'un autre membre est ouvert comme **copie**, publiée au nom de celui qui la modifie (l'original ne change pas). Un clic dans le sommaire ne fait pas défiler la page |
 | `/admin` | `pages/admin.astro` + `AdminModeration.vue` | Modération réservée aux administrateurs (voir §5.1) ; lien « Modération » et nombre de QCM en attente dans le bandeau |
@@ -490,4 +490,4 @@ Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, 
 
 ### 7.5 Îlots Vue
 
-Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmEditor.vue`, `apps/web/src/components/AdminModeration.vue`, `apps/web/src/components/DemoPlayer.vue`, `apps/web/src/components/StatsPage.vue`
+Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmReviews.vue`, `apps/web/src/components/ConfirmDialog.vue`, `apps/web/src/components/UiIcon.vue`, `apps/web/src/components/QcmEditor.vue`, `apps/web/src/components/AdminModeration.vue`, `apps/web/src/components/DemoPlayer.vue`, `apps/web/src/components/StatsPage.vue`

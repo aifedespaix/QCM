@@ -54,6 +54,7 @@ export interface CommentRecord extends RecordModel {
   text: string
   hidden: boolean
   created: string
+  updated: string
   expand?: { user?: UserRecord }
 }
 
@@ -254,8 +255,16 @@ export async function rateQcm(qcmId: string, value: number): Promise<RatingRecor
   return pb.collection('ratings').create<RatingRecord>({ qcm: qcmId, user: userId, value })
 }
 
-export function listComments(qcmId: string) {
-  return pb.collection('comments').getList<CommentRecord>(1, 50, {
+/** Retire la note de l'utilisateur connecté (la moyenne du QCM est recalculée par le serveur). */
+export async function removeRating(qcmId: string): Promise<void> {
+  const existing = await getMyRating(qcmId)
+  if (existing) await pb.collection('ratings').delete(existing.id)
+}
+
+export const COMMENTS_PAGE_SIZE = 20
+
+export function listComments(qcmId: string, page = 1) {
+  return pb.collection('comments').getList<CommentRecord>(page, COMMENTS_PAGE_SIZE, {
     filter: pb.filter('qcm = {:qcm}', { qcm: qcmId }),
     sort: '-created',
     expand: 'user',
@@ -266,6 +275,11 @@ export function addComment(qcmId: string, text: string) {
   const userId = pb.authStore.record?.id
   if (!userId) throw new Error('Connexion requise pour commenter.')
   return pb.collection('comments').create<CommentRecord>({ qcm: qcmId, user: userId, text: text.trim() }, { expand: 'user' })
+}
+
+/** Remplace le texte d'un commentaire de l'utilisateur connecté. */
+export function updateComment(id: string, text: string) {
+  return pb.collection('comments').update<CommentRecord>(id, { text: text.trim() }, { expand: 'user' })
 }
 
 export function deleteComment(id: string) {
