@@ -1,0 +1,14 @@
+---
+import StatsPage from '../components/StatsPage.vue'
+import Base from '../layouts/Base.astro'
+---
+
+<Base title="Suivi des révisions" description="Pour les parents : les QCM acquis et ceux à retravailler, d'un coup d'œil.">
+  <header class="mb-6">
+    <h1 class="text-3xl font-extrabold sm:text-4xl">Suivi des révisions</h1>
+    <p class="mt-1 max-w-3xl text-lg text-ink-soft">
+      Un espace pour les parents : ce qui est acquis, ce qui mérite d'être revu. Pendant un QCM, l'élève ne voit jamais de score.
+    </p>
+  </header>
+  <StatsPage client:only="vue" />
+</Base>

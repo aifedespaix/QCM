@@ -34,7 +34,7 @@ import {
   setQuestionImage,
   type DraftQuestion,
 } from '../lib/editorDraft.ts'
-import { publishQcm, saveQcmLocally, useAuth } from '../lib/pb.ts'
+import { fetchQcmArchive, getQcm, publishQcm, saveQcmLocally, updateQcm, useAuth } from '../lib/pb.ts'
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const
 const BADGES = ['bg-badge-a', 'bg-badge-b', 'bg-badge-c', 'bg-badge-d'] as const
@@ -51,6 +51,14 @@ type StartMode = 'blank' | 'text' | 'file'
 const { user, loginWithGoogle } = useAuth()
 const draft = createDraft()
 const resolveMedia = draftMediaResolver(draft)
+
+/**
+ * QCM de la bibliothèque ouvert avec `/editeur?id=…`. S'il appartient au membre connecté,
+ * « Publier » le met à jour ; sinon l'éditeur travaille sur une copie, publiée à son nom.
+ */
+const source = ref<{ id: string; owner: string; title: string } | null>(null)
+const sourceState = ref<'none' | 'loading' | 'error'>('none')
+const ownsSource = computed(() => !!source.value && !!user.value && source.value.owner === user.value.id)
 
 const step = ref<StepId>('start')
 const startMode = ref<StartMode>('blank')
@@ -100,20 +108,21 @@ function stepDone(id: StepId): boolean {
   return saved.value
 }
 
-function goStep(id: StepId): void {
+/** `keepScroll` : appel depuis le sommaire, la page reste là où elle est. */
+function goStep(id: StepId, keepScroll = false): void {
   step.value = id
   summaryOpen.value = false
   problems.value = []
   if (id !== 'finish') notice.value = ''
   void nextTick(() => {
     stepHeading.value?.focus({ preventScroll: true })
-    window.scrollTo({ top: 0 })
+    if (!keepScroll) window.scrollTo({ top: 0 })
   })
 }
 
-function goQuestion(index: number): void {
+function goQuestion(index: number, keepScroll = false): void {
   current.value = Math.min(Math.max(0, index), draft.questions.length - 1)
-  goStep('questions')
+  goStep('questions', keepScroll)
 }
 
 function shiftStep(direction: -1 | 1): void {
@@ -123,9 +132,9 @@ function shiftStep(direction: -1 | 1): void {
 
 // ---------------------------------------------------------------- Questions
 
-function appendQuestion(): void {
+function appendQuestion(keepScroll = false): void {
   const index = addQuestion(draft)
-  if (index >= 0) goQuestion(index)
+  if (index >= 0) goQuestion(index, keepScroll)
 }
 
 function duplicateCurrent(): void {
@@ -268,13 +277,18 @@ async function publish(): Promise<void> {
   if (!built) return
   busy.value = true
   try {
-    const record = await publishQcm(built)
+    const updating = ownsSource.value && source.value
+    const record = updating ? await updateQcm(updating.id, built) : await publishQcm(built)
+    // Une nouvelle publication depuis cette page met à jour ce QCM au lieu d'en créer un autre.
+    source.value = { id: record.id, owner: record.owner, title: record.title }
     publishedId.value = record.id
     notice.value =
       record.status === 'published'
-        ? 'Ton QCM est publié dans la bibliothèque.'
-        : 'Ton QCM est envoyé. Il apparaîtra dans la bibliothèque après validation.'
-    saved.value = true
+        ? updating ? 'Ton QCM est mis à jour dans la bibliothèque.' : 'Ton QCM est publié dans la bibliothèque.'
+        : updating
+          ? 'Ta modification est envoyée. Le QCM redeviendra visible dans la bibliothèque après validation.'
+          : 'Ton QCM est envoyé. Il apparaîtra dans la bibliothèque après validation.'
+    void nextTick(() => (saved.value = true))
   } catch (error) {
     if (error instanceof QcmFormatError) report(error)
     else problems.value = ['La publication n\'a pas abouti. Vérifie ta connexion, puis réessaie.']
@@ -295,7 +309,29 @@ function onBeforeUnload(event: BeforeUnloadEvent): void {
   if (!saved.value && !isDraftEmpty(draft)) event.preventDefault()
 }
 
-onMounted(() => window.addEventListener('beforeunload', onBeforeUnload))
+/** `/editeur?id=…` : charge le QCM de la bibliothèque dans l'éditeur. */
+async function loadSource(id: string): Promise<void> {
+  sourceState.value = 'loading'
+  try {
+    const record = await getQcm(id)
+    loadArchiveIntoDraft(draft, await fetchQcmArchive(record))
+    source.value = { id: record.id, owner: record.owner, title: record.title }
+    // Copie du QCM d'un autre membre : elle sera signée par celui qui la publie.
+    if (record.owner !== user.value?.id) draft.author = user.value?.name ?? ''
+    sourceState.value = 'none'
+    current.value = 0
+    goStep('meta')
+    void nextTick(() => (saved.value = true))
+  } catch {
+    sourceState.value = 'error'
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', onBeforeUnload)
+  const id = new URLSearchParams(window.location.search).get('id')
+  if (id) void loadSource(id)
+})
 onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
 </script>
 
@@ -303,8 +339,25 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
   <!-- Aperçu en plein écran, exactement comme le verra l'élève. La croix ramène à l'éditeur. -->
   <QcmPlayer v-if="preview" :qcm="preview" :resolve-media="resolveMedia" closable immersive @close="preview = null" />
 
+  <div v-else-if="sourceState === 'loading'" role="status" aria-label="Chargement du QCM" class="qcm-panel flex flex-col gap-4 p-7">
+    <div class="qcm-skeleton h-9 w-2/3" />
+    <div class="qcm-skeleton h-5 w-1/3" />
+    <div class="qcm-skeleton h-40 w-full" />
+  </div>
+
   <div v-else class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
     <div class="flex min-w-0 flex-col gap-5">
+      <p v-if="sourceState === 'error'" role="alert" class="qcm-note qcm-note-retry">
+        Ce QCM n'a pas pu être chargé. Il a peut-être été retiré. Tu peux en créer un nouveau ci-dessous.
+      </p>
+      <p v-else-if="source && ownsSource" role="status" class="qcm-note qcm-note-info">
+        Tu modifies ton QCM « {{ source.title }} ».
+        {{ user?.admin ? 'La mise à jour est publiée tout de suite.' : 'Après la mise à jour, il est relu avant de redevenir visible dans la bibliothèque.' }}
+      </p>
+      <p v-else-if="source" role="status" class="qcm-note qcm-note-info">
+        Tu travailles sur une copie de « {{ source.title }} ». L'original ne change pas : ta version sera publiée à ton nom.
+      </p>
+
       <!-- Fil d'étapes -->
       <nav aria-label="Étapes de création">
         <ol class="grid grid-cols-4 gap-2">
@@ -580,7 +633,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
             <button v-if="current < draft.questions.length - 1" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="current += 1">
               Question suivante →
             </button>
-            <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="draft.questions.length >= LIMITS.maxQuestions" @click="appendQuestion">
+            <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="draft.questions.length >= LIMITS.maxQuestions" @click="appendQuestion()">
               + Ajouter une question
             </button>
           </div>
@@ -634,12 +687,15 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               <button type="button" class="qcm-block qcm-block-primary qcm-block-sm" :disabled="!allReady" @click="exportFile">Enregistrer le fichier</button>
             </div>
             <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
-              <h3 class="text-lg font-extrabold">Publier</h3>
+              <h3 class="text-lg font-extrabold">{{ ownsSource ? 'Mettre à jour' : 'Publier' }}</h3>
               <p class="flex-1 text-sm font-medium text-ink-soft">
-                {{ user ? 'Propose ton QCM à la bibliothèque. Il est relu avant d\'apparaître.' : 'La publication demande une connexion avec Google.' }}
+                <template v-if="!user">La publication demande une connexion avec Google.</template>
+                <template v-else-if="ownsSource">Remplace ton QCM dans la bibliothèque. Il est relu avant de redevenir visible.</template>
+                <template v-else-if="source">Publie ta copie à ton nom. Elle est relue avant d'apparaître.</template>
+                <template v-else>Propose ton QCM à la bibliothèque. Il est relu avant d'apparaître.</template>
               </p>
               <button v-if="user" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="!allReady || busy" @click="publish">
-                {{ busy ? 'Publication…' : 'Publier dans la bibliothèque' }}
+                {{ busy ? 'Envoi…' : ownsSource ? 'Mettre à jour mon QCM' : source ? 'Publier ma copie' : 'Publier dans la bibliothèque' }}
               </button>
               <button v-else type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="login">Se connecter</button>
             </div>
@@ -705,7 +761,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               type="button"
               class="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-sunken"
               :class="step === 'meta' ? 'bg-selected' : ''"
-              @click="goStep('meta')"
+              @click="goStep('meta', true)"
             >
               <span class="flex size-7 flex-none items-center justify-center rounded-full border-2 border-line text-xs font-extrabold" :class="infoIssues.length === 0 ? 'bg-correct text-correct-ink' : 'bg-surface'" aria-hidden="true">
                 {{ infoIssues.length === 0 ? '✓' : 'i' }}
@@ -720,7 +776,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               class="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-sunken"
               :class="step === 'questions' && current === index ? 'bg-selected' : ''"
               :aria-current="step === 'questions' && current === index ? 'true' : undefined"
-              @click="goQuestion(index)"
+              @click="goQuestion(index, true)"
             >
               <span
                 class="flex size-7 flex-none items-center justify-center rounded-full border-2 border-line text-xs font-extrabold"
@@ -738,10 +794,10 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
         </ol>
 
         <div class="flex flex-col gap-2 border-t-[1.5px] border-line-soft p-3">
-          <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm w-full" :disabled="draft.questions.length >= LIMITS.maxQuestions" @click="appendQuestion">
+          <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm w-full" :disabled="draft.questions.length >= LIMITS.maxQuestions" @click="appendQuestion(true)">
             + Ajouter une question
           </button>
-          <button v-if="step !== 'finish'" type="button" class="qcm-text-button justify-center" @click="goStep('finish')">Vérifier et terminer →</button>
+          <button v-if="step !== 'finish'" type="button" class="qcm-text-button justify-center" @click="goStep('finish', true)">Vérifier et terminer →</button>
         </div>
       </div>
     </aside>

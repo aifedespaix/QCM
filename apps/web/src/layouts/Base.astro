@@ -20,6 +20,7 @@ const path = Astro.url.pathname
 const links = [
   { href: '/bibliotheque', label: 'Bibliothèque' },
   { href: '/editeur', label: 'Créer un QCM' },
+  { href: '/statistiques', label: 'Suivi' },
 ]
 const current = (active: boolean) => (active ? 'page' : undefined)
 // Une fiche de QCM fait partie de la bibliothèque.
@@ -33,6 +34,8 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>{title} · QCM</title>
     <script is:inline>
       // Applique le thème enregistré avant le premier affichage (pas de flash).
@@ -90,6 +93,7 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
         <nav aria-label="Liens de pied de page" class="flex flex-col gap-1 text-sm font-bold">
           <a href="/bibliotheque" class="hover:underline">Bibliothèque</a>
           <a href="/editeur" class="hover:underline">Créer un QCM</a>
+          <a href="/statistiques" class="hover:underline">Suivi des révisions</a>
           <a href="/#telecharger" class="hover:underline">Télécharger le lecteur Windows</a>
         </nav>
       </div>

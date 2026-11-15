@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { LEVEL_LABELS, SUBJECT_LABELS, type QcmArchive } from '@qcm/core'
-import { QcmPlayer } from '@qcm/ui'
+import { QcmPlayer, useQcmHistory } from '@qcm/ui'
 import {
   addComment,
   deleteComment,
@@ -20,6 +20,9 @@ import {
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 
 const { user } = useAuth()
+const { recordOpen, recordResult } = useQcmHistory()
+/** Clé du QCM dans le suivi local (posée au lancement du lecteur). */
+let historyKey = ''
 const state = ref<'loading' | 'ready' | 'missing'>('loading')
 const record = shallowRef<QcmRecord | null>(null)
 const archive = shallowRef<QcmArchive | null>(null)
@@ -56,6 +59,7 @@ async function play(): Promise<void> {
   playError.value = ''
   try {
     archive.value ??= await fetchQcmArchive(record.value)
+    historyKey = recordOpen(archive.value.data, { recordId: record.value.id })
     playing.value = true
   } catch {
     playError.value = 'Ce QCM ne peut pas être lu en ligne pour le moment. Tu peux le télécharger.'
@@ -103,6 +107,8 @@ onMounted(async () => {
     await refresh(id)
     document.title = `${record.value?.title ?? 'QCM'} · QCM`
     state.value = 'ready'
+    // `/qcm?id=…&jouer=1` (lien « Relancer » du suivi) démarre le lecteur tout de suite.
+    if (new URLSearchParams(window.location.search).has('jouer')) void play()
   } catch {
     state.value = 'missing'
   }
@@ -127,7 +133,7 @@ onBeforeUnmount(() => {
   </section>
 
   <!-- Plein écran : le site s'efface, il ne reste que la question. -->
-  <QcmPlayer v-else-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive @close="playing = false" />
+  <QcmPlayer v-else-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive @close="playing = false" @result="recordResult(historyKey, $event)" />
 
   <div v-else class="mx-auto flex max-w-4xl flex-col gap-6">
     <a href="/bibliotheque" class="qcm-text-button self-start">← Bibliothèque</a>
@@ -157,6 +163,10 @@ onBeforeUnmount(() => {
         <a :href="qcmDownloadUrl(record)" class="qcm-block qcm-block-quiet text-xl no-underline">Télécharger le fichier .qcm</a>
       </div>
       <p v-if="playError" role="alert" class="qcm-note qcm-note-retry">{{ playError }}</p>
+      <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-base text-ink-soft">
+        <a :href="`/editeur?id=${record.id}`" class="qcm-text-button -ml-2 underline">{{ isOwner ? 'Modifier mon QCM' : 'Modifier une copie' }}</a>
+        <span>{{ isOwner ? 'Après une modification, il est relu avant de redevenir public.' : 'L\'original ne change pas : ta version est publiée à ton nom.' }}</span>
+      </p>
 
       <div v-if="isOwner || isAdmin" class="flex flex-wrap items-center gap-2 border-t-[1.5px] border-line-soft pt-4">
         <template v-if="isAdmin">

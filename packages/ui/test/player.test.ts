@@ -72,6 +72,10 @@ describe('useQcmPlayer', () => {
     expect(player.isLast.value).toBe(true)
     player.handleKey(key('Enter'))
     expect(player.phase.value).toBe('done')
+    expect(player.results.value).toEqual([
+      { id: 'q1', wrong: 1, revealed: false },
+      { id: 'q2', wrong: 0, revealed: false },
+    ])
     expect(played).toEqual(['select', 'soft', 'select', 'correct', 'select', 'correct', 'complete'])
   })
 
@@ -87,6 +91,7 @@ describe('useQcmPlayer', () => {
     expect(player.correctIndex.value).toBe(1)
     player.next()
     expect(player.index.value).toBe(1)
+    expect(player.results.value).toEqual([{ id: 'q1', wrong: 1, revealed: true }])
     player.restart()
     expect(player.phase.value).toBe('intro')
     expect(player.index.value).toBe(0)

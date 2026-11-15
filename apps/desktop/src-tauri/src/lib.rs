@@ -4,13 +4,21 @@
 //! au frontend (qui le valide avec `@qcm/core`, seule source de vérité du schéma) et servir les
 //! images `media/*.webp` par le protocole `qcm://`. La mise à jour de l'application est pilotée
 //! par le frontend (`src/lib/updater.ts`) à travers `tauri-plugin-updater`.
+//!
+//! Deux ajouts autour de ce noyau :
+//! - une copie de chaque QCM ouvert est rangée dans le dossier de données de l'application
+//!   (`qcms/<empreinte>.qcm`) : la liste « Derniers QCM » continue de fonctionner même si le
+//!   fichier d'origine est déplacé, renommé ou supprimé ;
+//! - la bibliothèque en ligne (PocketBase) est interrogée d'ici, jamais depuis la webview :
+//!   pas de CORS, pas d'ouverture de la CSP, et une seule adresse possible (`QCM_PB_URL`).
 
 use std::{
     collections::HashMap,
-    fs::File,
+    fs::{self, File},
     io::Read,
     path::{Path, PathBuf},
     sync::Mutex,
+    time::Duration,
 };
 
 use percent_encoding::percent_decode_str;
@@ -27,6 +35,15 @@ const MAX_DATA_BYTES: u64 = 1024 * 1024;
 const MAX_MEDIA_BYTES: u64 = 3 * 1024 * 1024;
 const MAX_TOTAL_BYTES: u64 = 60 * 1024 * 1024;
 const DATA_FILE: &str = "data.yaml";
+
+/// Sous-dossier du dossier de données de l'application qui contient les copies des QCM ouverts.
+const STORE_DIR: &str = "qcms";
+/// Préfixe d'un téléchargement en attente de validation par le frontend.
+const DOWNLOAD_PREFIX: &str = "download-";
+/// Seules routes de la bibliothèque en ligne que le frontend peut lire.
+const LIBRARY_RECORDS_PATH: &str = "/api/collections/qcms/records";
+const LIBRARY_TIMEOUT: Duration = Duration::from_secs(20);
+const MAX_JSON_BYTES: u64 = 2 * 1024 * 1024;
 
 /// Codes d'erreur partagés avec `QcmErrorCode` de `@qcm/core`.
 #[derive(Debug, PartialEq, Eq)]
@@ -195,6 +212,198 @@ fn load_qcm(path: String, state: State<'_, AppState>) -> Result<LoadedQcm, Strin
     })
 }
 
+// ---------------------------------------------------------------- QCM conservés
+
+/// Empreinte produite par `qcmFingerprint` de `@qcm/core` : sert de nom de fichier, donc contrôlée.
+pub fn is_store_key(key: &str) -> bool {
+    (8..=32).contains(&key.len()) && key.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+}
+
+/// Identifiant d'enregistrement PocketBase.
+pub fn is_record_id(id: &str) -> bool {
+    (1..=32).contains(&id.len()) && id.chars().all(|c| c.is_ascii_alphanumeric())
+}
+
+/// Nom de fichier PocketBase : un seul segment, sans séparateur ni `..`.
+pub fn is_remote_file_name(name: &str) -> bool {
+    (1..=200).contains(&name.len())
+        && !name.starts_with('.')
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')
+}
+
+fn store_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|_| "E_OPEN".to_string())?
+        .join(STORE_DIR);
+    fs::create_dir_all(&dir).map_err(|_| "E_OPEN".to_string())?;
+    Ok(dir)
+}
+
+fn stored_path(dir: &Path, key: &str) -> Result<PathBuf, String> {
+    if !is_store_key(key) {
+        return Err("E_OPEN".into());
+    }
+    Ok(dir.join(format!("{key}.qcm")))
+}
+
+/// Range `source` dans `dir` sous le nom `<key>.qcm`. Un téléchargement en attente est déplacé,
+/// tout autre fichier est copié (l'original de l'utilisateur n'est jamais touché).
+pub fn store_file(dir: &Path, source: &Path, key: &str) -> Result<(), String> {
+    let target = stored_path(dir, key)?;
+    if source == target {
+        return Ok(());
+    }
+    let is_download = source.parent() == Some(dir)
+        && source
+            .file_name()
+            .is_some_and(|name| name.to_string_lossy().starts_with(DOWNLOAD_PREFIX));
+    if is_download {
+        if target.exists() {
+            let _ = fs::remove_file(&target);
+        }
+        return fs::rename(source, &target).map_err(|_| "E_OPEN".to_string());
+    }
+    fs::copy(source, &target).map(|_| ()).map_err(|_| "E_OPEN".to_string())
+}
+
+/// Empreintes des QCM présents dans `dir`.
+pub fn stored_keys(dir: &Path) -> Vec<String> {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut keys: Vec<String> = entries
+        .flatten()
+        .filter_map(|entry| {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let key = name.strip_suffix(".qcm")?;
+            is_store_key(key).then(|| key.to_string())
+        })
+        .collect();
+    keys.sort();
+    keys
+}
+
+/// Garde une copie du QCM qui vient d'être ouvert, sous son empreinte.
+#[tauri::command(async)]
+fn store_qcm(app: AppHandle, path: String, key: String) -> Result<(), String> {
+    store_file(&store_dir(&app)?, Path::new(&path), &key)
+}
+
+/// Rouvre un QCM conservé.
+#[tauri::command(async)]
+fn load_stored_qcm(app: AppHandle, key: String, state: State<'_, AppState>) -> Result<LoadedQcm, String> {
+    let path = stored_path(&store_dir(&app)?, &key)?;
+    load_qcm(path.to_string_lossy().into_owned(), state)
+}
+
+/// Empreintes des QCM conservés sur cet ordinateur.
+#[tauri::command(async)]
+fn list_stored_qcms(app: AppHandle) -> Result<Vec<String>, String> {
+    Ok(stored_keys(&store_dir(&app)?))
+}
+
+/// Retire la copie d'un QCM (le fichier d'origine de l'utilisateur n'est pas concerné).
+#[tauri::command(async)]
+fn remove_stored_qcm(app: AppHandle, key: String) -> Result<(), String> {
+    let path = stored_path(&store_dir(&app)?, &key)?;
+    if path.exists() {
+        fs::remove_file(path).map_err(|_| "E_OPEN".to_string())?;
+    }
+    Ok(())
+}
+
+// ---------------------------------------------------------------- Bibliothèque en ligne
+
+/// Adresse de PocketBase : variable `QCM_PB_URL` lue à l'exécution (développement), sinon celle
+/// figée à la compilation (installateur). Absente : la bibliothèque en ligne est désactivée.
+fn library_base_url() -> Option<String> {
+    let url = std::env::var("QCM_PB_URL")
+        .ok()
+        .or_else(|| option_env!("QCM_PB_URL").map(str::to_string))?;
+    let url = url.trim().trim_end_matches('/').to_string();
+    (url.starts_with("https://") || url.starts_with("http://")).then_some(url)
+}
+
+/// `true` si `path` (chemin + requête) désigne la liste ou un enregistrement de la collection `qcms`.
+pub fn is_library_path(path: &str) -> bool {
+    match path.strip_prefix(LIBRARY_RECORDS_PATH) {
+        Some(rest) => {
+            let (segment, _query) = rest.split_once('?').unwrap_or((rest, ""));
+            !path.contains(['#', '\\', ' '])
+                && (segment.is_empty() || segment.strip_prefix('/').is_some_and(is_record_id))
+        }
+        None => false,
+    }
+}
+
+fn library_client() -> Result<reqwest::Client, String> {
+    // Même fournisseur de chiffrement que la mise à jour ; l'appel est sans effet s'il est déjà posé.
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    reqwest::Client::builder()
+        .user_agent(concat!("qcm-desktop/", env!("CARGO_PKG_VERSION")))
+        .timeout(LIBRARY_TIMEOUT)
+        .build()
+        .map_err(|_| "E_OFFLINE".to_string())
+}
+
+/// Télécharge une réponse en refusant de dépasser `limit` octets.
+async fn fetch_limited(url: &str, limit: u64) -> Result<Vec<u8>, String> {
+    let mut response = library_client()?
+        .get(url)
+        .send()
+        .await
+        .map_err(|_| "E_OFFLINE".to_string())?;
+    if !response.status().is_success() {
+        return Err(if response.status() == reqwest::StatusCode::NOT_FOUND { "E_NOT_FOUND" } else { "E_OFFLINE" }.into());
+    }
+    if response.content_length().is_some_and(|length| length > limit) {
+        return Err("E_TOO_BIG".into());
+    }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(|_| "E_OFFLINE".to_string())? {
+        bytes.extend_from_slice(&chunk);
+        if bytes.len() as u64 > limit {
+            return Err("E_TOO_BIG".into());
+        }
+    }
+    Ok(bytes)
+}
+
+/// `true` si l'application a été construite avec l'adresse de la bibliothèque en ligne.
+#[tauri::command]
+fn library_available() -> bool {
+    library_base_url().is_some()
+}
+
+/// Lecture seule de la collection `qcms` : renvoie le JSON brut de PocketBase.
+/// Rejets : `E_NO_LIBRARY` (non configurée), `E_OFFLINE` (pas de réseau ou serveur muet), `E_NOT_FOUND`.
+#[tauri::command]
+async fn library_get(path: String) -> Result<String, String> {
+    let base = library_base_url().ok_or("E_NO_LIBRARY")?;
+    if !is_library_path(&path) {
+        return Err("E_NOT_FOUND".into());
+    }
+    let bytes = fetch_limited(&format!("{base}{path}"), MAX_JSON_BYTES).await?;
+    String::from_utf8(bytes).map_err(|_| "E_OFFLINE".to_string())
+}
+
+/// Télécharge le fichier `.qcm` d'un enregistrement dans le dossier des QCM conservés et renvoie
+/// son chemin provisoire. Le frontend le valide (`load_qcm`) puis le range (`store_qcm`).
+#[tauri::command]
+async fn library_download(app: AppHandle, record_id: String, file_name: String) -> Result<String, String> {
+    let base = library_base_url().ok_or("E_NO_LIBRARY")?;
+    if !is_record_id(&record_id) || !is_remote_file_name(&file_name) {
+        return Err("E_NOT_FOUND".into());
+    }
+    let url = format!("{base}/api/files/qcms/{record_id}/{file_name}");
+    let bytes = fetch_limited(&url, MAX_ARCHIVE_BYTES).await?;
+    let path = store_dir(&app)?.join(format!("{DOWNLOAD_PREFIX}{record_id}.qcm"));
+    fs::write(&path, bytes).map_err(|_| "E_OPEN".to_string())?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 /// Renvoie (une seule fois) le chemin reçu par double-clic, au lancement ou à chaud.
 #[tauri::command]
 fn take_pending_file(state: State<'_, AppState>) -> Option<String> {
@@ -260,7 +469,17 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![load_qcm, take_pending_file])
+        .invoke_handler(tauri::generate_handler![
+            load_qcm,
+            take_pending_file,
+            store_qcm,
+            load_stored_qcm,
+            list_stored_qcms,
+            remove_stored_qcm,
+            library_available,
+            library_get,
+            library_download
+        ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de QCM");
 }
@@ -314,6 +533,52 @@ mod tests {
         assert!(!is_media_path("media/.webp"));
         assert!(!is_media_path("media/_x.webp"));
         assert!(!is_media_path("x.webp"));
+    }
+
+    #[test]
+    fn validates_store_keys_and_library_paths() {
+        assert!(is_store_key("0abc123def456ghi789jkl"));
+        assert!(!is_store_key("court"));
+        assert!(!is_store_key("../../etc/passwd0000"));
+        assert!(!is_store_key("ABCDEFGHIJKL"));
+        assert!(is_record_id("a1B2c3d4e5f6g7h"));
+        assert!(!is_record_id("a/b"));
+        assert!(!is_record_id(""));
+        assert!(is_remote_file_name("les_fractions_ab12cd.qcm"));
+        assert!(!is_remote_file_name("../secret"));
+        assert!(!is_remote_file_name(".cache"));
+        assert!(is_library_path("/api/collections/qcms/records?page=1&filter=status%3D%22published%22"));
+        assert!(is_library_path("/api/collections/qcms/records/a1b2c3d4e5f6g7h"));
+        assert!(!is_library_path("/api/collections/users/records"));
+        assert!(!is_library_path("/api/collections/qcms/records/../../users/records"));
+        assert!(!is_library_path("/api/collections/qcms/recordsX"));
+        assert!(!is_library_path("@evil.example/api/collections/qcms/records"));
+    }
+
+    #[test]
+    fn stores_copies_and_moves_downloads() {
+        let dir = std::env::temp_dir().join(format!("qcm-store-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let original = write_qcm("store", &[("data.yaml", b"version: 1\n")]);
+
+        // Fichier de l'utilisateur : copié, l'original reste en place.
+        store_file(&dir, &original, "aaaaaaaaaaaa").unwrap();
+        assert!(original.exists());
+        assert!(read_qcm_file(&dir.join("aaaaaaaaaaaa.qcm")).is_ok());
+        // Rouvrir la copie elle-même ne casse rien.
+        store_file(&dir, &dir.join("aaaaaaaaaaaa.qcm"), "aaaaaaaaaaaa").unwrap();
+
+        // Téléchargement provisoire : déplacé.
+        let download = dir.join("download-rec1.qcm");
+        fs::copy(&original, &download).unwrap();
+        store_file(&dir, &download, "bbbbbbbbbbbb").unwrap();
+        assert!(!download.exists());
+
+        assert_eq!(stored_keys(&dir), vec!["aaaaaaaaaaaa", "bbbbbbbbbbbb"]);
+        assert!(store_file(&dir, &original, "../evil").is_err());
+
+        fs::remove_file(original).unwrap();
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

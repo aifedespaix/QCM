@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
-import { summarizeQcm, type QcmData } from '@qcm/core'
+import { summarizeQcm, type QcmData, type QcmSessionResult } from '@qcm/core'
 import { useQcmPlayer } from '../composables/useQcmPlayer.ts'
 import { useQcmSound } from '../composables/useQcmSound.ts'
 import QcmAnswerDock from './QcmAnswerDock.vue'
@@ -28,6 +28,11 @@ const props = withDefaults(
 const emit = defineEmits<{
   close: []
   complete: []
+  /**
+   * Résultat d'un passage, pour le suivi : émis à la fin du QCM, ou quand il est quitté
+   * après au moins une question terminée (`completed: false`).
+   */
+  result: [result: QcmSessionResult]
 }>()
 
 const sound = useQcmSound()
@@ -58,11 +63,26 @@ function guarded(action: () => void): void {
   action()
 }
 
+/** `true` quand le passage en cours a déjà été transmis. */
+let reported = false
+function report(completed: boolean): void {
+  if (reported || player.results.value.length === 0) return
+  reported = true
+  emit('result', { questions: [...player.results.value], total: total.value, completed })
+}
+
 // Un nouveau fichier remet le lecteur sur l'écran d'accueil.
-watch(() => props.qcm, () => player.restart())
-watch(phase, (value) => {
+watch(() => props.qcm, () => {
+  reported = true
+  player.restart()
+})
+watch(phase, (value, previous) => {
   lockedUntil = Date.now() + 450
-  if (value === 'done') emit('complete')
+  if (previous === 'intro') reported = false
+  if (value === 'done') {
+    report(true)
+    emit('complete')
+  }
 })
 
 function onKeydown(event: KeyboardEvent): void {
@@ -76,6 +96,8 @@ onMounted(() => {
   if (props.keyboard) window.addEventListener('keydown', onKeydown)
 })
 onBeforeUnmount(() => {
+  // QCM quitté en cours de route : les questions déjà vues comptent pour le suivi.
+  report(false)
   window.removeEventListener('keydown', onKeydown)
   if (props.immersive) document.documentElement.classList.remove('qcm-locked')
 })

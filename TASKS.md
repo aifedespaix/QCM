@@ -26,7 +26,7 @@ Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contra
     bun run build:web
     cd apps/desktop/src-tauri && cargo test && cargo clippy --all-targets -- -D warnings
     ```
-    Attendu : 19 tests Bun, 0 erreur de types sur 4 workspaces, 5 pages générées, 5 tests Rust, 0 avertissement.
+    Attendu : 22 tests Bun, 0 erreur de types sur 4 workspaces, 6 pages générées, 7 tests Rust, 0 avertissement.
 
 ---
 
@@ -88,6 +88,7 @@ Toutes les commandes se lancent depuis la racine du dépôt, sauf mention contra
   - **Sections `ARCHITECTURE.md` à lire :** §4.1, §4.4, §4.5.
   - **Périmètre de fichiers :** `apps/desktop/src-tauri/tauri.conf.json` (clé publique, numéro de version), `apps/desktop/package.json` et `apps/desktop/src-tauri/Cargo.toml` (numéro de version).
   - **Instructions :**
+    0. GitHub > Settings > Secrets and variables > Actions > onglet **Variables** : créer `QCM_PB_URL` avec l'adresse publique de PocketBase (la même que `PUBLIC_PB_URL`). Sans elle, l'écran « Bibliothèque » de l'application ne montre que les QCM déjà sur l'ordinateur (`ARCHITECTURE.md` §4.6).
     1. Générer la clé de signature et créer les 2 secrets GitHub : étapes exactes en §4.5. La clé privée ne va ni dans le dépôt, ni dans une conversation avec un agent.
     2. Remplacer `REMPLACER_PAR_LA_CLE_PUBLIQUE` dans `tauri.conf.json`, commiter, pousser.
     3. Pousser le tag `v0.1.0`. Attendre la fin du workflow `release-desktop`, puis publier le brouillon de Release.

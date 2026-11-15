@@ -34,6 +34,14 @@ onRecordCreateRequest((e) => {
   e.next()
 }, "qcms")
 
+// 2 ter. Modification d'un QCM par son auteur : il repasse « pending » et doit être revalidé
+//    avant de redevenir public. Un administrateur garde la main sur le statut.
+onRecordUpdateRequest((e) => {
+  const isAdmin = e.hasSuperuserAuth() || (e.auth && e.auth.get("admin") === true)
+  if (!isAdmin) e.record.set("status", "pending")
+  e.next()
+}, "qcms")
+
 // 2 bis. À chaque connexion : le compte dont l'e-mail est PB_SUPERUSER_EMAIL devient administrateur.
 onRecordAuthRequest((e) => {
   const adminEmail = ($os.getenv("PB_SUPERUSER_EMAIL") || "").trim().toLowerCase()

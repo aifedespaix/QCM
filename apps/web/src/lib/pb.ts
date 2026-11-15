@@ -85,6 +85,8 @@ export interface QcmQuery {
   level?: Level | ''
   sort?: QcmSort
   page?: number
+  /** Identifiant d'un membre : uniquement ses QCM, quel que soit leur statut (« Mes QCM »). */
+  owner?: string
 }
 
 const SORTS: Record<QcmSort, string> = {
@@ -96,7 +98,7 @@ const SORTS: Record<QcmSort, string> = {
 export const PAGE_SIZE = 24
 
 export function listQcms(query: QcmQuery = {}) {
-  const parts = ['status = "published"']
+  const parts = [query.owner ? pb.filter('owner = {:owner}', { owner: query.owner }) : 'status = "published"']
   const search = query.search?.trim()
   if (search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: search }))
   if (query.subject) parts.push(pb.filter('subject = {:subject}', { subject: query.subject }))
@@ -181,13 +183,10 @@ function toBlobPart(bytes: Uint8Array): ArrayBuffer {
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
 }
 
-export function publishQcm(input: PublishInput): Promise<QcmRecord> {
-  const userId = pb.authStore.record?.id
-  if (!userId) throw new Error('Connexion requise pour publier.')
+function qcmForm(input: PublishInput): FormData {
   const summary = summarizeQcm(input.data)
   const meta = input.data.meta
   const form = new FormData()
-  form.set('owner', userId)
   form.set('title', meta.title)
   form.set('description', meta.description ?? '')
   form.set('subject', meta.subject)
@@ -200,7 +199,27 @@ export function publishQcm(input: PublishInput): Promise<QcmRecord> {
   if (input.thumbnail) {
     form.set('thumbnail', new File([toBlobPart(input.thumbnail)], 'miniature.webp', { type: 'image/webp' }))
   }
+  return form
+}
+
+export function publishQcm(input: PublishInput): Promise<QcmRecord> {
+  const userId = pb.authStore.record?.id
+  if (!userId) throw new Error('Connexion requise pour publier.')
+  const form = qcmForm(input)
+  form.set('owner', userId)
   return pb.collection('qcms').create<QcmRecord>(form)
+}
+
+/**
+ * Remplace le contenu d'un QCM de l'utilisateur connecté. Le serveur le repasse « à valider »
+ * (sauf pour un administrateur) : il redevient public après relecture.
+ */
+export function updateQcm(id: string, input: PublishInput): Promise<QcmRecord> {
+  if (!pb.authStore.record?.id) throw new Error('Connexion requise pour modifier.')
+  const form = qcmForm(input)
+  // Plus d'image dans le QCM : l'ancienne miniature est retirée.
+  if (!input.thumbnail) form.set('thumbnail', '')
+  return pb.collection('qcms').update<QcmRecord>(id, form)
 }
 
 /** Déclenche l'enregistrement local d'un fichier `.qcm` (export sans compte). */

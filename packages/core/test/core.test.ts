@@ -3,7 +3,17 @@ import { zipSync, strToU8 } from 'fflate'
 import {
   QCM_AI_PROMPT,
   QcmFormatError,
+  addAttempt,
   aiCorrectionMessage,
+  computeStats,
+  emptyHistory,
+  entryFromQcm,
+  formatRelativeDay,
+  parseHistory,
+  qcmFingerprint,
+  removeEntry,
+  statusOfRate,
+  upsertEntry,
   extractQcmYaml,
   correctIndexOf,
   fitWithin,
@@ -174,5 +184,68 @@ describe('prompt IA', () => {
 
   test('aiCorrectionMessage liste les points à corriger', () => {
     expect(aiCorrectionMessage(['questions[0].choices : trop court'])).toContain('- questions[0].choices : trop court')
+  })
+})
+
+describe('suivi des révisions', () => {
+  const qcm = parseQcmYaml(EXAMPLE)
+  const DAY = 86_400_000
+  const now = new Date(2026, 10, 15, 12).getTime()
+
+  test('empreinte stable, sensible au contenu', () => {
+    const key = qcmFingerprint(qcm)
+    expect(key).toMatch(/^[a-z0-9]{22}$/)
+    expect(qcmFingerprint(parseQcmYaml(EXAMPLE))).toBe(key)
+    expect(qcmFingerprint({ ...qcm, meta: { ...qcm.meta, title: 'Autre titre' } })).not.toBe(key)
+  })
+
+  test('enregistre les passages et calcule le suivi', () => {
+    const entry = entryFromQcm(qcm, { recordId: 'abc' }, now - 2 * DAY)
+    let history = upsertEntry(emptyHistory(), entry)
+    const ids = qcm.questions.map((question) => question.id)
+    // Premier passage : 1 réussie du premier coup, 2 après essai, 2 réponses affichées.
+    history = addAttempt(history, entry.key, {
+      total: 5,
+      completed: true,
+      questions: ids.map((id, index) => ({ id, wrong: index === 0 ? 0 : 1, revealed: index > 2 })),
+    }, now - 2 * DAY)
+    // Second passage : 4 sur 5.
+    history = addAttempt(history, entry.key, {
+      total: 5,
+      completed: true,
+      questions: ids.map((id, index) => ({ id, wrong: index === 4 ? 2 : 0, revealed: false })),
+    }, now)
+    // Passage inconnu ou vide : ignoré.
+    expect(addAttempt(history, 'inconnu', { total: 1, completed: true, questions: [{ id: 'q1', wrong: 0, revealed: false }] })).toBe(history)
+    expect(addAttempt(history, entry.key, { total: 5, completed: false, questions: [] })).toBe(history)
+
+    const stats = computeStats(history, { now })
+    expect(stats.sessions).toBe(2)
+    expect(stats.counts).toEqual({ first: 5, retry: 3, revealed: 2, seen: 10 })
+    expect(stats.activeDays).toBe(2)
+    expect(stats.week).toHaveLength(7)
+    const [stat] = stats.qcms
+    expect(stat!.status).toBe('acquired')
+    expect(stat!.trend).toEqual([0.2, 0.8])
+    expect(stat!.weak).toEqual([{ id: ids[4]!, prompt: qcm.questions[4]!.prompt, outcome: 'retry', misses: 2 }])
+    expect(stats.subjects[0]).toMatchObject({ subject: 'maths', qcmCount: 1, rate: 0.5 })
+
+    // Période limitée à aujourd'hui : seul le second passage compte.
+    expect(computeStats(history, { now, since: now - DAY / 2 }).counts.seen).toBe(5)
+
+    const reread = parseHistory(JSON.stringify(history))
+    expect(reread.attempts).toHaveLength(2)
+    expect(upsertEntry(reread, entryFromQcm(qcm)).entries[0]!.recordId).toBe('abc')
+    expect(removeEntry(reread, entry.key)).toEqual(emptyHistory())
+    expect(parseHistory('pas du json')).toEqual(emptyHistory())
+  })
+
+  test('statuts et dates relatives', () => {
+    expect(statusOfRate(0.8)).toBe('acquired')
+    expect(statusOfRate(0.5)).toBe('progress')
+    expect(statusOfRate(0.49)).toBe('review')
+    expect(formatRelativeDay(now, now)).toBe('aujourd\'hui')
+    expect(formatRelativeDay(now - DAY, now)).toBe('hier')
+    expect(formatRelativeDay(now - 3 * DAY, now)).toBe('il y a 3 jours')
   })
 })

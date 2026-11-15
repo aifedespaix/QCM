@@ -1,5 +1,5 @@
 import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
-import { correctIndexOf, type QcmData, type QcmQuestion } from '@qcm/core'
+import { correctIndexOf, type QcmData, type QcmQuestion, type QuestionResult } from '@qcm/core'
 
 /**
  * Machine à états du lecteur QCM.
@@ -27,6 +27,8 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
   const selectedIndex = ref<number | null>(null)
   /** Réponses déjà essayées sur la question en cours : elles restent grisées. */
   const triedIndexes = ref<number[]>([])
+  /** Résultat de chaque question terminée depuis `start` (pour le suivi, jamais affiché à l'élève). */
+  const results = ref<QuestionResult[]>([])
 
   const questions = computed<QcmQuestion[]>(() => toValue(source).questions)
   const total = computed(() => questions.value.length)
@@ -41,6 +43,7 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
 
   function start(): void {
     index.value = 0
+    results.value = []
     resetQuestion()
     phase.value = 'answering'
   }
@@ -81,6 +84,12 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
 
   function next(): void {
     if (phase.value !== 'correct' && phase.value !== 'revealed') return
+    if (question.value) {
+      results.value = [
+        ...results.value,
+        { id: question.value.id, wrong: triedIndexes.value.length, revealed: phase.value === 'revealed' },
+      ]
+    }
     if (isLast.value) {
       phase.value = 'done'
       sounds.playComplete?.()
@@ -150,6 +159,7 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
     question,
     selectedIndex,
     triedIndexes,
+    results,
     correctIndex,
     isLast,
     start,

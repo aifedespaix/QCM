@@ -18,6 +18,7 @@ Règles :
 | Format d'une réponse | (libre) | `correct: true` posé sur **une** réponse, pas d'index `answer: 2`. | Robuste au réordonnancement, lisible, moins d'erreurs pour un LLM. |
 | Flux d'erreur | « réessayer ou passer » | Deux étapes : **choisir** puis **Valider**. Après une erreur : indice facultatif, la réponse essayée est grisée, boutons « Réessayer » et « Voir la réponse ». | La validation explicite limite les réponses impulsives (TDAH). « Voir la réponse » remplace « passer » : l'élève repart avec la bonne information. |
 | Écran de fin | (libre) | Aucun score, aucun pourcentage, aucune étoile. | Zéro culpabilité. |
+| Suivi | (demandé ensuite) | Les résultats de chaque passage sont enregistrés **sur l'appareil** (`localStorage`, clé `qcm:history`) et montrés sur un écran séparé « Suivi des révisions », destiné aux parents. Le lecteur et l'accueil de l'élève n'affichent toujours aucun score. | Les parents voient quoi retravailler sans que l'élève soit noté pendant qu'il révise. Rien n'est envoyé sur Internet. |
 | Composants `@qcm/ui` | 5 composants | 5 composants + `QcmPlayer` (orchestrateur) + `useQcmPlayer` (machine à états) + 2 boutons (son, thème). | Le desktop et le web partagent exactement le même lecteur : aucune logique dupliquée. |
 | Commentaires | collection `comments` | Conservée, avec un champ `hidden` réservé aux administrateurs, et `status` sur `qcms`. | Public mineur : il faut pouvoir masquer un contenu sans le supprimer. |
 | Moyenne des notes | (libre) | Champs `rating_avg` / `rating_count` sur `qcms`, recalculés par un hook serveur. | Permet le tri « mieux notés » sans exposer les notes individuelles. |
@@ -49,10 +50,10 @@ Règles :
 
 Exécuté avec succès sur le code du dépôt :
 
-- `bun test` : 16 tests (`@qcm/core`, `@qcm/ui`).
+- `bun test` : 22 tests (`@qcm/core`, `@qcm/ui`).
 - `bun run typecheck` : 0 erreur sur les 4 workspaces (`tsc`, `vue-tsc`, `astro check`).
-- `cargo test` et `cargo clippy --all-targets -- -D warnings` sous Linux : 5 tests, 0 avertissement.
-- `bun run build:web` : 5 pages ; parcours éditeur → aperçu → clavier → export `.qcm` vérifié dans Chromium, thèmes clair et sombre.
+- `cargo test` et `cargo clippy --all-targets -- -D warnings` sous Linux : 7 tests, 0 avertissement.
+- `bun run build:web` : 6 pages ; accueil, bibliothèque et suivi de l'application vérifiés dans Chromium avec les commandes Tauri simulées ; parcours éditeur → aperçu → clavier → export `.qcm` vérifié dans Chromium, thèmes clair et sombre.
 - PocketBase 0.40.6 : image Docker, migration, hooks de démarrage et de création, règles d'accès anonymes, export du schéma (4 collections).
 
 **Jamais exécuté** (c'est l'objet de `TASKS.md`) : PocketBase (usage depuis le site web, hook de moyenne) ; l'installateur Windows, l'association `.qcm` et la mise à jour automatique (Windows uniquement) ; le workflow GitHub Actions ; la connexion Google.
@@ -62,11 +63,11 @@ Exécuté avec succès sur le code du dépôt :
 1. Jamais de `#FFFFFF` ni de `#000000`. Uniquement les jetons de `theme.css`.
 2. Jamais de rouge. Une erreur utilise `bg-retry` (ambre) ; une information neutre utilise `bg-selected` (lavande).
 3. Tout élément cliquable principal porte la classe `qcm-block` (64 px minimum, bordure 2 px, `rounded-2xl`, ombre décalée).
-4. Aucun score, chronomètre, compte à rebours, série (« streak »), classement ou confetti.
+4. Aucun score, chronomètre, compte à rebours, série (« streak »), classement ou confetti dans le lecteur et sur l'accueil. Seule exception : l'écran « Suivi des révisions », réservé aux parents (taux de réussite du premier coup, sans rouge, sans classement).
 5. Aucune animation de plus de 150 ms. `prefers-reduced-motion` est respecté par `theme.css`.
 6. Textes d'interface : tutoiement, phrases courtes, pas de point d'exclamation, pas d'émoji.
 7. Clavier : `1` `2` `3` `4` ou `A` `B` `C` `D` choisissent une réponse ; `Entrée` ou `Espace` lancent l'action principale de l'écran (Commencer, Valider, Réessayer, Continuer).
-8. Le lecteur desktop fait une seule requête réseau : la recherche de mise à jour au démarrage (§4.5). Tout le reste fonctionne hors-ligne.
+8. Le lecteur desktop fait une requête réseau au démarrage (recherche de mise à jour, §4.5) et n'interroge la bibliothèque en ligne que lorsque l'écran « Bibliothèque » est ouvert (§4.6). Tout le reste fonctionne hors-ligne, y compris les QCM déjà ouverts une fois.
 
 ---
 
@@ -212,12 +213,15 @@ Les clés inconnues sont refusées (`z.strictObject`).
 | `fitWithin`, `mediaPathFor`, `qcmFileName`, `isWebp` | Utilitaires |
 | `QCM_AI_PROMPT`, `extractQcmYaml(text)`, `aiCorrectionMessage(details)` | Prompt IA (identique à `docs/skill-ingestion-cours.md`, vérifié par un test), nettoyage d'un texte collé (bloc Markdown, phrases autour), message de correction à renvoyer à l'assistant |
 | `QcmFormatError`, `QcmErrorCode`, `QCM_ERROR_CODES` | Erreur unique : `code` stable + `details` lisibles |
+| `qcmFingerprint(data)` | Empreinte du contenu (22 caractères `a-z 0-9`) : identité d'un QCM, indépendante de l'emplacement du fichier |
+| `QcmHistory`, `entryFromQcm`, `upsertEntry`, `addAttempt`, `removeEntry`, `recentEntries`, `parseHistory` | Suivi local : QCM connus (`entries`) et passages (`attempts`), fonctions pures |
+| `computeStats(history, { since })`, `outcomeOf`, `statusOfRate`, `formatRelativeDay` | Agrégats du tableau de suivi. Une question est `first` (réussie du premier coup), `retry` (trouvée après un essai) ou `revealed` (réponse affichée). Un QCM est « Acquis » à partir de 80 % du premier coup au dernier passage terminé, « En progrès » à partir de 50 %, « À revoir » en dessous |
 
 Codes d'erreur : `E_OPEN`, `E_NOT_ZIP`, `E_NO_DATA`, `E_TOO_BIG`, `E_YAML`, `E_SCHEMA`, `E_MEDIA_MISSING`, `E_MEDIA_INVALID`, `E_IMAGE`.
 
 ### 2.3 Fichiers
 
-`packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/src/schema.ts`, `packages/core/src/errors.ts`, `packages/core/src/archive.ts`, `packages/core/src/webp.ts`, `packages/core/src/aiPrompt.ts`, `packages/core/src/index.ts`, `packages/core/scripts/pack.ts`, `packages/core/test/core.test.ts`
+`packages/core/package.json`, `packages/core/tsconfig.json`, `packages/core/src/schema.ts`, `packages/core/src/errors.ts`, `packages/core/src/archive.ts`, `packages/core/src/webp.ts`, `packages/core/src/aiPrompt.ts`, `packages/core/src/history.ts`, `packages/core/src/index.ts`, `packages/core/scripts/pack.ts`, `packages/core/test/core.test.ts`
 
 ---
 
@@ -264,7 +268,8 @@ Chaque application importe le thème ainsi dans son CSS d'entrée (le chemin `@s
 | `QcmChoiceGrid` | `choices: readonly { text: string }[]`, `selectedIndex: number \| null`, `triedIndexes: readonly number[]`, `correctIndex: number \| null`, `locked?: boolean` | `select(index: number)` | — |
 | `QcmAnswerDock` | `kind: 'answering' \| 'retry' \| 'correct' \| 'revealed'`, `selectedLetter?: string \| null`, `hasTried?: boolean`, `hint?: string`, `explanation?: string`, `isLast?: boolean`, `showKeys?: boolean` | `validate`, `continue`, `reveal` | — |
 | `QcmCompletionScreen` | `title: string`, `questionCount: number`, `closable?: boolean` | `restart`, `close` | — |
-| `QcmPlayer` | `qcm: QcmData`, `resolveMedia?: (path: string) => string \| undefined`, `closable?: boolean` (défaut `false`), `keyboard?: boolean` (défaut `true`) | `close`, `complete` | — |
+| `QcmPlayer` | `qcm: QcmData`, `resolveMedia?: (path: string) => string \| undefined`, `closable?: boolean` (défaut `false`), `keyboard?: boolean` (défaut `true`) | `close`, `complete`, `result(QcmSessionResult)` : à la fin, ou à la fermeture après au moins une question (`completed: false`) | — |
+| `QcmStatsDashboard` | `history: QcmHistory`, `canOpen?: (entry) => boolean` | `open(key)`, `clear` | `empty` |
 | `QcmSoundToggle` | — | — | — |
 | `QcmThemeToggle` | — | — | — |
 
@@ -281,6 +286,8 @@ intro ──start──▶ answering ──validate (bonne réponse)──▶ co
                      ▼  │
                     retry ──reveal──▶ revealed ──next──▶ answering | done
 ```
+
+Suivi (`useQcmHistory`) : `history`, `recents`, `recordOpen(data, { recordId?, fileName? })` → clé, `recordResult(clé, résultat)`, `forget`, `clearAttempts`. État partagé, conservé dans `localStorage` sous la clé `qcm:history`. Les classes `qcm-field`, `qcm-label`, `qcm-text-button`, `qcm-note*`, `qcm-tile`, `qcm-skeleton` sont dans `theme.css` (site et application).
 
 Sons (`useQcmSound`) : `playSelect` (choix d'une réponse), `playCorrect` (bonne réponse), `playSoft` (« pas encore »), `playComplete` (fin). État muet partagé, conservé dans `localStorage` sous la clé `qcm:muted`. Le thème est conservé sous `qcm:theme`.
 
@@ -309,14 +316,28 @@ Commandes Tauri :
 |---|---|---|
 | `load_qcm` | `path: string` | `{ path, fileName, yaml, media: string[] }` ou rejet avec un code `E_OPEN` / `E_NOT_ZIP` / `E_NO_DATA` / `E_TOO_BIG` / `E_MEDIA_INVALID` |
 | `take_pending_file` | — | `string \| null` |
+| `store_qcm` | `path`, `key` | Copie le fichier dans `<données de l'application>/qcms/<key>.qcm` |
+| `load_stored_qcm` | `key` | Comme `load_qcm`, sur la copie conservée |
+| `list_stored_qcms` / `remove_stored_qcm` | — / `key` | Empreintes conservées / retire une copie |
+| `library_available` | — | `true` si `QCM_PB_URL` est connue |
+| `library_get` | `path` (sous `/api/collections/qcms/records` uniquement) | JSON brut de PocketBase, ou rejet `E_NO_LIBRARY` / `E_OFFLINE` / `E_NOT_FOUND` |
+| `library_download` | `recordId`, `fileName` | Chemin du fichier téléchargé (provisoire, rangé ensuite par `store_qcm`) |
 
-Permissions (`capabilities/default.json`) : `core:default`, `dialog:allow-open`, `updater:default`, `process:allow-restart`.
+Permissions (`capabilities/default.json`) : `core:default`, `dialog:allow-open`, `dialog:allow-confirm`, `updater:default`, `process:allow-restart`.
 
-Autres entrées : bouton « Ouvrir un QCM » (dialogue natif) et glisser-déposer d'un fichier sur la fenêtre.
+Autres entrées : bouton « Ouvrir un fichier » (dialogue natif) et glisser-déposer d'un fichier sur la fenêtre.
 
 ### 4.2 Frontend
 
-Fichiers : `apps/desktop/package.json`, `apps/desktop/tsconfig.json`, `apps/desktop/vite.config.ts`, `apps/desktop/index.html`, `apps/desktop/app-icon.svg`, `apps/desktop/src/main.ts`, `apps/desktop/src/style.css`, `apps/desktop/src/lib/qcmFile.ts`, `apps/desktop/src/lib/updater.ts`, `apps/desktop/src/App.vue`
+Trois écrans, plus le lecteur qui les recouvre. Le bandeau porte le logo (retour à l'accueil) et deux boutons icône : « Bibliothèque » et « Suivi des révisions ». `Échap` ramène à l'accueil.
+
+| Écran | Fichier | Contenu |
+|---|---|---|
+| Accueil | `src/views/HomeView.vue` | Au centre : « Ouvrir un fichier », « Bibliothèque », carte de mise à jour. À droite : colonne « Derniers QCM » avec son propre défilement ; un clic relance le QCM. Aucun score |
+| Bibliothèque | `src/views/LibraryView.vue` | Onglets « En ligne » et « Sur cet ordinateur », recherche, matière, niveau, tri. Voir §4.6 |
+| Suivi | `QcmStatsDashboard` de `@qcm/ui` | Tableau pour les parents ; « Relancer » rouvre la copie locale, sinon retélécharge |
+
+Fichiers : `apps/desktop/package.json`, `apps/desktop/tsconfig.json`, `apps/desktop/vite.config.ts`, `apps/desktop/index.html`, `apps/desktop/app-icon.svg`, `apps/desktop/src/main.ts`, `apps/desktop/src/style.css`, `apps/desktop/src/lib/qcmFile.ts`, `apps/desktop/src/lib/library.ts`, `apps/desktop/src/lib/updater.ts`, `apps/desktop/src/App.vue`, `apps/desktop/src/views/HomeView.vue`, `apps/desktop/src/views/LibraryView.vue`
 
 ### 4.3 Backend Rust et configuration Tauri
 
@@ -332,7 +353,7 @@ Les icônes ne sont pas écrites à la main. Depuis `apps/desktop` :
 bun run tauri icon app-icon.svg
 ```
 
-Les icônes sont déjà générées dans `src-tauri/icons/`. Ne relancer cette commande que si `app-icon.svg` change (puis supprimer `icons/android` et `icons/ios`).
+`app-icon.svg` est le logo (quatre réponses, une cochée), sans cadre, identique à `QcmLogo` en thème clair. Les icônes sont déjà générées dans `src-tauri/icons/`. Ne relancer cette commande que si `app-icon.svg` change (puis supprimer `icons/android` et `icons/ios`). Le site utilise le même dessin : `apps/web/public/favicon.svg` (copie), `favicon.ico` (32 px) et `apple-touch-icon.png` (180 px).
 
 Prérequis Linux pour `cargo check` / `cargo test` (Ubuntu 24.04) :
 
@@ -377,6 +398,14 @@ Si le dépôt GitHub change de nom ou de propriétaire, modifier `plugins.update
 
 Vérification manuelle sur Windows 11 après installation : (1) double-clic sur un `.qcm` alors que QCM est fermé → l'écran d'accueil du QCM s'affiche ; (2) double-clic sur un autre `.qcm` alors que QCM est ouvert → la même fenêtre passe au premier plan et affiche le nouveau QCM ; (3) couper le réseau → tout fonctionne et aucune carte de mise à jour n'apparaît ; (4) installer une version N, publier une version N+1, relancer QCM → la carte apparaît, un clic installe N+1 et QCM se rouvre.
 
+### 4.6 QCM conservés, bibliothèque en ligne et hors-ligne
+
+**Un fichier déplacé ne casse rien.** À chaque ouverture (dialogue, glisser-déposer, double-clic, téléchargement), l'application copie le `.qcm` dans son dossier de données, sous l'empreinte de son contenu (`qcmFingerprint`). « Derniers QCM », l'onglet « Sur cet ordinateur » et « Relancer » rouvrent cette copie : le fichier d'origine peut être déplacé, renommé ou supprimé. Le même QCM ouvert depuis deux emplacements ne donne qu'une entrée. Seuls les QCM dont la copie existe (`list_stored_qcms`) sont proposés ; si une copie disparaît, l'entrée sort des listes et le suivi est conservé. « Retirer » supprime la copie, pas le suivi.
+
+**Bibliothèque en ligne.** Les requêtes partent du backend Rust (`reqwest`, mêmes réglages TLS que la mise à jour), jamais de la webview : pas de CORS à ouvrir côté PocketBase, CSP inchangée. Une seule adresse est possible : `QCM_PB_URL`, lue à la compilation (variable du dépôt GitHub `QCM_PB_URL`, même valeur que `PUBLIC_PB_URL`) ou à l'exécution en développement. Lecture anonyme : seuls les QCM publiés sont visibles. « Ouvrir » télécharge le fichier, le valide, le range, puis lance le lecteur.
+
+**Sans Internet** (ou sans `QCM_PB_URL`) : l'onglet « En ligne » affiche un message calme et les QCM déjà sur l'ordinateur, avec un bouton « Réessayer » ; la liste se recharge seule au retour du réseau. Un téléchargement qui échoue rouvre la copie locale si elle existe.
+
 ---
 
 ## 5. `backend` (PocketBase) et infrastructure Dokploy
@@ -398,6 +427,7 @@ Hooks serveur (`pb_hooks/main.pb.js`) :
 
 1. `onBootstrap` : active le fournisseur Google à partir de `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
 2. `onRecordCreateRequest` sur `qcms` : force `status = "pending"` (QCM à valider, invisible de la bibliothèque), `rating_avg = 0`, `rating_count = 0`. Les QCM d'un administrateur ou d'un superuser (seed) sont publiés directement.
+2 bis. `onRecordUpdateRequest` sur `qcms` : une modification par son auteur repasse le QCM en `pending` (il redevient public après validation). Un administrateur garde le statut qu'il choisit.
 3. `onRecordAuthRequest` sur `users` : à chaque connexion, le champ `admin` vaut `true` si l'e-mail du compte (Google) est celui de `PB_SUPERUSER_EMAIL`, sinon `false`. Le champ est refusé dans toute requête client.
 4. Après création, modification ou suppression d'une note : recalcule `rating_avg` (1 décimale) et `rating_count` du QCM.
 
@@ -436,9 +466,10 @@ Sans ligne de commande : l'éditeur du site (étape « Départ », choix « Coll
 | Route | Fichier | Contenu |
 |---|---|---|
 | `/` | `pages/index.astro` | Vitrine, bouton « Télécharger pour Windows » (vers `PUBLIC_RELEASES_URL`), étapes, QCM de démonstration jouable (`DemoPlayer.vue`, `client:visible`), engagements |
-| `/bibliotheque` | `pages/bibliotheque.astro` + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct |
-| `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`), note 1 à 5, commentaires |
-| `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur guidé en 4 étapes (Départ, Informations, Questions, Finaliser) avec sommaire fixé à l'écran (à droite, ou en bas sur mobile). Départ : page vide, texte collé (sortie d'une IA, prompt fourni) ou fichier `.qcm`. Une question à la fois, images converties en WebP, aperçu, export local, copie au format texte, publication |
+| `/bibliotheque` | `pages/bibliotheque.astro` + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct. Connecté : bascule « Mes QCM » (`?mes=1`), avec le statut de chaque QCM et un bouton « Modifier » |
+| `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`, résultat enregistré dans le suivi local ; `&jouer=1` démarre tout de suite), « Modifier mon QCM » ou « Modifier une copie », note 1 à 5, commentaires |
+| `/statistiques` | `pages/statistiques.astro` + `StatsPage.vue` | Suivi des révisions pour les parents (`QcmStatsDashboard`), à partir des QCM faits sur le site avec cet appareil |
+| `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur guidé en 4 étapes (Départ, Informations, Questions, Finaliser) avec sommaire fixé à l'écran (à droite, ou en bas sur mobile). Départ : page vide, texte collé (sortie d'une IA, prompt fourni) ou fichier `.qcm`. Une question à la fois, images converties en WebP, aperçu, export local, copie au format texte, publication. `/editeur?id=<id>` charge un QCM de la bibliothèque : celui du membre connecté est **mis à jour** (puis revalidé), celui d'un autre membre est ouvert comme **copie**, publiée au nom de celui qui la modifie (l'original ne change pas). Un clic dans le sommaire ne fait pas défiler la page |
 | `/admin` | `pages/admin.astro` + `AdminModeration.vue` | Modération réservée aux administrateurs (voir §5.1) ; lien « Modération » et nombre de QCM en attente dans le bandeau |
 
 Tous les îlots sont montés avec `client:only="vue"` (ils utilisent `localStorage`, le SDK PocketBase et la Canvas API). L'export local fonctionne sans compte ; la publication demande une connexion Google.
@@ -455,8 +486,8 @@ Fichiers : `apps/web/src/lib/pb.ts`, `apps/web/src/lib/editorDraft.ts`, `apps/we
 
 ### 7.4 Mise en page et pages
 
-Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm.astro`, `apps/web/src/pages/editeur.astro`, `apps/web/src/pages/admin.astro`
+Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm.astro`, `apps/web/src/pages/editeur.astro`, `apps/web/src/pages/admin.astro`, `apps/web/src/pages/statistiques.astro`
 
 ### 7.5 Îlots Vue
 
-Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmEditor.vue`, `apps/web/src/components/AdminModeration.vue`, `apps/web/src/components/DemoPlayer.vue`
+Fichiers : `apps/web/src/components/HeaderControls.vue`, `apps/web/src/components/LibraryBrowser.vue`, `apps/web/src/components/QcmDetail.vue`, `apps/web/src/components/QcmEditor.vue`, `apps/web/src/components/AdminModeration.vue`, `apps/web/src/components/DemoPlayer.vue`, `apps/web/src/components/StatsPage.vue`

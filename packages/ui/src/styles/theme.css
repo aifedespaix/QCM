@@ -375,3 +375,131 @@ html.qcm-locked {
     min-height: 4rem;
   }
 }
+
+/* Formulaires, messages et petits éléments de mise en page partagés par le site et l'application. */
+@layer components {
+  /* Champ de formulaire : bordure fine au repos, bordure nette quand on écrit dedans. */
+  .qcm-field {
+    width: 100%;
+    min-height: 52px;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line-soft);
+    border-radius: var(--radius-xl);
+    font: inherit;
+    font-weight: 600;
+    transition: border-color 120ms ease-out, box-shadow 120ms ease-out;
+  }
+
+  .qcm-field::placeholder {
+    color: var(--qcm-ink-soft);
+    font-weight: 500;
+    opacity: 0.75;
+  }
+
+  .qcm-field:hover {
+    border-color: var(--qcm-ink-soft);
+  }
+
+  .qcm-field:focus-visible {
+    border-color: var(--qcm-line);
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--qcm-focus) 45%, transparent);
+  }
+
+  textarea.qcm-field {
+    resize: vertical;
+    line-height: 1.45;
+  }
+
+  .qcm-label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--qcm-ink-soft);
+  }
+
+  /* Compteur de caractères ou mention « facultatif » à droite d'un libellé. */
+  .qcm-label-aside {
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.85;
+    white-space: nowrap;
+  }
+
+  /* Bouton texte discret (actions secondaires dans un panneau). */
+  .qcm-text-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 40px;
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-lg);
+    color: var(--qcm-ink);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .qcm-text-button:hover:not(:disabled) {
+    background-color: var(--qcm-sunken);
+  }
+
+  .qcm-text-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* Tuile d'icône colorée. */
+  .qcm-tile {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-2xl);
+  }
+
+  /* Message d'état : information, réussite, point à corriger. */
+  .qcm-note {
+    padding: 0.875rem 1.125rem;
+    border: 2px solid var(--qcm-line);
+    border-radius: var(--radius-2xl);
+    font-weight: 600;
+  }
+
+  .qcm-note-retry {
+    background-color: var(--qcm-retry);
+    color: var(--qcm-retry-ink);
+  }
+
+  .qcm-note-correct {
+    background-color: var(--qcm-correct);
+    color: var(--qcm-correct-ink);
+  }
+
+  .qcm-note-info {
+    background-color: var(--qcm-selected);
+  }
+
+  /* Bloc en attente de chargement. */
+  .qcm-skeleton {
+    background-color: var(--qcm-sunken);
+    border-radius: var(--radius-xl);
+    animation: qcm-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes qcm-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

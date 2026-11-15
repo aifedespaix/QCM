@@ -32,18 +32,53 @@ function toErrorCode(value: unknown): QcmErrorCode {
   return QCM_ERROR_CODES.includes(value as QcmErrorCode) ? (value as QcmErrorCode) : 'E_OPEN'
 }
 
-/** Charge un fichier `.qcm` : Rust dézippe, `@qcm/core` valide le YAML. */
-export async function loadQcm(path: string): Promise<OpenedQcm> {
-  let payload: LoadedQcmPayload
-  try {
-    payload = await invoke<LoadedQcmPayload>('load_qcm', { path })
-  } catch (code) {
-    throw new QcmFormatError(toErrorCode(code))
-  }
+function toOpened(payload: LoadedQcmPayload): OpenedQcm {
   const data = parseQcmYaml(payload.yaml)
   const missing = summarizeQcm(data).imagePaths.filter((image) => !payload.media.includes(image))
   if (missing.length > 0) throw new QcmFormatError('E_MEDIA_MISSING', missing)
   return { path: payload.path, fileName: payload.fileName, data }
+}
+
+async function command<T>(name: string, args: Record<string, unknown>): Promise<T> {
+  try {
+    return await invoke<T>(name, args)
+  } catch (code) {
+    throw new QcmFormatError(toErrorCode(code))
+  }
+}
+
+/** Charge un fichier `.qcm` : Rust dézippe, `@qcm/core` valide le YAML. */
+export async function loadQcm(path: string): Promise<OpenedQcm> {
+  return toOpened(await command<LoadedQcmPayload>('load_qcm', { path }))
+}
+
+// ---------------------------------------------------------------- QCM conservés
+//
+// Chaque QCM ouvert est copié dans le dossier de données de l'application, sous son empreinte
+// (`qcmFingerprint`). « Derniers QCM » rouvre cette copie : déplacer, renommer ou supprimer le
+// fichier d'origine ne casse rien.
+
+/** Rouvre la copie conservée d'un QCM. */
+export async function loadStoredQcm(key: string): Promise<OpenedQcm> {
+  return toOpened(await command<LoadedQcmPayload>('load_stored_qcm', { key }))
+}
+
+/** Conserve une copie du fichier `path` sous l'empreinte `key`. */
+export function storeQcm(path: string, key: string): Promise<void> {
+  return invoke('store_qcm', { path, key })
+}
+
+/** Empreintes des QCM conservés sur cet ordinateur. */
+export async function listStoredQcms(): Promise<Set<string>> {
+  try {
+    return new Set(await invoke<string[]>('list_stored_qcms'))
+  } catch {
+    return new Set()
+  }
+}
+
+export function removeStoredQcm(key: string): Promise<void> {
+  return invoke('remove_stored_qcm', { key })
 }
 
 /** `media/x.webp` → URL servie par le protocole Rust `qcm://` (http://qcm.localhost/ sous Windows). */

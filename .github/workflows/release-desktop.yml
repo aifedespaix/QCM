@@ -80,6 +80,9 @@ jobs:
           # Clé privée de signature des mises à jour (voir ARCHITECTURE.md §4.5).
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Adresse publique de PocketBase (variable du dépôt, même valeur que PUBLIC_PB_URL du site).
+          # Absente : l'écran Bibliothèque de l'application ne montre que les QCM déjà sur l'ordinateur.
+          QCM_PB_URL: ${{ vars.QCM_PB_URL }}
         with:
           projectPath: apps/desktop
           tauriScript: bun run tauri
