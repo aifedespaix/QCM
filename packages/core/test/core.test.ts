@@ -17,7 +17,8 @@ import {
   writeQcmArchive,
 } from '../src/index.ts'
 
-const EXAMPLE = await Bun.file(new URL('../../../examples/fractions/data.yaml', import.meta.url)).text()
+// Normalisé en LF : sous Windows, git peut extraire le fichier en CRLF.
+const EXAMPLE = (await Bun.file(new URL('../../../examples/fractions/data.yaml', import.meta.url)).text()).replace(/\r\n/g, '\n')
 
 /** Plus petit en-tête WebP accepté par `isWebp`. */
 const FAKE_WEBP = new Uint8Array([0x52, 0x49, 0x46, 0x46, 4, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0, 0, 0, 0])
