@@ -333,7 +333,7 @@ onBeforeUnmount(clearMedia)
           </div>
 
           <!-- Décision : reste visible pendant la relecture -->
-          <div class="qcm-card sticky top-3 z-20 lg:top-[4.75rem] flex flex-wrap items-center gap-3 p-3 sm:px-5">
+          <div class="qcm-card sticky top-[calc(var(--site-header)+0.5rem)] z-20 flex flex-wrap items-center gap-3 p-3 sm:px-5">
             <p class="mr-auto hidden font-extrabold sm:block">Ta décision</p>
             <button v-if="selected.status !== 'published'" type="button" class="qcm-block qcm-block-primary qcm-block-sm flex-1 bg-correct sm:flex-none sm:px-7" :disabled="busy" @click="decide('published')">
               ✓ Valider et publier
@@ -353,7 +353,9 @@ onBeforeUnmount(clearMedia)
           <p v-else-if="reviewState === 'error' || !archive" role="alert" class="qcm-note qcm-note-retry">
             Le fichier de ce QCM est illisible ou ne respecte pas le format. Il ne peut pas être joué : mieux vaut le refuser.
           </p>
-          <QcmPlayer v-else-if="playing" :qcm="archive.data" :resolve-media="resolveMedia" :keyboard="false" closable @close="playing = false" />
+          <div v-else-if="playing" class="qcm-card h-[36rem] max-h-[72dvh] overflow-hidden">
+            <QcmPlayer :qcm="archive.data" :resolve-media="resolveMedia" :keyboard="false" closable @close="playing = false" />
+          </div>
           <ol v-else class="flex flex-col gap-4">
             <li v-for="(question, index) in archive.data.questions" :key="question.id" class="qcm-panel flex flex-col gap-3 p-5 sm:p-6">
               <p class="text-sm font-bold text-ink-soft">Question {{ index + 1 }} sur {{ archive.data.questions.length }}</p>

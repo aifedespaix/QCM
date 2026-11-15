@@ -1,6 +1,7 @@
 ---
 import { QcmLogo } from '@qcm/ui'
 import HeaderControls from '../components/HeaderControls.vue'
+import MobileMenus from '../components/MobileMenus.vue'
 import '../styles/global.css'
 
 interface Props {
@@ -15,17 +16,21 @@ const {
   description = 'QCM : des questionnaires calmes, sans publicité, sans chronomètre.',
   bodyClass = '',
 } = Astro.props
+const path = Astro.url.pathname
 const links = [
   { href: '/bibliotheque', label: 'Bibliothèque' },
   { href: '/editeur', label: 'Créer un QCM' },
 ]
+const current = (active: boolean) => (active ? 'page' : undefined)
+// Une fiche de QCM fait partie de la bibliothèque.
+const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
 ---
 
 <!doctype html>
 <html lang="fr" data-theme="light">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} · QCM</title>
@@ -38,13 +43,14 @@ const links = [
       } catch {}
     </script>
   </head>
-  <body class:list={['flex min-h-dvh flex-col bg-bg text-ink', bodyClass]}>
+  <body class:list={['site-body flex min-h-dvh flex-col bg-bg text-ink', bodyClass]}>
     <a href="#contenu" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded-xl focus:bg-surface focus:p-3">
       Aller au contenu
     </a>
-    <header class="top-0 z-40 border-b-[1.5px] border-line-soft bg-bg/85 backdrop-blur-md lg:sticky">
-      <div class="site-shell flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2.5">
-        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <!-- Bandeau : une seule ligne, toujours collée en haut. Sur téléphone, la navigation est dans la barre du bas. -->
+    <header class="site-header sticky top-0 z-40 border-b-[1.5px] border-line-soft bg-bg/85 backdrop-blur-md">
+      <div class="site-shell flex h-full items-center justify-between gap-x-4">
+        <div class="flex items-center gap-x-6">
           <a href="/" class="site-brand" aria-label="QCM, accueil">
             <QcmLogo size={48} />
             <span class="flex flex-col">
@@ -52,21 +58,23 @@ const links = [
               <span class="site-brand-tagline">Réviser au calme</span>
             </span>
           </a>
-          <nav aria-label="Navigation principale" class="flex flex-wrap items-center gap-1">
+          <nav aria-label="Navigation principale" class="hidden items-center gap-1 lg:flex">
             {
               links.map((link) => (
-                <a href={link.href} class="site-nav-link" aria-current={Astro.url.pathname.startsWith(link.href) ? 'page' : undefined}>
+                <a href={link.href} class="site-nav-link" aria-current={current(link.href === '/bibliotheque' ? inLibrary : path.startsWith(link.href))}>
                   {link.label}
                 </a>
               ))
             }
           </nav>
         </div>
-        <HeaderControls client:only="vue" />
+        <div class="hidden lg:block">
+          <HeaderControls client:only="vue" />
+        </div>
       </div>
     </header>
 
-    <main id="contenu" class="site-shell flex-1 pt-8 pb-20">
+    <main id="contenu" class="site-shell flex-1 pt-5 pb-12 sm:pt-8 sm:pb-20">
       <slot />
     </main>
 
@@ -86,5 +94,35 @@ const links = [
         </nav>
       </div>
     </footer>
+
+    <!-- Barre du bas (téléphone, tablette) : sous le pouce, avec la bibliothèque au centre. -->
+    <nav aria-label="Navigation principale" class="site-tabbar lg:hidden">
+      <div class="site-tabbar-inner">
+        <a href="/" class="site-tab" aria-current={current(path === '/')}>
+          <span class="site-tab-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h4.2v-5.5h3.6V20H18V9.5" /></svg>
+          </span>
+          Accueil
+        </a>
+        <a href="/editeur" class="site-tab" aria-current={current(path.startsWith('/editeur'))}>
+          <span class="site-tab-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4.5L16.5 4l3.5 3.5L8.5 19 4 20zM14 6.5l3.5 3.5" /></svg>
+          </span>
+          Créer
+        </a>
+        <a href="/bibliotheque" class="site-tab site-tab-main" aria-current={current(inLibrary)}>
+          <span class="site-tab-disc">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13" /></svg>
+          </span>
+          Bibliothèque
+        </a>
+        <MobileMenus client:only="vue">
+          <Fragment slot="fallback">
+            <span class="site-tab" aria-hidden="true"><span class="site-tab-icon"></span>Réglages</span>
+            <span class="site-tab" aria-hidden="true"><span class="site-tab-icon"></span>Compte</span>
+          </Fragment>
+        </MobileMenus>
+      </div>
+    </nav>
   </body>
 </html>

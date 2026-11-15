@@ -97,33 +97,25 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex min-h-dvh flex-col bg-bg text-ink">
-    <header class="flex items-center justify-between gap-4 px-6 py-4">
+  <!-- Pendant un QCM, le lecteur occupe toute la fenêtre : sa croix remplace le bandeau. -->
+  <div v-if="view === 'player' && opened" class="h-dvh">
+    <QcmPlayer :key="openCount" :qcm="opened.data" :resolve-media="resolveMedia" closable @close="goHome" />
+  </div>
+
+  <div v-else class="flex h-dvh flex-col bg-bg text-ink">
+    <header class="flex flex-none items-center justify-between gap-4 px-6 py-4">
       <div class="flex min-w-0 items-center gap-3">
         <QcmLogo :size="40" class="flex-none" />
-        <p v-if="view === 'player' && opened" class="truncate text-base font-bold text-ink-soft">{{ opened.fileName }}</p>
-        <p v-else class="text-2xl leading-none font-extrabold tracking-tight">QCM</p>
+        <p class="text-2xl leading-none font-extrabold tracking-tight">QCM</p>
       </div>
       <div class="flex items-center gap-3">
-        <button v-if="view === 'player'" type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="goHome">
-          Fermer le QCM
-        </button>
         <QcmSoundToggle />
         <QcmThemeToggle />
       </div>
     </header>
 
-    <main class="flex flex-1 items-center justify-center px-6 pb-10" :class="view === 'home' ? 'home-glow' : ''">
-      <QcmPlayer
-        v-if="view === 'player' && opened"
-        :key="openCount"
-        :qcm="opened.data"
-        :resolve-media="resolveMedia"
-        closable
-        @close="goHome"
-      />
-
-      <div v-else-if="view === 'home'" class="flex w-full max-w-2xl flex-col gap-6">
+    <main class="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-6 pb-10" :class="view === 'home' ? 'home-glow' : ''">
+      <div v-if="view === 'home'" class="my-auto flex w-full max-w-2xl flex-col gap-6">
         <section class="qcm-panel flex flex-col items-center gap-6 p-8 text-center sm:p-10">
           <QcmLogo :size="96" />
           <div>
@@ -169,7 +161,7 @@ onBeforeUnmount(() => {
         </section>
       </div>
 
-      <section v-else-if="view === 'error'" class="qcm-card flex w-full max-w-xl flex-col gap-5 p-8" role="alert">
+      <section v-else-if="view === 'error'" class="qcm-card my-auto flex w-full max-w-xl flex-col gap-5 p-8" role="alert">
         <h1 class="text-2xl font-extrabold">Ce QCM ne s'ouvre pas.</h1>
         <p class="rounded-2xl border-2 border-line bg-retry px-5 py-4 text-lg font-medium text-retry-ink">{{ errorMessage }}</p>
         <ul v-if="errorDetails.length > 0" class="list-disc pl-6 text-base text-ink-soft select-text">
@@ -178,7 +170,7 @@ onBeforeUnmount(() => {
         <button type="button" class="qcm-block qcm-block-primary w-full" @click="chooseFile">Ouvrir un autre QCM</button>
       </section>
 
-      <p v-else class="text-lg font-bold text-ink-soft" role="status">Ouverture du QCM…</p>
+      <p v-else class="my-auto text-lg font-bold text-ink-soft" role="status">Ouverture du QCM…</p>
     </main>
   </div>
 </template>

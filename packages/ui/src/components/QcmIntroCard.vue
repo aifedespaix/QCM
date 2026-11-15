@@ -6,38 +6,41 @@ const props = defineProps<{
   meta: QcmMeta
   questionCount: number
   hasImages: boolean
+  /** Affiche le rappel de la touche Entrée. */
+  showKeys?: boolean
 }>()
 
 const emit = defineEmits<{ start: [] }>()
 
 const facts = computed(() => [
+  { label: 'Chapitre', value: props.meta.chapter, wide: true },
   { label: 'Matière', value: SUBJECT_LABELS[props.meta.subject] },
   { label: 'Niveau', value: LEVEL_LABELS[props.meta.level] },
-  { label: 'Chapitre', value: props.meta.chapter },
   { label: 'Questions', value: props.questionCount === 1 ? '1 question' : `${props.questionCount} questions` },
   { label: 'Images', value: props.hasImages ? 'Avec images' : 'Sans image' },
 ])
 </script>
 
 <template>
-  <section class="qcm-card mx-auto flex w-full max-w-2xl flex-col gap-6 p-6 sm:p-8" aria-labelledby="qcm-intro-title">
-    <h1 id="qcm-intro-title" class="text-3xl leading-tight font-extrabold text-ink">{{ meta.title }}</h1>
+  <section class="qcm-card mx-auto flex w-full max-w-2xl flex-col gap-4 p-5 sm:gap-6 sm:p-8" aria-labelledby="qcm-intro-title">
+    <h1 id="qcm-intro-title" class="text-2xl leading-tight font-extrabold text-ink sm:text-3xl">{{ meta.title }}</h1>
     <p v-if="meta.description" class="text-ink-soft">{{ meta.description }}</p>
 
-    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <dl class="grid grid-cols-2 gap-2.5 sm:gap-3">
       <div
         v-for="fact in facts"
         :key="fact.label"
-        class="rounded-2xl border-2 border-line bg-bg px-4 py-3"
+        class="rounded-2xl border-2 border-line bg-bg px-3.5 py-2 sm:px-4 sm:py-3"
+        :class="fact.wide ? 'col-span-2' : ''"
       >
         <dt class="text-sm font-semibold text-ink-soft">{{ fact.label }}</dt>
-        <dd class="text-lg font-bold text-ink">{{ fact.value }}</dd>
+        <dd class="font-bold text-ink sm:text-lg">{{ fact.value }}</dd>
       </div>
     </dl>
 
     <button type="button" class="qcm-block qcm-block-primary w-full text-xl" @click="emit('start')">
       Commencer
-      <span class="qcm-key" aria-hidden="true">Entrée</span>
+      <span v-if="showKeys" class="qcm-key hidden sm:inline-flex" aria-hidden="true">Entrée</span>
     </button>
   </section>
 </template>

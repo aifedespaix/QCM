@@ -2,10 +2,23 @@
 @import "@qcm/ui/theme.css";
 @source "../../../../packages/ui/src";
 
+/* Hauteurs du bandeau et de la barre du bas : servent aux éléments collants des pages. */
+:root {
+  --site-header: 3.5rem;
+  --site-tabbar: calc(4rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 64rem) {
+  :root {
+    --site-header: 4.25rem;
+    --site-tabbar: 0px;
+  }
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 6rem;
+    scroll-padding-top: calc(var(--site-header) + 1rem);
     /* La barre de défilement garde sa place : pas de saut entre pages courtes et longues. */
     scrollbar-gutter: stable;
   }
@@ -91,12 +104,130 @@
     }
   }
 
+  .site-header {
+    height: var(--site-header);
+    padding-top: env(safe-area-inset-top);
+    box-sizing: content-box;
+  }
+
+  /* La page laisse la place de la barre du bas. */
+  .site-body {
+    padding-bottom: var(--site-tabbar);
+  }
+
+  /* Barre du bas : cinq onglets égaux, icône au-dessus d'un petit libellé. */
+  .site-tabbar {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom);
+    background-color: var(--qcm-surface);
+    border-top: 2px solid var(--qcm-line);
+  }
+
+  .site-tabbar-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.4fr 1fr 1fr;
+    max-width: 34rem;
+    height: 4rem;
+    margin-inline: auto;
+    padding-inline: 0.25rem;
+  }
+
+  .site-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.1rem;
+    min-width: 0;
+    padding-bottom: 0.4rem;
+    color: var(--qcm-ink-soft);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .site-tab-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.1rem;
+    height: 1.9rem;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    transition: background-color 120ms ease-out;
+  }
+
+  /* Onglet de la page en cours (ou panneau ouvert) : pastille pleine, pas seulement une couleur. */
+  .site-tab[aria-current="page"],
+  .site-tab[aria-expanded="true"] {
+    color: var(--qcm-ink);
+    font-weight: 800;
+  }
+
+  .site-tab[aria-current="page"] .site-tab-icon,
+  .site-tab-icon-on {
+    background-color: var(--qcm-selected);
+    border-color: var(--qcm-line);
+    color: var(--qcm-ink);
+  }
+
+  /* Onglet central : un disque plus grand qui dépasse de la barre. */
+  .site-tab-main {
+    color: var(--qcm-ink);
+    font-weight: 800;
+  }
+
+  .site-tab-disc {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-top: -1.25rem;
+    background-color: var(--qcm-primary);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: 9999px;
+    box-shadow: var(--shadow-block-sm);
+    transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+  }
+
+  .site-tab-main:active .site-tab-disc {
+    transform: translate(2px, 2px);
+    box-shadow: none;
+  }
+
+  .site-tab-main[aria-current="page"] .site-tab-disc {
+    background-color: var(--qcm-selected);
+  }
+
+  /* Panneau « Réglages » ou « Compte », posé juste au-dessus de la barre. */
+  .site-tab-panel {
+    position: fixed;
+    right: max(0.75rem, calc(50vw - 16.5rem));
+    bottom: calc(var(--site-tabbar) + 0.75rem);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: min(20rem, calc(100vw - 1.5rem));
+    padding: 1rem;
+  }
+
   /* Logo et nom de l'application dans le bandeau. */
   .site-brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.7rem;
-    min-height: 52px;
+    gap: 0.6rem;
+    min-height: 44px;
     border-radius: var(--radius-xl);
     color: var(--qcm-ink);
     text-decoration: none;
@@ -240,4 +371,20 @@
     radial-gradient(38rem 24rem at 88% 4%, color-mix(in srgb, var(--qcm-badge-d) 60%, transparent), transparent 70%),
     radial-gradient(30rem 22rem at 4% 30%, color-mix(in srgb, var(--qcm-badge-a) 55%, transparent), transparent 70%),
     radial-gradient(28rem 20rem at 70% 78%, color-mix(in srgb, var(--qcm-badge-b) 45%, transparent), transparent 70%);
+}
+
+/* Bandeau compact sur téléphone : il reste collé en haut, il doit donc prendre peu de place. */
+@media (max-width: 63.99rem) {
+  .site-brand .qcm-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .site-brand-name {
+    font-size: 1.5rem;
+  }
+
+  .site-brand-tagline {
+    font-size: 0.72rem;
+  }
 }

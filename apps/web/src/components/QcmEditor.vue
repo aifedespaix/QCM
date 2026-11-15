@@ -300,10 +300,8 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 </script>
 
 <template>
-  <div v-if="preview" class="flex flex-col gap-5">
-    <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm self-start" @click="preview = null">← Revenir à l'éditeur</button>
-    <QcmPlayer :qcm="preview" :resolve-media="resolveMedia" closable @close="preview = null" />
-  </div>
+  <!-- Aperçu en plein écran, exactement comme le verra l'élève. La croix ramène à l'éditeur. -->
+  <QcmPlayer v-if="preview" :qcm="preview" :resolve-media="resolveMedia" closable immersive @close="preview = null" />
 
   <div v-else class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
     <div class="flex min-w-0 flex-col gap-5">
@@ -666,7 +664,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
 
     <!-- ───────────── Sommaire : fixé à droite (grand écran) ou en bas (mobile) ───────────── -->
     <aside
-      class="qcm-panel sticky bottom-3 z-30 flex max-h-[75dvh] flex-col overflow-hidden lg:top-24 lg:bottom-auto lg:max-h-[calc(100dvh-7.5rem)]"
+      class="qcm-panel sticky bottom-[calc(var(--site-tabbar)+0.75rem)] z-30 flex max-h-[75dvh] flex-col overflow-hidden lg:top-24 lg:bottom-auto lg:max-h-[calc(100dvh-7.5rem)]"
       aria-label="Sommaire du QCM"
     >
       <button

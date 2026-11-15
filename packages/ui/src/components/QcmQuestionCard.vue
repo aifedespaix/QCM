@@ -1,38 +1,40 @@
 <script setup lang="ts">
-defineProps<{
-  /** Index de la question, à partir de 0. */
-  index: number
-  total: number
+import { computed } from 'vue'
+
+/**
+ * Zone de l'énoncé : le texte de la question et, s'il y en a une, son image.
+ *
+ * Elle occupe une part fixe de l'écran (voir `QcmPlayer`) : l'énoncé est centré dedans,
+ * et l'image prend toute la place qui reste sans jamais pousser les réponses.
+ */
+const props = defineProps<{
   prompt: string
   /** URL affichable de l'image (déjà résolue), ou `undefined` s'il n'y a pas d'image. */
   imageUrl?: string
 }>()
+
+/** Un énoncé long est écrit un peu plus petit pour tenir sans défilement. */
+const promptSize = computed(() => {
+  // Avec une image, l'énoncé compte comme plus long : la place est partagée.
+  const length = props.prompt.length + (props.imageUrl ? 60 : 0)
+  if (length > 200) return 'text-base sm:text-xl'
+  if (length > 110) return 'text-lg sm:text-2xl'
+  return 'text-[1.3rem] sm:text-3xl'
+})
 </script>
 
 <template>
-  <section class="qcm-card mx-auto flex w-full max-w-3xl flex-col gap-5 p-5 sm:p-7" aria-labelledby="qcm-question-prompt">
-    <header class="flex flex-col gap-2">
-      <p class="text-base font-bold text-ink-soft">Question {{ index + 1 }} sur {{ total }}</p>
-      <div class="flex gap-1.5" aria-hidden="true">
-        <span
-          v-for="step in total"
-          :key="step"
-          class="h-2.5 flex-1 rounded-full border-2 border-line"
-          :class="step <= index ? 'bg-correct' : step === index + 1 ? 'bg-primary' : 'bg-sunken'"
-        />
-      </div>
-    </header>
+  <section class="qcm-enter flex flex-col justify-center gap-3" aria-labelledby="qcm-question-prompt">
+    <h2 id="qcm-question-prompt" class="leading-snug font-extrabold text-balance text-ink" :class="promptSize">{{ prompt }}</h2>
 
-    <h2 id="qcm-question-prompt" class="qcm-enter text-2xl leading-snug font-extrabold text-ink">{{ prompt }}</h2>
-
-    <img
-      v-if="imageUrl"
-      :src="imageUrl"
-      alt="Image de la question"
-      class="max-h-80 w-full rounded-2xl border-2 border-line bg-bg object-contain"
-      draggable="false"
-    />
-
-    <slot />
+    <!-- L'image remplit l'espace restant : hauteur souple, jamais moins de 5rem. -->
+    <div v-if="imageUrl" class="qcm-question-image relative flex-[1_1_0]">
+      <img
+        :src="imageUrl"
+        alt="Image de la question"
+        class="absolute inset-0 size-full rounded-2xl object-contain"
+        draggable="false"
+      />
+    </div>
   </section>
 </template>

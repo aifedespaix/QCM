@@ -236,15 +236,89 @@
   }
 }
 
-/* Dépliage en hauteur (indice, explication) : la grille passe de 0 à sa hauteur naturelle. */
-.qcm-unfold {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 220ms ease-out;
+/*
+ * Scène du lecteur : une colonne qui remplit exactement son conteneur, sans défilement.
+ * C'est l'hôte qui fixe la hauteur (plein écran, fenêtre de bureau, encart dans une page).
+ */
+.qcm-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--qcm-bg);
+  color: var(--qcm-ink);
 }
 
-.qcm-unfold-open {
-  grid-template-rows: 1fr;
+/* Plein écran : par-dessus la page, à la taille réelle de l'écran visible (barres du navigateur comprises). */
+.qcm-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+html.qcm-locked {
+  overflow: hidden;
+}
+
+/* Colonne de lecture : même largeur et mêmes marges pour la progression, la question et la barre d'action. */
+.qcm-stage-column {
+  width: 100%;
+  max-width: 56rem;
+  margin-inline: auto;
+  padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right));
+}
+
+@media (min-width: 40rem) {
+  .qcm-stage-column {
+    padding-inline: 1.5rem;
+  }
+}
+
+@layer components {
+  /* Réponse : cible tactile de 52px au minimum, texte un peu plus grand quand la place le permet. */
+  .qcm-choice {
+    min-height: 52px;
+    padding: 0.5rem 0.875rem;
+  }
+
+  @media (min-width: 40rem) {
+    .qcm-choice {
+      min-height: 64px;
+      padding: 0.75rem 1.25rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  /* Action discrète dans le message de la barre d'action (« Voir la réponse », déplier). */
+  .qcm-dock-link {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 2rem;
+    padding: 0 0.6rem;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  /* Zone tactile élargie à 44px sans grossir le bouton. */
+  .qcm-dock-link:not(.absolute) {
+    position: relative;
+  }
+
+  .qcm-dock-link::after {
+    content: "";
+    position: absolute;
+    inset: -6px -2px;
+  }
 }
 
 /* Petite apparition d'une marque d'état (coche, flèche). */
@@ -278,5 +352,26 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Image de la question : hauteur souple, avec un minimum pour rester lisible. */
+.qcm-question-image {
+  min-height: 5rem;
+}
+
+/* Écran très bas (petit téléphone, barres du navigateur visibles) : tout se resserre d'un cran. */
+@media (max-height: 620px) and (max-width: 39.99rem) {
+  .qcm-stage h2 {
+    font-size: 1.15rem;
+  }
+
+  .qcm-choice {
+    min-height: 46px;
+    padding-block: 0.3rem;
+  }
+
+  .qcm-question-image {
+    min-height: 4rem;
   }
 }

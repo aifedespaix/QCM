@@ -126,10 +126,8 @@ onBeforeUnmount(() => {
     <a href="/bibliotheque" class="qcm-block qcm-block-primary no-underline">Retour à la bibliothèque</a>
   </section>
 
-  <div v-else-if="playing && archive" class="flex flex-col gap-5">
-    <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm self-start" @click="playing = false">← Quitter le QCM</button>
-    <QcmPlayer :qcm="archive.data" :resolve-media="resolveMedia" closable @close="playing = false" />
-  </div>
+  <!-- Plein écran : le site s'efface, il ne reste que la question. -->
+  <QcmPlayer v-else-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive @close="playing = false" />
 
   <div v-else class="mx-auto flex max-w-4xl flex-col gap-6">
     <a href="/bibliotheque" class="qcm-text-button self-start">← Bibliothèque</a>
