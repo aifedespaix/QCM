@@ -419,7 +419,7 @@ Si la version de PocketBase épinglée (`PB_VERSION`) refuse une instruction de 
 
 ## 6. Skill IA d'ingestion de cours
 
-Le prompt système complet, prêt à copier, est dans `docs/skill-ingestion-cours.md`. Il produit un `data.yaml` conforme au schéma de §2.1 et applique 18 règles pédagogiques TSA (une idée par question, sens littéral, aucune négation, aucun piège, ton neutre). Son exemple de sortie a été validé par `bun run pack`.
+Le prompt système complet, prêt à copier, est dans `docs/skill-ingestion-cours.md`. Il produit un `data.yaml` conforme au schéma de §2.1 et applique 18 règles pédagogiques (une idée par question, sens littéral, aucune négation, aucun piège, ton neutre). Son exemple de sortie a été validé par `bun run pack`.
 
 Boucle d'utilisation : réponse du LLM → `mon-cours/data.yaml` → `bun run pack mon-cours` → en cas d'erreur `E_SCHEMA` / `E_YAML`, renvoyer les lignes d'erreur au LLM.
 
