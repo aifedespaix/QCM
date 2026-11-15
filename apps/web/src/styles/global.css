@@ -6,6 +6,8 @@
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 6rem;
+    /* La barre de défilement garde sa place : pas de saut entre pages courtes et longues. */
+    scrollbar-gutter: stable;
   }
 
   h1,
@@ -73,6 +75,66 @@
     font-weight: 600;
     opacity: 0.85;
     white-space: nowrap;
+  }
+
+  /* Gabarit commun au bandeau, au contenu et au pied de page : même largeur sur toutes les pages. */
+  .site-shell {
+    width: 100%;
+    max-width: 80rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 40rem) {
+    .site-shell {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  /* Logo et nom de l'application dans le bandeau. */
+  .site-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-height: 52px;
+    border-radius: var(--radius-xl);
+    color: var(--qcm-ink);
+    text-decoration: none;
+  }
+
+  .site-brand .qcm-logo {
+    flex: none;
+    transition: transform 160ms ease-out;
+  }
+
+  .site-brand:hover .qcm-logo {
+    transform: rotate(-4deg) scale(1.04);
+  }
+
+  .site-brand-name {
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .site-brand-tagline {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--qcm-ink-soft);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-brand .qcm-logo {
+      transition: none;
+    }
+
+    .site-brand:hover .qcm-logo {
+      transform: none;
+    }
   }
 
   /* Lien de navigation du bandeau. */

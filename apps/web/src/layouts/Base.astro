@@ -1,12 +1,11 @@
 ---
+import { QcmLogo } from '@qcm/ui'
 import HeaderControls from '../components/HeaderControls.vue'
 import '../styles/global.css'
 
 interface Props {
   title: string
   description?: string
-  /** Pages outils (éditeur, modération) : contenu plus large. */
-  wide?: boolean
   /** Classe ajoutée à <body> (fond décoratif de l'accueil). */
   bodyClass?: string
 }
@@ -14,14 +13,12 @@ interface Props {
 const {
   title,
   description = 'QCM : des questionnaires calmes, sans publicité, sans chronomètre.',
-  wide = false,
   bodyClass = '',
 } = Astro.props
 const links = [
   { href: '/bibliotheque', label: 'Bibliothèque' },
   { href: '/editeur', label: 'Créer un QCM' },
 ]
-const width = wide ? 'max-w-7xl' : 'max-w-6xl'
 ---
 
 <!doctype html>
@@ -46,11 +43,14 @@ const width = wide ? 'max-w-7xl' : 'max-w-6xl'
       Aller au contenu
     </a>
     <header class="top-0 z-40 border-b-[1.5px] border-line-soft bg-bg/85 backdrop-blur-md lg:sticky">
-      <div class:list={['mx-auto flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6', width]}>
-        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <a href="/" class="flex items-center gap-2.5 text-2xl font-extrabold no-underline" aria-label="QCM, accueil">
-            <img src="/favicon.svg" alt="" width="40" height="40" />
-            QCM
+      <div class="site-shell flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2.5">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <a href="/" class="site-brand" aria-label="QCM, accueil">
+            <QcmLogo size={48} />
+            <span class="flex flex-col">
+              <span class="site-brand-name">QCM</span>
+              <span class="site-brand-tagline">Réviser au calme</span>
+            </span>
           </a>
           <nav aria-label="Navigation principale" class="flex flex-wrap items-center gap-1">
             {
@@ -66,15 +66,15 @@ const width = wide ? 'max-w-7xl' : 'max-w-6xl'
       </div>
     </header>
 
-    <main id="contenu" class:list={['mx-auto w-full flex-1 px-4 pt-8 pb-20 sm:px-6', width]}>
+    <main id="contenu" class="site-shell flex-1 pt-8 pb-20">
       <slot />
     </main>
 
     <footer class="border-t-[1.5px] border-line-soft bg-surface/60">
-      <div class:list={['mx-auto flex w-full flex-col gap-6 px-4 py-8 sm:flex-row sm:items-start sm:justify-between sm:px-6', width]}>
+      <div class="site-shell flex flex-col gap-6 py-8 sm:flex-row sm:items-start sm:justify-between">
         <div class="max-w-sm">
-          <p class="flex items-center gap-2 text-lg font-extrabold">
-            <img src="/favicon.svg" alt="" width="28" height="28" />
+          <p class="flex items-center gap-2.5 text-2xl font-extrabold tracking-tight">
+            <QcmLogo size={36} />
             QCM
           </p>
           <p class="mt-2 text-sm text-ink-soft">Des questionnaires calmes pour réviser à son rythme. Logiciel libre, sans publicité et sans pistage.</p>

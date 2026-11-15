@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { QcmFormatError } from '@qcm/core'
-import { QcmPlayer, QcmSoundToggle, QcmThemeToggle } from '@qcm/ui'
+import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmThemeToggle } from '@qcm/ui'
 import {
   loadQcm,
   onOpenFileRequest,
@@ -11,7 +11,6 @@ import {
   takePendingFile,
   type OpenedQcm,
 } from './lib/qcmFile.ts'
-import logoUrl from '../app-icon.svg'
 import { checkForUpdate, installUpdate, type AvailableUpdate } from './lib/updater.ts'
 
 const TIPS = [
@@ -100,9 +99,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex min-h-dvh flex-col bg-bg text-ink">
     <header class="flex items-center justify-between gap-4 px-6 py-4">
-      <p class="truncate text-base font-bold text-ink-soft">
-        {{ view === 'player' && opened ? opened.fileName : 'QCM' }}
-      </p>
+      <div class="flex min-w-0 items-center gap-3">
+        <QcmLogo :size="40" class="flex-none" />
+        <p v-if="view === 'player' && opened" class="truncate text-base font-bold text-ink-soft">{{ opened.fileName }}</p>
+        <p v-else class="text-2xl leading-none font-extrabold tracking-tight">QCM</p>
+      </div>
       <div class="flex items-center gap-3">
         <button v-if="view === 'player'" type="button" class="qcm-block qcm-block-quiet min-h-12 px-4 py-2 text-base" @click="goHome">
           Fermer le QCM
@@ -124,7 +125,7 @@ onBeforeUnmount(() => {
 
       <div v-else-if="view === 'home'" class="flex w-full max-w-2xl flex-col gap-6">
         <section class="qcm-panel flex flex-col items-center gap-6 p-8 text-center sm:p-10">
-          <img :src="logoUrl" alt="" width="88" height="88" />
+          <QcmLogo :size="96" />
           <div>
             <h1 class="text-4xl font-extrabold">Prêt à réviser ?</h1>
             <p class="mt-2 text-lg text-ink-soft">Ouvre un fichier .qcm pour commencer. Tu peux aussi le glisser dans cette fenêtre.</p>

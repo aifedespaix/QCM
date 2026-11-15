@@ -6,6 +6,7 @@ export { default as QcmCompletionScreen } from './components/QcmCompletionScreen
 export { default as QcmPlayer } from './components/QcmPlayer.vue'
 export { default as QcmSoundToggle } from './components/QcmSoundToggle.vue'
 export { default as QcmThemeToggle } from './components/QcmThemeToggle.vue'
+export { default as QcmLogo } from './components/QcmLogo.vue'
 export { useQcmSound, type QcmSound } from './composables/useQcmSound.ts'
 export { useQcmTheme, type QcmTheme } from './composables/useQcmTheme.ts'
 export { useQcmPlayer, type QcmPhase, type QcmPlayerSounds } from './composables/useQcmPlayer.ts'
