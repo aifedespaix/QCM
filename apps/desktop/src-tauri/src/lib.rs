@@ -405,6 +405,48 @@ async fn library_download(app: AppHandle, record_id: String, file_name: String) 
     Ok(path.to_string_lossy().into_owned())
 }
 
+// ---------------------------------------------------------------- Enregistrer sous…
+
+/// Chemin choisi dans « Enregistrer sous » : on ajoute `.qcm` si l'élève l'a effacé.
+pub fn with_qcm_extension(dest: &str) -> PathBuf {
+    let path = PathBuf::from(dest);
+    let has_extension = path
+        .extension()
+        .is_some_and(|ext| ext.to_string_lossy().eq_ignore_ascii_case("qcm"));
+    if has_extension {
+        path
+    } else {
+        let mut name = path.into_os_string();
+        name.push(".qcm");
+        PathBuf::from(name)
+    }
+}
+
+/// Copie un QCM conservé sur l'ordinateur vers l'emplacement choisi par l'élève.
+#[tauri::command(async)]
+fn export_stored_qcm(app: AppHandle, key: String, dest: String) -> Result<(), String> {
+    let source = stored_path(&store_dir(&app)?, &key)?;
+    if !source.exists() {
+        return Err("E_NOT_FOUND".into());
+    }
+    fs::copy(source, with_qcm_extension(&dest)).map(|_| ()).map_err(|_| "E_OPEN".to_string())
+}
+
+/// Télécharge un QCM de la bibliothèque en ligne directement vers l'emplacement choisi.
+#[tauri::command]
+async fn export_library_qcm(record_id: String, file_name: String, dest: String) -> Result<(), String> {
+    let base = library_base_url().ok_or("E_NO_LIBRARY")?;
+    if !is_record_id(&record_id) || !is_remote_file_name(&file_name) {
+        return Err("E_NOT_FOUND".into());
+    }
+    let bytes = fetch_limited(&format!("{base}/api/files/qcms/{record_id}/{file_name}"), MAX_ARCHIVE_BYTES).await?;
+    // Une archive .qcm est un zip : on n'écrit pas autre chose sur le disque de l'élève.
+    if !bytes.starts_with(b"PK") {
+        return Err("E_NOT_ZIP".into());
+    }
+    fs::write(with_qcm_extension(&dest), bytes).map_err(|_| "E_OPEN".to_string())
+}
+
 /// Renvoie (une seule fois) le chemin reçu par double-clic, au lancement ou à chaud.
 #[tauri::command]
 fn take_pending_file(state: State<'_, AppState>) -> Option<String> {
@@ -537,7 +579,9 @@ pub fn run() {
             remove_stored_qcm,
             library_available,
             library_get,
-            library_download
+            library_download,
+            export_stored_qcm,
+            export_library_qcm
         ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de QCM");
@@ -570,6 +614,13 @@ mod tests {
         // Fenêtre 1100×780 sur un écran 1366×768 : ramenée sous la hauteur de l'écran.
         assert!(clamp_to_screen(780.0, 768.0) < 768.0);
         assert_eq!(clamp_to_screen(1100.0, 1920.0), 1100.0);
+    }
+
+    #[test]
+    fn adds_qcm_extension_when_missing() {
+        assert_eq!(with_qcm_extension("C:\\Cours\\fractions"), PathBuf::from("C:\\Cours\\fractions.qcm"));
+        assert_eq!(with_qcm_extension("fractions.QCM"), PathBuf::from("fractions.QCM"));
+        assert_eq!(with_qcm_extension("notes.v2"), PathBuf::from("notes.v2.qcm"));
     }
 
     #[test]

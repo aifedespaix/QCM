@@ -5,12 +5,15 @@ import { QcmFormatError, type QcmHistoryEntry } from '@qcm/core'
 import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmStatsDashboard, QcmThemeToggle, useQcmHistory } from '@qcm/ui'
 import { LibraryError, downloadLibraryQcm, getLibraryRecord, libraryAvailable, type LibraryRecord } from './lib/library.ts'
 import {
+  exportLibraryQcm,
+  exportStoredQcm,
   listStoredQcms,
   loadQcm,
   loadStoredQcm,
   onOpenFileRequest,
   onQcmFileDrop,
   pickQcmFile,
+  pickSaveLocation,
   removeStoredQcm,
   resolveMedia,
   storeQcm,
@@ -43,6 +46,8 @@ let currentKey = ''
 const onlineLibrary = ref(false)
 const downloadingId = ref('')
 const downloadError = ref('')
+/** Confirmation d'un « Enregistrer sous » réussi, affichée sur l'écran de la bibliothèque. */
+const exportNotice = ref('')
 
 const localQcms = computed(() => recents.value.filter((entry) => stored.value.has(entry.key)))
 
@@ -172,6 +177,26 @@ async function removeLocal(entry: QcmHistoryEntry): Promise<void> {
   stored.value = await listStoredQcms()
 }
 
+/**
+ * « Télécharger… » : l'élève choisit où ranger le fichier. Une copie déjà sur l'ordinateur est
+ * recopiée telle quelle, sinon le QCM est téléchargé directement à l'endroit choisi.
+ */
+async function exportQcm(target: { title: string; key?: string; record?: Pick<LibraryRecord, 'id' | 'file'> }): Promise<void> {
+  downloadError.value = ''
+  exportNotice.value = ''
+  try {
+    const dest = await pickSaveLocation(target.title)
+    if (!dest) return
+    const key = target.key ?? localQcms.value.find((entry) => entry.recordId === target.record?.id)?.key
+    if (key) await exportStoredQcm(key, dest)
+    else if (target.record) await exportLibraryQcm(target.record.id, target.record.file, dest)
+    else return
+    exportNotice.value = `« ${target.title} » est enregistré.`
+  } catch {
+    downloadError.value = 'Le fichier n\'a pas pu être enregistré à cet endroit. Choisis un autre dossier, ou vérifie la connexion à Internet.'
+  }
+}
+
 async function clearStats(): Promise<void> {
   const sure = await confirm('Effacer tout le suivi enregistré sur cet ordinateur ?', {
     title: 'Effacer le suivi',
@@ -200,6 +225,7 @@ function closeOverlay(): void {
 
 function go(target: Page): void {
   downloadError.value = ''
+  exportNotice.value = ''
   page.value = target
 }
 
@@ -304,7 +330,10 @@ onBeforeUnmount(() => {
         :local="localQcms"
         :downloading-id="downloadingId"
         :download-error="downloadError"
+        :export-notice="exportNotice"
         @open-record="openRecord"
+        @export-record="exportQcm({ title: $event.title, record: $event })"
+        @export-local="exportQcm({ title: $event.title, key: $event.key })"
         @open-local="openStored"
         @remove-local="removeLocal"
         @choose-file="chooseFile"

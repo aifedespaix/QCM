@@ -1,11 +1,12 @@
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { getCurrentWebview } from '@tauri-apps/api/webview'
-import { open } from '@tauri-apps/plugin-dialog'
+import { open, save } from '@tauri-apps/plugin-dialog'
 import {
   QCM_ERROR_CODES,
   QcmFormatError,
   parseQcmYaml,
+  qcmFileName,
   summarizeQcm,
   type QcmData,
   type QcmErrorCode,
@@ -114,4 +115,23 @@ export async function pickQcmFile(): Promise<string | null> {
     filters: [{ name: 'QCM', extensions: ['qcm'] }],
   })
   return typeof selected === 'string' ? selected : null
+}
+
+/** Boîte de dialogue native « Enregistrer sous » : nom proposé = titre du QCM. `null` si annulée. */
+export async function pickSaveLocation(title: string): Promise<string | null> {
+  return save({
+    title: 'Enregistrer le QCM',
+    defaultPath: qcmFileName(title),
+    filters: [{ name: 'QCM', extensions: ['qcm'] }],
+  })
+}
+
+/** Copie un QCM conservé sur l'ordinateur vers `dest`. */
+export function exportStoredQcm(key: string, dest: string): Promise<void> {
+  return invoke('export_stored_qcm', { key, dest })
+}
+
+/** Télécharge un QCM de la bibliothèque en ligne vers `dest`. */
+export function exportLibraryQcm(recordId: string, fileName: string, dest: string): Promise<void> {
+  return invoke('export_library_qcm', { recordId, fileName, dest })
 }

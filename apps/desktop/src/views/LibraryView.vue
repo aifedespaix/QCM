@@ -11,11 +11,15 @@ const props = defineProps<{
   downloadingId: string
   /** Message à afficher après un téléchargement qui n'a pas abouti. */
   downloadError: string
+  /** Confirmation après un « Télécharger… » réussi. */
+  exportNotice: string
 }>()
 
 const emit = defineEmits<{
   openRecord: [record: LibraryRecord]
   openLocal: [key: string]
+  exportRecord: [record: LibraryRecord]
+  exportLocal: [entry: QcmHistoryEntry]
   removeLocal: [entry: QcmHistoryEntry]
   chooseFile: []
 }>()
@@ -164,6 +168,7 @@ onBeforeUnmount(() => {
     </form>
 
     <p v-if="downloadError" role="alert" class="qcm-note qcm-note-retry">{{ downloadError }}</p>
+    <p v-else-if="exportNotice" role="status" class="qcm-note qcm-note-correct font-bold">✓ {{ exportNotice }}</p>
 
     <!-- Pas de réponse de la bibliothèque en ligne : on le dit calmement, et on montre ce qui est disponible. -->
     <div v-if="tab === 'online' && online === 'offline'" role="status" class="qcm-note qcm-note-info flex flex-wrap items-center justify-between gap-3">
@@ -197,6 +202,9 @@ onBeforeUnmount(() => {
           <p class="mt-auto pt-1 text-sm font-bold text-ink-soft">{{ countLabel(entry.questionCount) }} · ouvert {{ formatRelativeDay(entry.openedAt) }}</p>
           <div class="flex items-center gap-2">
             <button type="button" class="qcm-block qcm-block-primary qcm-block-sm flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
+<button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+            </button>
             <button type="button" class="qcm-text-button underline" :aria-label="`Retirer ${entry.title} de cet ordinateur`" @click="emit('removeLocal', entry)">Retirer</button>
           </div>
         </li>
@@ -234,15 +242,20 @@ onBeforeUnmount(() => {
             <span v-if="item.has_images">Avec images</span>
             <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
           </p>
-          <button
-            type="button"
-            class="qcm-block qcm-block-primary qcm-block-sm"
-            :disabled="downloadingId !== ''"
-            :aria-label="`Ouvrir ${item.title}`"
-            @click="emit('openRecord', item)"
-          >
-            {{ downloadingId === item.id ? 'Téléchargement…' : 'Ouvrir' }}
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="qcm-block qcm-block-primary qcm-block-sm flex-1"
+              :disabled="downloadingId !== ''"
+              :aria-label="`Ouvrir ${item.title}`"
+              @click="emit('openRecord', item)"
+            >
+              {{ downloadingId === item.id ? 'Téléchargement…' : 'Ouvrir' }}
+            </button>
+            <button type="button" class="qcm-icon-button flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+            </button>
+          </div>
         </li>
       </ul>
       <button v-if="page < totalPages" type="button" class="qcm-block qcm-block-quiet qcm-block-sm self-center px-8" :disabled="loadingMore" @click="load(true)">

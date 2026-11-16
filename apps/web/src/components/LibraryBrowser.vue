@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
 import { downloadQcm, listQcms, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
+import UiIcon from './UiIcon.vue'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 
 const STATUS_CHIPS: Record<QcmRecord['status'], { label: string; tone: string }> = {
@@ -28,6 +29,34 @@ const totalItems = ref(0)
 const state = ref<'loading' | 'ready' | 'error'>('loading')
 const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level))
 let debounce: ReturnType<typeof setTimeout> | undefined
+
+const SORT_LABELS: Record<QcmSort, string> = { recent: 'Les plus récents', rating: 'Les mieux notés', title: 'Titre (A à Z)' }
+/** Téléphone : le panneau de filtres (matière, niveau, tri) est replié dans la barre du bas. */
+const sheetOpen = ref(false)
+/** Filtres choisis dans le panneau (la recherche est toujours visible, elle ne compte pas). */
+const activeFilters = computed(() =>
+  [
+    filters.subject ? SUBJECT_LABELS[filters.subject] : '',
+    filters.level ? LEVEL_LABELS[filters.level] : '',
+    filters.sort !== 'recent' ? SORT_LABELS[filters.sort] : '',
+  ].filter(Boolean),
+)
+const resultLabel = computed(() =>
+  state.value !== 'ready' ? 'Voir les résultats' : totalItems.value === 0 ? 'Aucun QCM' : totalItems.value === 1 ? 'Voir 1 QCM' : `Voir ${totalItems.value} QCM`,
+)
+
+/** Lance la recherche tout de suite, replie le panneau et range le clavier. */
+function submit(): void {
+  clearTimeout(debounce)
+  page.value = 1
+  void load()
+  sheetOpen.value = false
+  if (document.activeElement instanceof HTMLElement && document.activeElement.closest('[data-search-dock]')) document.activeElement.blur()
+}
+
+function onEscape(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && sheetOpen.value) sheetOpen.value = false
+}
 
 async function load(): Promise<void> {
   state.value = 'loading'
@@ -79,12 +108,16 @@ watch(
   },
 )
 
-onMounted(load)
+onMounted(() => {
+  window.addEventListener('keydown', onEscape)
+  void load()
+})
+onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
-    <form class="qcm-panel grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 sm:p-5 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="load">
+    <form class="qcm-panel hidden grid-cols-1 gap-4 p-4 sm:grid sm:grid-cols-3 sm:p-5 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="submit">
       <div class="sm:col-span-3 lg:col-span-1">
         <label class="qcm-label" for="lib-search">Rechercher</label>
         <input id="lib-search" v-model="filters.search" class="qcm-field" type="search" placeholder="Un titre, un chapitre, un mot…" />
@@ -112,6 +145,79 @@ onMounted(load)
         </select>
       </div>
     </form>
+
+
+    <!--
+      Téléphone : recherche et filtres dans une barre fixée en bas, juste au-dessus des onglets du site.
+      Repliée : le champ de recherche + un bouton « Filtres » (pastille = nombre de filtres actifs).
+      Dépliée : matière, niveau, tri, puis « Voir N QCM » qui lance la recherche et replie le panneau.
+    -->
+    <div class="sm:hidden" data-search-dock>
+      <div v-if="sheetOpen" class="fixed inset-0 z-30 bg-ink/40" aria-hidden="true" @click="sheetOpen = false" />
+      <form
+        class="fixed inset-x-0 z-40 flex flex-col gap-3 rounded-t-3xl border-t-2 border-line bg-surface px-4 py-3 shadow-soft"
+        style="bottom: var(--site-tabbar)"
+        role="search"
+        aria-label="Rechercher dans la bibliothèque"
+        @submit.prevent="submit"
+      >
+        <div id="lib-sheet" v-show="sheetOpen" class="flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-extrabold">Filtres</h2>
+            <button type="button" class="qcm-text-button" :disabled="activeFilters.length === 0" @click="Object.assign(filters, { subject: '', level: '', sort: 'recent' })">Effacer</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="qcm-label" for="lib-m-subject">Matière</label>
+              <select id="lib-m-subject" v-model="filters.subject" class="qcm-field">
+                <option value="">Toutes</option>
+                <option v-for="subject in SUBJECTS" :key="subject" :value="subject">{{ SUBJECT_LABELS[subject] }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="qcm-label" for="lib-m-level">Niveau</label>
+              <select id="lib-m-level" v-model="filters.level" class="qcm-field">
+                <option value="">Tous</option>
+                <option v-for="level in LEVELS" :key="level" :value="level">{{ LEVEL_LABELS[level] }}</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="qcm-label" for="lib-m-sort">Trier par</label>
+            <select id="lib-m-sort" v-model="filters.sort" class="qcm-field">
+              <option v-for="(label, value) in SORT_LABELS" :key="value" :value="value">{{ label }}</option>
+            </select>
+          </div>
+          <button type="submit" class="qcm-block qcm-block-primary justify-center">{{ resultLabel }}</button>
+        </div>
+
+        <!-- Filtres actifs, lisibles sans ouvrir le panneau. -->
+        <p v-if="!sheetOpen && activeFilters.length > 0" class="flex items-center gap-2 text-sm font-bold text-ink-soft">
+          <span class="min-w-0 flex-1 truncate">{{ activeFilters.join(' · ') }}</span>
+          <button type="button" class="qcm-text-button min-h-9" @click="Object.assign(filters, { subject: '', level: '', sort: 'recent' })">Effacer</button>
+        </p>
+
+        <div class="flex items-center gap-2">
+          <div class="relative min-w-0 flex-1">
+            <UiIcon name="search" class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-soft" />
+            <label class="sr-only" for="lib-m-search">Rechercher</label>
+            <input id="lib-m-search" v-model="filters.search" class="qcm-field pl-11" type="search" enterkeyhint="search" placeholder="Titre, chapitre, mot…" />
+          </div>
+          <button
+            type="button"
+            class="qcm-icon-button relative flex-none"
+            :class="sheetOpen ? 'bg-selected' : ''"
+            :aria-expanded="sheetOpen"
+            aria-controls="lib-sheet"
+            :aria-label="activeFilters.length > 0 ? `Filtres, ${activeFilters.length} actif${activeFilters.length > 1 ? 's' : ''}` : 'Filtres'"
+            @click="sheetOpen = !sheetOpen"
+          >
+            <UiIcon :name="sheetOpen ? 'close' : 'sliders'" />
+            <span v-if="activeFilters.length > 0 && !sheetOpen" class="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border-2 border-line bg-primary text-xs font-extrabold" aria-hidden="true">{{ activeFilters.length }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
 
     <div v-if="user" role="radiogroup" aria-label="QCM affichés" class="inline-flex gap-1 self-start rounded-2xl bg-sunken p-1">
       <button
@@ -193,5 +299,7 @@ onMounted(load)
         <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="page >= totalPages" @click="goTo(page + 1)">Suivante →</button>
       </nav>
     </template>
+    <!-- Place pour la barre de recherche fixée en bas (téléphone). -->
+    <div class="h-24 sm:hidden" aria-hidden="true" />
   </div>
 </template>
