@@ -887,28 +887,28 @@ onBeforeUnmount(() => {
           <p v-else-if="notice" role="status" class="qcm-note qcm-note-correct text-lg">{{ notice }}</p>
 
           <div class="grid gap-4 md:grid-cols-3">
-            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
+            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4 max-md:order-1">
               <h3 class="text-lg font-extrabold">Essayer</h3>
               <p class="flex-1 text-sm font-medium text-ink-soft">Joue le QCM comme le verra l'élève, avant de le partager.</p>
               <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="!allReady" @click="showPreview">Essayer le QCM</button>
             </div>
-            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line bg-selected p-4 shadow-block-sm">
+            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4 max-md:order-3 md:border-line md:bg-selected md:shadow-block-sm">
               <h3 class="text-lg font-extrabold">Enregistrer</h3>
               <p class="flex-1 text-sm font-medium text-ink-soft">Un fichier .qcm à ouvrir avec le lecteur Windows. Sans compte.</p>
-              <button type="button" class="qcm-block qcm-block-primary w-full text-lg" :disabled="!allReady" @click="exportFile">Enregistrer le fichier</button>
+              <button type="button" class="qcm-block qcm-block-quiet w-full md:bg-primary md:text-lg md:font-bold" :disabled="!allReady" @click="exportFile">Enregistrer le fichier</button>
             </div>
-            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
+            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line bg-selected p-4 shadow-block-sm max-md:order-2">
               <h3 class="text-lg font-extrabold">{{ ownsSource ? 'Mettre à jour' : 'Publier' }}</h3>
               <p class="flex-1 text-sm font-medium text-ink-soft">
                 <template v-if="!user">La publication demande une connexion avec Google.</template>
-                <template v-else-if="ownsSource">Remplace ton QCM dans la bibliothèque. Il est relu avant de redevenir visible.</template>
-                <template v-else-if="source">Publie ta copie à ton nom. Elle est relue avant d'apparaître.</template>
-                <template v-else>Propose ton QCM à la bibliothèque. Il est relu avant d'apparaître.</template>
+                <template v-else-if="ownsSource">Remplace ton QCM dans la bibliothèque. {{ user?.admin ? 'Il est visible tout de suite.' : 'Il est relu avant de redevenir visible.' }}</template>
+                <template v-else-if="source">Publie ta copie à ton nom. {{ user?.admin ? 'Elle est visible tout de suite.' : 'Elle est relue avant d\'apparaître.' }}</template>
+                <template v-else>Propose ton QCM à la bibliothèque. {{ user?.admin ? 'Il est visible tout de suite.' : 'Il est relu avant d\'apparaître.' }}</template>
               </p>
-              <button v-if="user" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="!allReady || busy" @click="publish">
+              <button v-if="user" type="button" class="qcm-block qcm-block-primary w-full text-lg" :disabled="!allReady || busy" @click="publish">
                 {{ busy ? 'Envoi…' : ownsSource ? 'Mettre à jour mon QCM' : source ? 'Publier ma copie' : 'Publier dans la bibliothèque' }}
               </button>
-              <button v-else type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="login">Se connecter</button>
+              <button v-else type="button" class="qcm-block qcm-block-primary w-full text-lg" @click="login">Se connecter</button>
             </div>
           </div>
 
