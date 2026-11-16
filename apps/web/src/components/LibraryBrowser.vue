@@ -285,9 +285,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
               <span v-if="item.has_images">Avec images</span>
               <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
             </p>
-            <div class="relative z-10 grid gap-2" :class="mineActive ? 'grid-cols-2' : ''">
-              <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-block qcm-block-primary qcm-block-sm no-underline" :aria-label="`Modifier ${item.title}`">Modifier</a>
-              <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm justify-center" :aria-label="`Télécharger ${item.title}`" @click="downloadQcm(item)">Télécharger</button>
+            <div class="relative z-10 flex items-center gap-2">
+              <a :href="`/qcm?id=${item.id}`" class="qcm-block qcm-block-primary qcm-block-sm flex-1 justify-center no-underline" :aria-label="`Voir ${item.title}`">Voir</a>
+              <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-block qcm-block-quiet qcm-block-sm justify-center no-underline" :aria-label="`Modifier ${item.title}`">Modifier</a>
+              <button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${item.title}`" title="Télécharger" @click="downloadQcm(item)">
+                <UiIcon name="download" />
+              </button>
             </div>
           </div>
         </li>
