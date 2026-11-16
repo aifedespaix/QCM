@@ -23,7 +23,8 @@ use std::{
 
 use percent_encoding::percent_decode_str;
 use serde::Serialize;
-use tauri::{http, AppHandle, Emitter, Manager, State};
+use tauri::{http, AppHandle, Emitter, Manager, State, WebviewWindowBuilder};
+use tauri_plugin_window_state::StateFlags;
 use zip::ZipArchive;
 
 /// Évènement envoyé au frontend quand un fichier attend d'être ouvert (`take_pending_file`).
@@ -418,6 +419,57 @@ fn focus_main_window(app: &AppHandle) {
     }
 }
 
+/// Écran « confortable » : au-dessus, la fenêtre s'ouvre à sa taille par défaut ; en dessous
+/// (ordinateur portable 1366×768 par exemple), elle s'ouvre agrandie pour remplir la zone utile.
+const COMFORT_WIDTH: f64 = 1500.0;
+const COMFORT_HEIGHT: f64 = 900.0;
+/// Part maximale de l'écran qu'une fenêtre non agrandie peut occuper (barre des tâches, titre).
+const MAX_SCREEN_SHARE: f64 = 0.92;
+
+/// `true` si l'écran (en pixels logiques) est trop petit pour la taille par défaut de la fenêtre.
+pub fn is_small_screen(width: f64, height: f64) -> bool {
+    width < COMFORT_WIDTH || height < COMFORT_HEIGHT
+}
+
+/// Ramène `size` dans `limit` (même unité), en gardant la place d'une barre des tâches.
+pub fn clamp_to_screen(size: f64, limit: f64) -> f64 {
+    size.min(limit * MAX_SCREEN_SHARE)
+}
+
+/// Crée la fenêtre principale. La taille et la position de la dernière fois sont rétablies par
+/// `tauri-plugin-window-state` à la création ; au tout premier lancement, ou si l'écran a changé
+/// depuis (portable branché sur un projecteur…), on s'assure que la fenêtre tient dans l'écran.
+fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
+    let config = app.config().app.windows.first().cloned().expect("fenêtre principale dans tauri.conf.json");
+    let mut builder = WebviewWindowBuilder::from_config(app, &config)?;
+
+    let monitor = app.primary_monitor().ok().flatten();
+    if let Some(monitor) = &monitor {
+        let scale = monitor.scale_factor();
+        let (width, height) = (monitor.size().width as f64 / scale, monitor.size().height as f64 / scale);
+        if is_small_screen(width, height) {
+            builder = builder.maximized(true);
+        }
+    }
+    let window = builder.build()?;
+
+    if !window.is_maximized().unwrap_or(false) {
+        if let Ok(Some(monitor)) = window.current_monitor() {
+            let scale = monitor.scale_factor();
+            let (screen_w, screen_h) = (monitor.size().width as f64 / scale, monitor.size().height as f64 / scale);
+            if let Ok(size) = window.outer_size() {
+                let (width, height) = (size.width as f64 / scale, size.height as f64 / scale);
+                let (fit_w, fit_h) = (clamp_to_screen(width, screen_w), clamp_to_screen(height, screen_h));
+                if fit_w < width || fit_h < height {
+                    let _ = window.set_size(tauri::LogicalSize::new(fit_w, fit_h));
+                    let _ = window.center();
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Sert `qcm://localhost/media/x.webp` (Windows : `http://qcm.localhost/media/x.webp`).
 fn serve_media(app: &AppHandle, request: &http::Request<Vec<u8>>) -> http::Response<Vec<u8>> {
     let raw = request.uri().path().trim_start_matches('/');
@@ -454,11 +506,18 @@ pub fn run() {
         // Mise à jour : téléchargée et installée seulement quand l'élève clique sur « Mettre à jour ».
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        // Taille, position et état « agrandi » de la fenêtre : retrouvés à l'ouverture suivante.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
+                .build(),
+        )
         .manage(AppState::default())
         .register_uri_scheme_protocol("qcm", |context, request| {
             serve_media(context.app_handle(), &request)
         })
         .setup(|app| {
+            create_main_window(app)?;
             // Démarrage à froid : Windows lance `QCM.exe "C:\...\fichier.qcm"` au double-clic.
             let cwd = std::env::current_dir().ok();
             if let Some(path) = qcm_path_from_args(std::env::args(), cwd.as_deref()) {
@@ -501,6 +560,16 @@ mod tests {
         }
         writer.finish().unwrap();
         path
+    }
+
+    #[test]
+    fn small_screens_open_maximized_and_windows_fit() {
+        assert!(is_small_screen(1366.0, 768.0));
+        assert!(is_small_screen(1920.0, 880.0));
+        assert!(!is_small_screen(1920.0, 1080.0));
+        // Fenêtre 1100×780 sur un écran 1366×768 : ramenée sous la hauteur de l'écran.
+        assert!(clamp_to_screen(780.0, 768.0) < 768.0);
+        assert_eq!(clamp_to_screen(1100.0, 1920.0), 1100.0);
     }
 
     #[test]

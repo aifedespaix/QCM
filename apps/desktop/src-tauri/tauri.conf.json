@@ -13,11 +13,12 @@
     "windows": [
       {
         "label": "main",
+        "create": false,
         "title": "QCM",
         "width": 1100,
         "height": 780,
-        "minWidth": 720,
-        "minHeight": 560,
+        "minWidth": 640,
+        "minHeight": 480,
         "center": true,
         "resizable": true,
         "dragDropEnabled": true

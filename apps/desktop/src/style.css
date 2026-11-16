@@ -9,6 +9,15 @@ body {
   user-select: none;
 }
 
+/*
+ * Échelle selon la hauteur de la fenêtre : toute l'interface est en rem, donc sur un écran bas
+ * (1366×768 : ~680 px utiles) tout rétrécit d'un cran et rien ne dépasse. 18 px dès ~770 px de haut,
+ * jamais en dessous de 14 px.
+ */
+html {
+  font-size: clamp(14px, 2.35dvh, 18px);
+}
+
 /* Écran d'accueil : grandes taches pastel, immobiles. */
 .home-glow {
   background:
