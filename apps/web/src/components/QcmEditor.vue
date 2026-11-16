@@ -32,9 +32,11 @@ import {
   removeQuestion,
   removeQuestionImage,
   resetDraft,
+  restoreDraft,
   setQuestionImage,
   type DraftQuestion,
 } from '../lib/editorDraft.ts'
+import { clearStoredDraft, loadStoredDraft, saveStoredDraft } from '../lib/draftStore.ts'
 import { fetchQcmArchive, getQcm, publishQcm, saveQcmLocally, updateQcm, useAuth } from '../lib/pb.ts'
 
 const LETTERS = ['A', 'B', 'C', 'D'] as const
@@ -76,11 +78,20 @@ const toast = ref('')
 const successBox = ref<HTMLElement | null>(null)
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 
-/** Confirme visiblement qu'un enregistrement ou une publication a réussi. */
-function confirmSuccess(message: string): void {
+function showToast(message: string): void {
   toast.value = message
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => (toast.value = ''), 5000)
+}
+
+/** Confirme visiblement qu'un enregistrement ou une publication a réussi. */
+function confirmSuccess(message: string): void {
+  showToast(message)
+  // Le travail est à l'abri (fichier ou bibliothèque) : le brouillon local n'a plus de raison d'être.
+  void clearStoredDraft(draftKey.value)
+  clearTimeout(autosaveTimer)
+  localDirty.value = false
+  lastSaved.value = null
   void nextTick(() => {
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     successBox.value?.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
@@ -90,6 +101,82 @@ const publishedId = ref('')
 const busy = ref(false)
 /** `true` juste après un enregistrement ou une publication : quitter la page ne perd rien. */
 const saved = ref(false)
+
+/**
+ * Brouillon gardé dans le navigateur : enregistré automatiquement après chaque pause de frappe,
+ * ou tout de suite avec la barre « Enregistrer » (ou Ctrl+S). Une entrée par QCM ouvert.
+ */
+const lastSaved = ref<number | null>(null)
+/** `true` tant que les dernières modifications ne sont pas dans le stockage du navigateur. */
+const localDirty = ref(false)
+/** Date du brouillon retrouvé à l'ouverture, tant qu'on n'y a pas touché. */
+const restoredAt = ref<number | null>(null)
+const draftKey = computed(() => (source.value ? `qcm:${source.value.id}` : 'new'))
+const draftEmpty = computed(() => isDraftEmpty(draft))
+let autosaveTimer: ReturnType<typeof setTimeout> | undefined
+
+const timeFormat = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' })
+const dayFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+
+const saveStatus = computed(() => {
+  if (localDirty.value) return 'Modifications pas encore enregistrées'
+  if (lastSaved.value) return `Brouillon enregistré à ${timeFormat.format(lastSaved.value)}`
+  return 'Brouillon vide'
+})
+
+async function saveDraftNow(manual: boolean): Promise<void> {
+  clearTimeout(autosaveTimer)
+  if (draftEmpty.value) return
+  const savedAt = await saveStoredDraft(draftKey.value, draft)
+  if (savedAt === null) {
+    if (manual) problems.value = ['Ce navigateur ne permet pas de garder un brouillon. Enregistre le fichier à la dernière étape.']
+    return
+  }
+  lastSaved.value = savedAt
+  localDirty.value = false
+  if (manual) showToast('Brouillon enregistré')
+}
+
+function scheduleAutosave(): void {
+  clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => void saveDraftNow(false), 1200)
+}
+
+/** Reprend le brouillon enregistré pour `key` s'il existe. */
+async function restoreStored(key: string): Promise<boolean> {
+  const stored = await loadStoredDraft(key)
+  if (!stored) return false
+  restoreDraft(draft, stored.data)
+  current.value = 0
+  lastSaved.value = stored.savedAt
+  await nextTick()
+  // Le watcher du brouillon vient de passer : la restauration n'est pas une modification.
+  clearTimeout(autosaveTimer)
+  localDirty.value = false
+  saved.value = true
+  restoredAt.value = stored.savedAt
+  return true
+}
+
+/** Abandonne le brouillon retrouvé : repart de zéro, ou recharge le QCM de la bibliothèque. */
+async function discardRestored(): Promise<void> {
+  if (!window.confirm('Supprimer ce brouillon ? Tes modifications non enregistrées dans un fichier seront perdues.')) return
+  const key = draftKey.value
+  const id = source.value?.id
+  await clearStoredDraft(key)
+  lastSaved.value = null
+  localDirty.value = false
+  restoredAt.value = null
+  if (id) await loadSource(id, false)
+  else startNew(true)
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+    event.preventDefault()
+    void saveDraftNow(true)
+  }
+}
 
 const pastedText = ref('')
 const importProblems = ref<string[]>([])
@@ -316,8 +403,13 @@ async function publish(): Promise<void> {
 }
 
 /** Repart d'un QCM vierge (la signature est gardée) et ramène à la première étape. */
-function startNew(): void {
-  if (!saved.value && !isDraftEmpty(draft) && !window.confirm('Ce QCM n\'est pas enregistré. Le remplacer par un nouveau QCM vide ?')) return
+function startNew(force = false): void {
+  if (!force && !saved.value && !isDraftEmpty(draft) && !window.confirm('Ce QCM n\'est pas enregistré. Le remplacer par un nouveau QCM vide ?')) return
+  void clearStoredDraft(draftKey.value)
+  clearTimeout(autosaveTimer)
+  localDirty.value = false
+  lastSaved.value = null
+  restoredAt.value = null
   resetDraft(draft)
   source.value = null
   sourceState.value = 'none'
@@ -339,14 +431,24 @@ function login(): void {
   })
 }
 
-watch(draft, () => (saved.value = false), { deep: true })
+watch(
+  draft,
+  () => {
+    saved.value = false
+    localDirty.value = true
+    restoredAt.value = null
+    scheduleAutosave()
+  },
+  { deep: true },
+)
 
 function onBeforeUnload(event: BeforeUnloadEvent): void {
-  if (!saved.value && !isDraftEmpty(draft)) event.preventDefault()
+  // Le brouillon est gardé tout seul : on ne prévient que si cette garde a échoué.
+  if (!saved.value && localDirty.value && !isDraftEmpty(draft)) event.preventDefault()
 }
 
 /** `/editeur?id=…` : charge le QCM de la bibliothèque dans l'éditeur. */
-async function loadSource(id: string): Promise<void> {
+async function loadSource(id: string, withDraft = true): Promise<void> {
   sourceState.value = 'loading'
   try {
     const record = await getQcm(id)
@@ -357,7 +459,12 @@ async function loadSource(id: string): Promise<void> {
     sourceState.value = 'none'
     current.value = 0
     goStep('meta')
-    void nextTick(() => (saved.value = true))
+    void nextTick(() => {
+      saved.value = true
+      localDirty.value = false
+    })
+    // Des modifications non terminées sur ce QCM ? On les reprend à la place de la version publiée.
+    if (withDraft) await restoreStored(`qcm:${id}`)
   } catch {
     sourceState.value = 'error'
   }
@@ -365,12 +472,16 @@ async function loadSource(id: string): Promise<void> {
 
 onMounted(() => {
   window.addEventListener('beforeunload', onBeforeUnload)
+  window.addEventListener('keydown', onKeydown)
   const id = new URLSearchParams(window.location.search).get('id')
   if (id) void loadSource(id)
+  else void restoreStored('new').then((found) => found && goStep('meta'))
 })
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', onBeforeUnload)
+  window.removeEventListener('keydown', onKeydown)
   clearTimeout(toastTimer)
+  clearTimeout(autosaveTimer)
 })
 </script>
 
@@ -394,6 +505,25 @@ onBeforeUnmount(() => {
       </Transition>
     </Teleport>
     <div class="flex min-w-0 flex-col gap-5">
+      <!-- Barre fixe : enregistre le brouillon à tout moment, même incomplet. -->
+      <div
+        v-if="!draftEmpty"
+        class="qcm-panel sticky top-[calc(var(--site-header)+0.5rem)] z-30 flex items-center justify-between gap-3 py-2 pr-2 pl-4 sm:pl-5"
+      >
+        <p role="status" aria-live="polite" class="flex min-w-0 items-center gap-2 text-sm font-semibold text-ink-soft">
+          <span class="size-2.5 flex-none rounded-full" :class="localDirty ? 'bg-primary' : 'bg-correct'" aria-hidden="true" />
+          <span class="truncate">{{ saveStatus }}</span>
+        </p>
+        <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm flex-none" :disabled="!localDirty" @click="saveDraftNow(true)">
+          Enregistrer
+        </button>
+      </div>
+      <p v-if="restoredAt" role="status" class="qcm-note qcm-note-info flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <span>Brouillon retrouvé, enregistré le {{ dayFormat.format(restoredAt) }}.</span>
+        <button type="button" class="qcm-text-button underline" @click="discardRestored">
+          {{ source ? 'Revenir à la version de la bibliothèque' : 'Repartir de zéro' }}
+        </button>
+      </p>
       <p v-if="sourceState === 'error'" role="alert" class="qcm-note qcm-note-retry">
         Ce QCM n'a pas pu être chargé. Il a peut-être été retiré. Tu peux en créer un nouveau ci-dessous.
       </p>
@@ -734,10 +864,10 @@ onBeforeUnmount(() => {
               <p class="flex-1 text-sm font-medium text-ink-soft">Joue le QCM comme le verra l'élève, avant de le partager.</p>
               <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="!allReady" @click="showPreview">Essayer le QCM</button>
             </div>
-            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
+            <div class="flex flex-col gap-3 rounded-2xl border-2 border-line bg-selected p-4 shadow-block-sm">
               <h3 class="text-lg font-extrabold">Enregistrer</h3>
               <p class="flex-1 text-sm font-medium text-ink-soft">Un fichier .qcm à ouvrir avec le lecteur Windows. Sans compte.</p>
-              <button type="button" class="qcm-block qcm-block-primary qcm-block-sm" :disabled="!allReady" @click="exportFile">Enregistrer le fichier</button>
+              <button type="button" class="qcm-block qcm-block-primary w-full text-lg" :disabled="!allReady" @click="exportFile">Enregistrer le fichier</button>
             </div>
             <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
               <h3 class="text-lg font-extrabold">{{ ownsSource ? 'Mettre à jour' : 'Publier' }}</h3>

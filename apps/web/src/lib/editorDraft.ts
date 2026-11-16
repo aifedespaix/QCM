@@ -16,6 +16,9 @@ import {
   type Subject,
 } from '@qcm/core'
 
+/** Forme sérialisable du brouillon (identique à `StoredDraft['data']`). */
+export type StoredDraftData = import('./draftStore.ts').StoredDraft['data']
+
 export interface DraftImage {
   /** Chemin dans l'archive : `media/xxx.webp`. */
   path: string
@@ -220,6 +223,24 @@ export function loadArchiveIntoDraft(draft: Draft, archive: QcmArchive): void {
       image: question.image && bytes ? { path: question.image, bytes, url: blobUrl(bytes) } : null,
     }
   })
+}
+
+/** Remplace le brouillon par un brouillon enregistré dans le navigateur (voir `draftStore.ts`). */
+export function restoreDraft(draft: Draft, stored: StoredDraftData): void {
+  for (const question of draft.questions) {
+    if (question.image) URL.revokeObjectURL(question.image.url)
+  }
+  const { questions, ...fields } = stored
+  Object.assign(draft, fields)
+  draft.questions = questions.map((question) => ({
+    key: nextKey++,
+    prompt: question.prompt,
+    choices: question.choices.map((choice) => ({ text: choice.text })),
+    correctIndex: question.correctIndex,
+    hint: question.hint,
+    explanation: question.explanation,
+    image: question.image ? { path: question.image.path, bytes: question.image.bytes, url: blobUrl(question.image.bytes) } : null,
+  }))
 }
 
 /** Table `chemin → URL blob:` pour l'aperçu `QcmPlayer` dans l'éditeur. */
