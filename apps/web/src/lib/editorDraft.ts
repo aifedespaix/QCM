@@ -76,6 +76,18 @@ export function createDraft(): Draft {
   })
 }
 
+/**
+ * Vide le brouillon pour en commencer un nouveau. Les images de l'ancien sont libérées ;
+ * `keepAuthor` garde la signature, pour enchaîner plusieurs QCM sans la retaper.
+ */
+export function resetDraft(draft: Draft, keepAuthor = true): void {
+  for (const question of draft.questions) {
+    if (question.image) URL.revokeObjectURL(question.image.url)
+  }
+  const author = keepAuthor ? draft.author : ''
+  Object.assign(draft, { title: '', subject: 'maths', level: '6e', chapter: '', author, description: '', questions: [emptyQuestion()] })
+}
+
 /** Ajoute une question vide à la fin et renvoie son index (ou `-1` si la limite est atteinte). */
 export function addQuestion(draft: Draft): number {
   if (draft.questions.length >= LIMITS.maxQuestions) return -1

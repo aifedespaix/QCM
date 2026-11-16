@@ -31,6 +31,7 @@ import {
   removeChoice,
   removeQuestion,
   removeQuestionImage,
+  resetDraft,
   setQuestionImage,
   type DraftQuestion,
 } from '../lib/editorDraft.ts'
@@ -295,6 +296,24 @@ async function publish(): Promise<void> {
   } finally {
     busy.value = false
   }
+}
+
+/** Repart d'un QCM vierge (la signature est gardée) et ramène à la première étape. */
+function startNew(): void {
+  if (!saved.value && !isDraftEmpty(draft) && !window.confirm('Ce QCM n\'est pas enregistré. Le remplacer par un nouveau QCM vide ?')) return
+  resetDraft(draft)
+  source.value = null
+  sourceState.value = 'none'
+  publishedId.value = ''
+  pastedText.value = ''
+  importProblems.value = []
+  preview.value = null
+  startMode.value = 'blank'
+  current.value = 0
+  // L'adresse `?id=…` ne doit plus ramener à l'ancien QCM si la page est rechargée.
+  if (window.location.search) window.history.replaceState(null, '', window.location.pathname)
+  goStep('start')
+  void nextTick(() => (saved.value = true))
 }
 
 function login(): void {
@@ -670,10 +689,16 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
               <li v-for="problem in problems" :key="problem">{{ problem }}</li>
             </ul>
           </div>
-          <p v-if="notice" role="status" class="qcm-note qcm-note-correct text-lg">
-            {{ notice }}
-            <a v-if="publishedId" :href="`/qcm?id=${publishedId}`" class="underline">Voir la fiche</a>
-          </p>
+          <!-- Succès : le QCM est enregistré ou publié, on propose la suite. -->
+          <div v-if="notice && saved" role="status" class="qcm-note qcm-note-correct flex flex-col gap-4">
+            <p class="text-lg font-extrabold">{{ notice }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+              <button type="button" class="qcm-block qcm-block-primary" @click="startNew">+ Créer un nouveau QCM</button>
+              <a v-if="publishedId" :href="`/qcm?id=${publishedId}`" class="qcm-block qcm-block-quiet qcm-block-sm">Voir la fiche</a>
+              <a href="/bibliotheque" class="qcm-text-button underline">Aller à la bibliothèque</a>
+            </div>
+          </div>
+          <p v-else-if="notice" role="status" class="qcm-note qcm-note-correct text-lg">{{ notice }}</p>
 
           <div class="grid gap-4 md:grid-cols-3">
             <div class="flex flex-col gap-3 rounded-2xl border-2 border-line-soft bg-bg p-4">
