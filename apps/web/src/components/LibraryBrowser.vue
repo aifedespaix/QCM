@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
-import { listQcms, qcmDownloadUrl, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
+import { downloadQcm, listQcms, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 
 const STATUS_CHIPS: Record<QcmRecord['status'], { label: string; tone: string }> = {
@@ -181,7 +181,7 @@ onMounted(load)
             </p>
             <div class="relative z-10 grid gap-2" :class="mineActive ? 'grid-cols-2' : ''">
               <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-block qcm-block-primary qcm-block-sm no-underline" :aria-label="`Modifier ${item.title}`">Modifier</a>
-              <a :href="qcmDownloadUrl(item)" class="qcm-block qcm-block-quiet qcm-block-sm no-underline" :aria-label="`Télécharger ${item.title}`">Télécharger</a>
+              <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm justify-center" :aria-label="`Télécharger ${item.title}`" @click="downloadQcm(item)">Télécharger</button>
             </div>
           </div>
         </li>

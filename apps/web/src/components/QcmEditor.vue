@@ -71,6 +71,21 @@ const stepHeading = ref<HTMLElement | null>(null)
 const preview = shallowRef<QcmData | null>(null)
 const problems = ref<string[]>([])
 const notice = ref('')
+/** Message bref en bas de l'écran : confirme l'action même si le résultat est hors de vue. */
+const toast = ref('')
+const successBox = ref<HTMLElement | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | undefined
+
+/** Confirme visiblement qu'un enregistrement ou une publication a réussi. */
+function confirmSuccess(message: string): void {
+  toast.value = message
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => (toast.value = ''), 5000)
+  void nextTick(() => {
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    successBox.value?.scrollIntoView({ block: 'center', behavior: calm ? 'auto' : 'smooth' })
+  })
+}
 const publishedId = ref('')
 const busy = ref(false)
 /** `true` juste après un enregistrement ou une publication : quitter la page ne perd rien. */
@@ -266,6 +281,7 @@ function exportFile(): void {
   publishedId.value = ''
   notice.value = 'Le fichier .qcm est enregistré dans tes téléchargements.'
   void nextTick(() => (saved.value = true))
+  confirmSuccess('Fichier enregistré')
 }
 
 function copyText(): void {
@@ -290,6 +306,7 @@ async function publish(): Promise<void> {
           ? 'Ta modification est envoyée. Le QCM redeviendra visible dans la bibliothèque après validation.'
           : 'Ton QCM est envoyé. Il apparaîtra dans la bibliothèque après validation.'
     void nextTick(() => (saved.value = true))
+    confirmSuccess(updating ? 'QCM mis à jour' : 'QCM publié')
   } catch (error) {
     if (error instanceof QcmFormatError) report(error)
     else problems.value = ['La publication n\'a pas abouti. Vérifie ta connexion, puis réessaie.']
@@ -351,7 +368,10 @@ onMounted(() => {
   const id = new URLSearchParams(window.location.search).get('id')
   if (id) void loadSource(id)
 })
-onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
+  clearTimeout(toastTimer)
+})
 </script>
 
 <template>
@@ -365,6 +385,14 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
   </div>
 
   <div v-else class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start">
+    <!-- Confirmation brève (le détail est lu une seule fois, dans l'encadré de réussite). -->
+    <Teleport to="body">
+      <Transition name="toast">
+        <p v-if="toast" aria-hidden="true" class="qcm-card fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 bg-correct px-5 py-3 text-lg font-extrabold text-correct-ink">
+          <span aria-hidden="true">✓</span> {{ toast }}
+        </p>
+      </Transition>
+    </Teleport>
     <div class="flex min-w-0 flex-col gap-5">
       <p v-if="sourceState === 'error'" role="alert" class="qcm-note qcm-note-retry">
         Ce QCM n'a pas pu être chargé. Il a peut-être été retiré. Tu peux en créer un nouveau ci-dessous.
@@ -690,7 +718,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload)
             </ul>
           </div>
           <!-- Succès : le QCM est enregistré ou publié, on propose la suite. -->
-          <div v-if="notice && saved" role="status" class="qcm-note qcm-note-correct flex flex-col gap-4">
+          <div v-if="notice && saved" ref="successBox" role="status" class="qcm-note qcm-note-correct flex flex-col gap-4">
             <p class="text-lg font-extrabold">{{ notice }}</p>
             <div class="flex flex-wrap items-center gap-3">
               <button type="button" class="qcm-block qcm-block-primary" @click="startNew">+ Créer un nouveau QCM</button>

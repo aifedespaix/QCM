@@ -403,3 +403,20 @@
     font-size: 0.72rem;
   }
 }
+
+/* Confirmation brève (éditeur) : apparaît en glissant, sans animation si l'utilisateur la réduit. */
+.toast-enter-active,
+.toast-leave-active {
+  transition: opacity 180ms ease-out, translate 180ms ease-out;
+}
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  translate: 0 0.75rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter-active,
+  .toast-leave-active {
+    transition: none;
+  }
+}

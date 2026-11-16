@@ -159,6 +159,21 @@ export function qcmDownloadUrl(record: QcmRecord): string {
   return pb.files.getURL(record, record.file, { download: true })
 }
 
+/**
+ * Télécharge le `.qcm` sous un nom lisible (« les-fractions.qcm »). PocketBase y ajoute un suffixe
+ * aléatoire au stockage ; passer par un blob évite qu'il apparaisse dans le fichier de l'élève.
+ */
+export async function downloadQcm(record: QcmRecord): Promise<void> {
+  try {
+    const response = await fetch(pb.files.getURL(record, record.file))
+    if (!response.ok) throw new Error(String(response.status))
+    saveQcmLocally(new Uint8Array(await response.arrayBuffer()), record.title)
+  } catch {
+    // Repli : téléchargement direct (le nom contient alors le suffixe du serveur).
+    window.location.href = qcmDownloadUrl(record)
+  }
+}
+
 export function qcmThumbnailUrl(record: QcmRecord): string | undefined {
   return record.thumbnail ? pb.files.getURL(record, record.thumbnail, { thumb: '480x270' }) : undefined
 }

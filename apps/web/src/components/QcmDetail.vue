@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { LEVEL_LABELS, SUBJECT_LABELS, type QcmArchive } from '@qcm/core'
 import { QcmPlayer, useQcmHistory } from '@qcm/ui'
-import { deleteQcm, fetchQcmArchive, getQcm, qcmDownloadUrl, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
+import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 import ConfirmDialog from './ConfirmDialog.vue'
 import QcmReviews from './QcmReviews.vue'
@@ -231,10 +231,10 @@ onBeforeUnmount(() => {
               <UiIcon name="play" :size="24" filled />
               {{ starting ? 'Préparation…' : 'Essayer en ligne' }}
             </button>
-            <a :href="qcmDownloadUrl(record)" class="qcm-block qcm-block-quiet no-underline">
+            <button type="button" class="qcm-block qcm-block-quiet" @click="downloadQcm(record)">
               <UiIcon name="download" />
               Télécharger
-            </a>
+            </button>
             <p class="text-sm text-ink-soft">Le fichier .qcm s'ouvre dans le lecteur QCM, même sans connexion.</p>
             <p v-if="playError" role="alert" class="qcm-note qcm-note-retry">{{ playError }}</p>
 
