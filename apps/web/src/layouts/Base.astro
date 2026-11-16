@@ -45,6 +45,48 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
       } catch {}
     </script>
+    <script is:inline>
+      // Reprise après une coupure : si le code d'une page ne se charge pas (réseau instable), on recharge
+      // une fois automatiquement, puis on propose un bouton si l'îlot reste vide.
+      (function () {
+        var KEY = 'qcm:chunk-reload'
+        function reloadOnce() {
+          try {
+            var last = Number(sessionStorage.getItem(KEY) || 0)
+            if (Date.now() - last < 15000) return false
+            sessionStorage.setItem(KEY, String(Date.now()))
+          } catch (e) {}
+          location.reload()
+          return true
+        }
+        window.addEventListener('vite:preloadError', function (event) {
+          if (reloadOnce()) event.preventDefault()
+        })
+        function showBanner() {
+          if (document.getElementById('qcm-load-failed')) return
+          var bar = document.createElement('div')
+          bar.id = 'qcm-load-failed'
+          bar.setAttribute('role', 'alert')
+          bar.style.cssText = 'position:fixed;inset:auto 12px calc(var(--site-tabbar,0px) + 12px) 12px;z-index:100;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border:2px solid currentColor;border-radius:16px;background:#fff8e1;color:#222;font-weight:700'
+          bar.innerHTML = '<span>La page n\u2019a pas fini de se charger.</span>'
+          var button = document.createElement('button')
+          button.type = 'button'
+          button.textContent = 'Recharger'
+          button.style.cssText = 'min-height:44px;padding:0 16px;border:2px solid currentColor;border-radius:12px;background:#fff;font:inherit;cursor:pointer'
+          button.onclick = function () { location.reload() }
+          bar.appendChild(button)
+          document.body.appendChild(bar)
+        }
+        function check() {
+          // Un îlot « client:only » garde l'attribut ssr tant qu'il n'est pas monté.
+          if (document.querySelector('astro-island[ssr]')) showBanner()
+        }
+        window.addEventListener('load', function () { setTimeout(check, 6000) })
+        window.addEventListener('online', function () {
+          if (document.querySelector('astro-island[ssr]')) location.reload()
+        })
+      })()
+    </script>
   </head>
   <body class:list={['site-body flex min-h-dvh flex-col bg-bg text-ink', bodyClass]}>
     <a href="#contenu" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-3 focus:rounded-xl focus:bg-surface focus:p-3">

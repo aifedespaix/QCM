@@ -58,17 +58,21 @@ function onEscape(event: KeyboardEvent): void {
   if (event.key === 'Escape' && sheetOpen.value) sheetOpen.value = false
 }
 
+let loadId = 0
 async function load(): Promise<void> {
+  // Une réponse tardive d'une ancienne requête ne doit pas écraser la plus récente.
+  const id = ++loadId
   state.value = 'loading'
   try {
     const { mine: _mine, ...query } = filters
     const result = await listQcms({ ...query, page: page.value, ...(mineActive.value && user.value ? { owner: user.value.id } : {}) })
+    if (id !== loadId) return
     items.value = result.items
     totalPages.value = Math.max(1, result.totalPages)
     totalItems.value = result.totalItems
     state.value = 'ready'
   } catch {
-    state.value = 'error'
+    if (id === loadId) state.value = 'error'
   }
 }
 
@@ -108,11 +112,20 @@ watch(
   },
 )
 
+// Retour du réseau après une erreur : on recharge la liste sans attendre un clic.
+function onOnline(): void {
+  if (state.value === 'error') void load()
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onEscape)
+  window.addEventListener('online', onOnline)
   void load()
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onEscape)
+  window.removeEventListener('online', onOnline)
+})
 </script>
 
 <template>
@@ -247,7 +260,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onEscape))
 
     <div v-else-if="state === 'error'" role="alert" class="qcm-note qcm-note-retry flex flex-wrap items-center justify-between gap-3 text-lg">
       La bibliothèque ne répond pas pour le moment. Tu peux réessayer dans un instant.
-      <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="load">Réessayer</button>
+      <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="load()">Réessayer</button>
     </div>
 
     <div v-else-if="items.length === 0" class="qcm-panel flex flex-col items-center gap-4 p-10 text-center">

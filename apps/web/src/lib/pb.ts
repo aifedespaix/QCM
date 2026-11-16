@@ -15,6 +15,23 @@ export const pb = new PocketBase(import.meta.env.PUBLIC_PB_URL || 'http://127.0.
 // Les îlots Vue relancent parfois la même requête : on désactive l'annulation automatique.
 pb.autoCancellation(false)
 
+/**
+ * Rejoue une lecture quand le réseau a flanché (coupure brève, mobile, serveur qui redémarre).
+ * Les erreurs « normales » du serveur (4xx : introuvable, refusé…) ne sont pas rejouées.
+ */
+export async function withRetry<T>(run: () => Promise<T>, attempts = 3): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await run()
+    } catch (error) {
+      const status = (error as { status?: number } | null)?.status
+      const transient = status === undefined || status === 0 || status >= 500 || status === 408 || status === 429
+      if (!transient || attempt >= attempts) throw error
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt))
+    }
+  }
+}
+
 export interface UserRecord extends RecordModel {
   name: string
   avatar: string
@@ -104,22 +121,26 @@ export function listQcms(query: QcmQuery = {}) {
   if (search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: search }))
   if (query.subject) parts.push(pb.filter('subject = {:subject}', { subject: query.subject }))
   if (query.level) parts.push(pb.filter('level = {:level}', { level: query.level }))
-  return pb.collection('qcms').getList<QcmRecord>(query.page ?? 1, PAGE_SIZE, {
-    filter: parts.join(' && '),
-    sort: SORTS[query.sort ?? 'recent'],
-    expand: 'owner',
-  })
+  return withRetry(() =>
+    pb.collection('qcms').getList<QcmRecord>(query.page ?? 1, PAGE_SIZE, {
+      filter: parts.join(' && '),
+      sort: SORTS[query.sort ?? 'recent'],
+      expand: 'owner',
+    }),
+  )
 }
 
 export function listMyQcms(userId: string) {
-  return pb.collection('qcms').getFullList<QcmRecord>({
-    filter: pb.filter('owner = {:owner}', { owner: userId }),
-    sort: '-created',
-  })
+  return withRetry(() =>
+    pb.collection('qcms').getFullList<QcmRecord>({
+      filter: pb.filter('owner = {:owner}', { owner: userId }),
+      sort: '-created',
+    }),
+  )
 }
 
 export function getQcm(id: string) {
-  return pb.collection('qcms').getOne<QcmRecord>(id, { expand: 'owner' })
+  return withRetry(() => pb.collection('qcms').getOne<QcmRecord>(id, { expand: 'owner' }))
 }
 
 // ---------------------------------------------------------------- Modération
@@ -133,15 +154,17 @@ export const MODERATION_PAGE_SIZE = 30
  * Les QCM à valider sortent du plus ancien au plus récent ; les autres, du plus récemment modifié.
  */
 export function listQcmsByStatus(status: QcmStatus, page = 1) {
-  return pb.collection('qcms').getList<QcmRecord>(page, MODERATION_PAGE_SIZE, {
-    filter: pb.filter('status = {:status}', { status }),
-    sort: status === 'pending' ? 'created' : '-updated',
-    expand: 'owner',
-  })
+  return withRetry(() =>
+    pb.collection('qcms').getList<QcmRecord>(page, MODERATION_PAGE_SIZE, {
+      filter: pb.filter('status = {:status}', { status }),
+      sort: status === 'pending' ? 'created' : '-updated',
+      expand: 'owner',
+    }),
+  )
 }
 
 export async function countQcmsByStatus(status: QcmStatus): Promise<number> {
-  const result = await pb.collection('qcms').getList(1, 1, { filter: pb.filter('status = {:status}', { status }), fields: 'id' })
+  const result = await withRetry(() => pb.collection('qcms').getList(1, 1, { filter: pb.filter('status = {:status}', { status }), fields: 'id' }))
   return result.totalItems
 }
 
@@ -180,9 +203,12 @@ export function qcmThumbnailUrl(record: QcmRecord): string | undefined {
 
 /** Télécharge et valide l'archive pour la jouer dans le navigateur. */
 export async function fetchQcmArchive(record: QcmRecord): Promise<QcmArchive> {
-  const response = await fetch(pb.files.getURL(record, record.file))
-  if (!response.ok) throw new Error(`Téléchargement impossible (${response.status})`)
-  return readQcmArchive(new Uint8Array(await response.arrayBuffer()))
+  const bytes = await withRetry(async () => {
+    const response = await fetch(pb.files.getURL(record, record.file))
+    if (!response.ok) throw Object.assign(new Error(`Téléchargement impossible (${response.status})`), { status: response.status })
+    return new Uint8Array(await response.arrayBuffer())
+  })
+  return readQcmArchive(bytes)
 }
 
 // ---------------------------------------------------------------- Publication
@@ -255,9 +281,11 @@ export function saveQcmLocally(bytes: Uint8Array, title: string): void {
 export async function getMyRating(qcmId: string): Promise<RatingRecord | null> {
   const userId = pb.authStore.record?.id
   if (!userId) return null
-  const list = await pb.collection('ratings').getList<RatingRecord>(1, 1, {
-    filter: pb.filter('qcm = {:qcm} && user = {:user}', { qcm: qcmId, user: userId }),
-  })
+  const list = await withRetry(() =>
+    pb.collection('ratings').getList<RatingRecord>(1, 1, {
+      filter: pb.filter('qcm = {:qcm} && user = {:user}', { qcm: qcmId, user: userId }),
+    }),
+  )
   return list.items[0] ?? null
 }
 
@@ -279,11 +307,13 @@ export async function removeRating(qcmId: string): Promise<void> {
 export const COMMENTS_PAGE_SIZE = 20
 
 export function listComments(qcmId: string, page = 1) {
-  return pb.collection('comments').getList<CommentRecord>(page, COMMENTS_PAGE_SIZE, {
-    filter: pb.filter('qcm = {:qcm}', { qcm: qcmId }),
-    sort: '-created',
-    expand: 'user',
-  })
+  return withRetry(() =>
+    pb.collection('comments').getList<CommentRecord>(page, COMMENTS_PAGE_SIZE, {
+      filter: pb.filter('qcm = {:qcm}', { qcm: qcmId }),
+      sort: '-created',
+      expand: 'user',
+    }),
+  )
 }
 
 export function addComment(qcmId: string, text: string) {
