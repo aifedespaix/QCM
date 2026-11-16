@@ -21,6 +21,7 @@ import {
   type OpenedQcm,
 } from './lib/qcmFile.ts'
 import { checkForUpdate, installUpdate, type AvailableUpdate } from './lib/updater.ts'
+import LoadingScreen from './components/LoadingScreen.vue'
 import HomeView from './views/HomeView.vue'
 import LibraryView from './views/LibraryView.vue'
 
@@ -256,7 +257,9 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- Pendant un QCM, le lecteur occupe toute la fenêtre : sa croix remplace le bandeau. -->
-  <div v-if="overlay === 'player' && opened" class="h-dvh">
+  <LoadingScreen v-if="overlay === 'loading'" />
+
+  <div v-else-if="overlay === 'player' && opened" class="h-dvh">
     <QcmPlayer :key="openCount" :qcm="opened.data" :resolve-media="resolveMedia" closable @close="closeOverlay" @result="recordResult(currentKey, $event)" />
   </div>
 
@@ -299,9 +302,7 @@ onBeforeUnmount(() => {
     </header>
 
     <main class="flex min-h-0 flex-1 flex-col" :class="overlay === 'none' && page === 'home' ? '' : 'overflow-y-auto'">
-      <p v-if="overlay === 'loading'" class="m-auto text-lg font-bold text-ink-soft" role="status">Ouverture du QCM…</p>
-
-      <section v-else-if="overlay === 'error'" class="qcm-card m-auto flex w-full max-w-xl flex-col gap-5 p-8" role="alert">
+      <section v-if="overlay === 'error'" class="qcm-card m-auto flex w-full max-w-xl flex-col gap-5 p-8" role="alert">
         <h1 class="text-2xl font-extrabold">Ce QCM ne s'ouvre pas.</h1>
         <p class="qcm-note qcm-note-retry text-lg">{{ errorMessage }}</p>
         <ul v-if="errorDetails.length > 0" class="list-disc pl-6 text-base text-ink-soft select-text">

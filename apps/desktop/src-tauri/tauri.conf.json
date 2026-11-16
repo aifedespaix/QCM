@@ -14,6 +14,8 @@
       {
         "label": "main",
         "create": false,
+        "visible": false,
+        "backgroundColor": "#f6f1e7",
         "title": "QCM",
         "width": 1100,
         "height": 780,

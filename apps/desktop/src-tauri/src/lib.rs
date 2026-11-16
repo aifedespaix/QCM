@@ -495,6 +495,16 @@ fn create_main_window(app: &tauri::App) -> tauri::Result<()> {
     }
     let window = builder.build()?;
 
+    // Fenêtre masquée jusqu'au premier rendu (voir `main.ts`). Filet de sécurité : si le frontend
+    // ne la montre pas, elle apparaît d'elle-même.
+    let fallback = window.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(5));
+        if !fallback.is_visible().unwrap_or(true) {
+            let _ = fallback.show();
+        }
+    });
+
     if !window.is_maximized().unwrap_or(false) {
         if let Ok(Some(monitor)) = window.current_monitor() {
             let scale = monitor.scale_factor();

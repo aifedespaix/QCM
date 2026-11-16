@@ -4,9 +4,39 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>QCM</title>
+    <script>
+      // Thème appliqué avant le premier affichage : pas d'éclair clair en mode sombre.
+      try {
+        var t = localStorage.getItem('qcm:theme')
+        if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+        document.documentElement.dataset.theme = t
+      } catch (e) {}
+    </script>
+    <style>
+      /* Écran de démarrage : visible dès l'ouverture, remplacé par l'application quand elle est prête. */
+      html { background: #f6f1e7; }
+      html[data-theme='dark'] { background: #23262f; }
+      body { margin: 0; }
+      .boot { display: flex; height: 100vh; align-items: center; justify-content: center; font-family: system-ui, 'Segoe UI', sans-serif; }
+      .boot svg { width: 96px; height: 96px; animation: boot-breathe 1.8s ease-in-out infinite; }
+      @keyframes boot-breathe { 50% { transform: scale(1.07); } }
+      @media (prefers-reduced-motion: reduce) { .boot svg { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="boot" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <g stroke="#2b2d42" stroke-width="2.5">
+            <rect x="2.25" y="2.25" width="19" height="19" rx="5.5" fill="#bfd7ea" />
+            <rect x="26.75" y="2.25" width="19" height="19" rx="5.5" fill="#f7d6bf" />
+            <rect x="26.75" y="26.75" width="19" height="19" rx="5.5" fill="#dcd3f5" />
+            <rect x="2.25" y="26.75" width="19" height="19" rx="5.5" fill="#cfe6cf" />
+          </g>
+          <path d="M7.2 36.4l3.3 3.3 6.1-7.3" stroke="#1f4d2e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
