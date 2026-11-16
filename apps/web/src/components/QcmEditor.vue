@@ -64,7 +64,8 @@ const sourceState = ref<'none' | 'loading' | 'error'>('none')
 const ownsSource = computed(() => !!source.value && !!user.value && source.value.owner === user.value.id)
 
 const step = ref<StepId>('start')
-const startMode = ref<StartMode>('blank')
+// Cas le plus courant : le QCM vient d'un assistant IA, collé depuis le téléphone.
+const startMode = ref<StartMode>('text')
 /** Index de la question affichée à l'étape « Questions ». */
 const current = ref(0)
 const summaryOpen = ref(false)
@@ -288,8 +289,33 @@ function afterImport(): void {
   current.value = 0
   pastedText.value = ''
   importProblems.value = []
-  goStep('meta')
-  notice.value = `${count === 1 ? '1 question importée' : `${count} questions importées`}. Vérifie les informations, puis relis les questions.`
+  const imported = count === 1 ? '1 question importée' : `${count} questions importées`
+  // QCM complet : on va droit à la vérification (essai, enregistrement). Sinon on complète les informations.
+  if (allReady.value) {
+    goStep('finish')
+    notice.value = `${imported}. Essaie le QCM pour le vérifier, puis enregistre-le.`
+  } else {
+    goStep('meta')
+    notice.value = `${imported}. Vérifie les informations, puis relis les questions.`
+  }
+}
+
+/** Un seul geste : lit le presse-papiers et importe. Repli : zone de texte à remplir à la main. */
+async function pasteAndImport(): Promise<void> {
+  importProblems.value = []
+  let text = ''
+  try {
+    text = await navigator.clipboard.readText()
+  } catch {
+    importProblems.value = ['Le navigateur bloque le collage automatique. Colle le texte à la main dans la zone ci-dessous.']
+    return
+  }
+  if (!text.trim()) {
+    importProblems.value = ['Le presse-papiers est vide. Copie d\'abord la réponse de l\'assistant.']
+    return
+  }
+  pastedText.value = text
+  importText()
 }
 
 function importText(): void {
@@ -608,8 +634,8 @@ onBeforeUnmount(() => {
               <p class="mt-2 text-ink-soft">
                 Copie ce prompt dans ChatGPT, Claude, Mistral ou un autre assistant, puis colle ton cours à la suite. L'assistant répond avec un texte au bon format.
               </p>
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button type="button" class="qcm-block qcm-block-primary qcm-block-sm" @click="copy('prompt', QCM_AI_PROMPT)">
+              <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <button type="button" class="qcm-block qcm-block-primary w-full sm:w-auto" @click="copy('prompt', QCM_AI_PROMPT)">
                   {{ copied === 'prompt' ? 'Prompt copié ✓' : 'Copier le prompt' }}
                 </button>
                 <button type="button" class="qcm-text-button" :aria-expanded="promptVisible" @click="promptVisible = !promptVisible">
@@ -621,12 +647,14 @@ onBeforeUnmount(() => {
 
             <div class="rounded-2xl border-2 border-line-soft bg-bg p-4 sm:p-5">
               <h3 class="flex items-center gap-3 text-lg font-extrabold"><span class="qcm-key size-8 min-w-8 bg-surface text-sm">2</span>Colle sa réponse ici</h3>
+              <button type="button" class="qcm-block qcm-block-primary mt-3 w-full sm:w-auto sm:px-8" @click="pasteAndImport">Coller et importer</button>
+              <p class="mt-3 text-sm font-medium text-ink-soft">Ou colle le texte à la main :</p>
               <label class="sr-only" for="import-text">Texte du QCM</label>
               <textarea
                 id="import-text"
                 v-model="pastedText"
-                class="qcm-field mt-3 font-mono text-sm"
-                rows="9"
+                class="qcm-field mt-2 font-mono text-sm"
+                rows="5"
                 spellcheck="false"
                 placeholder="version: 1&#10;meta:&#10;  title: &quot;Les fractions égales&quot;&#10;  subject: maths&#10;  …"
               />
@@ -639,7 +667,7 @@ onBeforeUnmount(() => {
                   {{ copied === 'fix' ? 'Message copié ✓' : 'Copier le message de correction pour l\'assistant' }}
                 </button>
               </div>
-              <button type="button" class="qcm-block qcm-block-primary mt-4 w-full sm:w-fit sm:px-8" @click="importText">Importer ce texte</button>
+              <button type="button" class="qcm-block qcm-block-quiet mt-3 w-full sm:w-fit sm:px-8" @click="importText">Importer ce texte</button>
             </div>
           </div>
 
