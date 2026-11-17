@@ -3,11 +3,11 @@
  * - Pages : réseau d'abord, copie en cache si le réseau échoue, sinon page « hors connexion ».
  * - Tout ce qui n'est pas du même domaine (PocketBase, etc.) ou pas en GET passe sans interception.
  * Incrémenter VERSION force le renouvellement des caches. */
-const VERSION = 'v1'
+const VERSION = 'v2'
 const PAGES = `qcm-pages-${VERSION}`
 const ASSETS = `qcm-assets-${VERSION}`
 const OFFLINE_URL = '/offline.html'
-const PRECACHE = ['/', '/bibliotheque', '/editeur', '/statistiques', OFFLINE_URL, '/manifest.webmanifest', '/register-sw.js', '/favicon.svg', '/icon-192.png']
+const PRECACHE = ['/', '/bibliotheque/', '/editeur/', '/statistiques/', OFFLINE_URL, '/manifest.webmanifest', '/register-sw.js', '/favicon.svg', '/icon-192.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -54,6 +54,7 @@ self.addEventListener('fetch', (event) => {
           return (
             (await cache.match(request)) ||
             (await cache.match(url.pathname)) ||
+            (await cache.match(url.pathname.replace(/\/?$/, '/'))) ||
             (await cache.match(OFFLINE_URL)) ||
             Response.error()
           )

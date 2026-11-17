@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro'
 
+// Les adresses finissent par « / » : c'est la forme canonique servie par nginx.
 // Pages publiques indexables. /qcm (fiche chargée côté navigateur), /admin et /offline.html sont exclus.
 const PAGES = [
   { path: '/', priority: '1.0' },
-  { path: '/bibliotheque', priority: '0.9' },
-  { path: '/editeur', priority: '0.7' },
-  { path: '/statistiques', priority: '0.4' },
+  { path: '/bibliotheque/', priority: '0.9' },
+  { path: '/editeur/', priority: '0.7' },
+  { path: '/statistiques/', priority: '0.4' },
 ]
 
 export const GET: APIRoute = ({ site }) => {
