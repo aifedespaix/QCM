@@ -22,8 +22,10 @@ const props = withDefaults(
     history: QcmHistory
     /** `false` pour un QCM qui ne peut plus être relancé depuis cet écran. */
     canOpen?: (entry: QcmHistoryEntry) => boolean
+    /** Adresse de la fiche du QCM (bibliothèque) ; sans elle, les titres restent du texte simple. */
+    linkFor?: (entry: QcmHistoryEntry) => string | null
   }>(),
-  { canOpen: () => true },
+  { canOpen: () => true, linkFor: () => null },
 )
 
 const emit = defineEmits<{
@@ -183,7 +185,10 @@ function dayLabel(day: number): string {
             <li v-for="item in toWork" :key="item.entry.key" class="flex flex-col gap-3 rounded-2xl border-[1.5px] border-line-soft bg-bg p-4">
               <div class="flex flex-wrap items-start justify-between gap-2">
                 <div class="min-w-0">
-                  <h3 class="text-lg leading-snug font-extrabold break-words">{{ item.entry.title }}</h3>
+                  <h3 class="text-lg leading-snug font-extrabold break-words">
+                    <a v-if="linkFor(item.entry)" :href="linkFor(item.entry)!" class="underline decoration-2 underline-offset-4 hover:bg-sunken">{{ item.entry.title }}</a>
+                    <template v-else>{{ item.entry.title }}</template>
+                  </h3>
                   <p class="text-sm font-semibold text-ink-soft">
                     {{ SUBJECT_LABELS[item.entry.subject] }} · {{ LEVEL_LABELS[item.entry.level] }} · {{ item.entry.chapter }}
                   </p>
@@ -237,7 +242,10 @@ function dayLabel(day: number): string {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate font-bold">{{ item.entry.title }}</p>
+                  <p class="truncate font-bold">
+                    <a v-if="linkFor(item.entry)" :href="linkFor(item.entry)!" class="underline decoration-2 underline-offset-4 hover:bg-sunken">{{ item.entry.title }}</a>
+                    <template v-else>{{ item.entry.title }}</template>
+                  </p>
                   <p class="text-sm font-semibold text-ink-soft">{{ summary(item.counts) }} · {{ formatRelativeDay(item.reference.at) }}</p>
                 </div>
                 <button
@@ -287,7 +295,10 @@ function dayLabel(day: number): string {
             class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t-[1.5px] border-line-soft py-2.5 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)_minmax(0,12rem)_auto]"
           >
             <p class="text-sm font-semibold text-ink-soft max-sm:col-span-2">{{ formatRelativeDay(row.attempt.at) }}</p>
-            <p class="truncate font-bold">{{ row.entry.title }}</p>
+            <p class="truncate font-bold">
+              <a v-if="linkFor(row.entry)" :href="linkFor(row.entry)!" class="underline decoration-2 underline-offset-4 hover:bg-sunken">{{ row.entry.title }}</a>
+              <template v-else>{{ row.entry.title }}</template>
+            </p>
             <p class="text-sm font-bold tabular-nums sm:order-last sm:text-right">
               {{ row.counts.first }} / {{ row.counts.seen }}
               <span v-if="!row.attempt.completed" class="font-semibold text-ink-soft">· arrêté avant la fin</span>

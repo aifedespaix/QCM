@@ -1,4 +1,5 @@
 ---
+import AppHome from '../components/AppHome.vue'
 import DemoPlayer from '../components/DemoPlayer.vue'
 import Base from '../layouts/Base.astro'
 
@@ -75,6 +76,7 @@ const mockChoices = [
   <!-- Accueil de l'app installée : un récap des fonctions, à portée de pouce. -->
   <section class="app-only flex flex-col gap-5 pt-1" aria-labelledby="app-titre">
     <h1 id="app-titre" class="text-3xl font-extrabold">Que veux-tu faire ?</h1>
+    <AppHome client:only="vue" />
     <ul class="grid gap-4 sm:grid-cols-2">
       {
         appTiles.map((tile) => (

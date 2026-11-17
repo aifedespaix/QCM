@@ -9,6 +9,11 @@ function canOpen(entry: QcmHistoryEntry): boolean {
   return !!entry.recordId
 }
 
+/** Fiche du QCM dans la bibliothèque (seulement s'il en vient). */
+function ficheUrl(entry: QcmHistoryEntry): string | null {
+  return entry.recordId ? `/qcm?id=${entry.recordId}` : null
+}
+
 function open(key: string): void {
   const entry = history.value.entries.find((item) => item.key === key)
   if (entry?.recordId) window.location.href = `/qcm?id=${entry.recordId}&jouer=1`
@@ -20,7 +25,7 @@ function clear(): void {
 </script>
 
 <template>
-  <QcmStatsDashboard :history="history" :can-open="canOpen" @open="open" @clear="clear">
+  <QcmStatsDashboard :history="history" :can-open="canOpen" :link-for="ficheUrl" @open="open" @clear="clear">
     <template #empty>
       <a href="/bibliotheque" class="qcm-block qcm-block-primary qcm-block-sm no-underline">Choisir un QCM dans la bibliothèque</a>
     </template>
