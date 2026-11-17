@@ -445,7 +445,7 @@ Fichiers : `backend/pb_migrations/1760000000_init_qcm.js`, `backend/pb_hooks/mai
 
 1. Dokploy > Create Service > **Compose** > dépôt Git du projet, fichier `./docker-compose.yml`.
 2. Onglet Environment : coller le contenu de `backend/.env.example` avec les vraies valeurs.
-3. Onglet Domains : un domaine pour le service `pocketbase` (port `8090`), un domaine pour le service `web` (port `80`), HTTPS Let's Encrypt activé pour les deux.
+3. Onglet Domains : un domaine pour le service `qcm-pocketbase` (port `8090`), un domaine pour le service `qcm-web` (port `80`), HTTPS Let's Encrypt activé pour les deux.
 4. Console Google Cloud > Credentials > OAuth client « Web application » : URI de redirection autorisée = `https://<domaine pocketbase>/api/oauth2-redirect`.
 5. Deploy. Tableau de bord : `https://<domaine pocketbase>/_/`.
 

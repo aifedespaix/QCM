@@ -1,7 +1,9 @@
 # Déploiement Dokploy (type « Compose »). Les domaines et le HTTPS se règlent dans
-# Dokploy > Compose > Domains : `pocketbase` sur le port 8090, `web` sur le port 80.
+# Dokploy > Compose > Domains : `qcm-pocketbase` sur le port 8090, `qcm-web` sur le port 80.
+# Les services portent un préfixe : Dokploy met tous les projets sur un réseau partagé, où un nom
+# générique (`pocketbase`, `web`) peut être celui d'un autre projet et recevoir une partie du trafic.
 services:
-  pocketbase:
+  qcm-pocketbase:
     build:
       context: ./backend
       args:
@@ -19,7 +21,7 @@ services:
     expose:
       - "8090"
 
-  web:
+  qcm-web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -29,7 +31,7 @@ services:
         PUBLIC_RELEASES_URL: ${PUBLIC_RELEASES_URL}
     restart: unless-stopped
     depends_on:
-      - pocketbase
+      - qcm-pocketbase
     expose:
       - "80"
 
