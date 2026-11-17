@@ -15,6 +15,8 @@ export interface LibraryRecord {
   question_count: number
   has_images: boolean
   file: string
+  /** Empreinte du contenu publié ; vide pour un QCM publié avant son introduction. */
+  fingerprint?: string
   rating_avg: number
   rating_count: number
 }
@@ -46,7 +48,7 @@ export class LibraryError extends Error {
 }
 
 const RECORDS = '/api/collections/qcms/records'
-const FIELDS = 'id,title,description,subject,level,chapter,question_count,has_images,file,rating_avg,rating_count'
+const FIELDS = 'id,title,description,subject,level,chapter,question_count,has_images,file,fingerprint,rating_avg,rating_count'
 const SORTS: Record<LibrarySort, string> = {
   recent: '-created',
   rating: '-rating_avg,-rating_count,-created',
@@ -111,4 +113,38 @@ export async function downloadLibraryQcm(record: Pick<LibraryRecord, 'id' | 'fil
   } catch (code) {
     throw toFailure(code)
   }
+}
+
+/** Entrées recherchées par requête : garde la réponse sous `perPage`, même avec des doublons en ligne. */
+const SYNC_BATCH = 20
+
+export interface LibrarySearchResult {
+  records: LibraryRecord[]
+  /** `false` si la réponse a été tronquée : on n'en conclut jamais qu'un QCM a disparu. */
+  complete: boolean
+}
+
+/**
+ * Cherche en ligne les QCM publiés correspondant à des identifiants mémorisés et/ou à des empreintes
+ * de contenu. Lance `LibraryError` sans réseau : l'appelant ignore alors simplement la synchronisation.
+ */
+export async function findLibraryRecords(query: { ids: readonly string[]; fingerprints: readonly string[] }): Promise<LibrarySearchResult> {
+  const terms = [
+    ...query.ids.map((id) => `id = ${quote(id)}`),
+    ...query.fingerprints.map((print) => `fingerprint = ${quote(print)}`),
+  ]
+  const records: LibraryRecord[] = []
+  let complete = true
+  for (let start = 0; start < terms.length; start += SYNC_BATCH) {
+    const params = new URLSearchParams({
+      page: '1',
+      perPage: '100',
+      filter: `status = "published" && (${terms.slice(start, start + SYNC_BATCH).join(' || ')})`,
+      fields: FIELDS,
+    })
+    const page = await get<LibraryPage>(`${RECORDS}?${params}`)
+    records.push(...page.items)
+    if (page.totalItems > page.items.length) complete = false
+  }
+  return { records, complete }
 }

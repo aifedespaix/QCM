@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, formatRelativeDay, type Level, type QcmHistoryEntry, type Subject } from '@qcm/core'
+import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, formatRelativeDay, type LibraryMatch, type Level, type QcmHistoryEntry, type Subject } from '@qcm/core'
 import { SUBJECT_TONES } from '@qcm/ui'
 import { LibraryError, listLibrary, type LibraryRecord, type LibrarySort } from '../lib/library.ts'
 
 const props = defineProps<{
   /** QCM conservés sur cet ordinateur, du plus récemment ouvert au plus ancien. */
   local: readonly QcmHistoryEntry[]
+  /** Lien de ces QCM avec la bibliothèque en ligne (dernier état connu ; vide hors-ligne). */
+  remote: ReadonlyMap<string, LibraryMatch>
   /** Identifiant du QCM en ligne en cours de téléchargement. */
   downloadingId: string
   /** Message à afficher après un téléchargement qui n'a pas abouti. */
@@ -18,6 +20,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   openRecord: [record: LibraryRecord]
   openLocal: [key: string]
+  updateLocal: [entry: QcmHistoryEntry]
   exportRecord: [record: LibraryRecord]
   exportLocal: [entry: QcmHistoryEntry]
   removeLocal: [entry: QcmHistoryEntry]
@@ -50,7 +53,17 @@ let requestToken = 0
 const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level))
 /** Sans réponse de la bibliothèque en ligne, l'onglet « En ligne » montre les QCM de l'ordinateur. */
 const showLocal = computed(() => tab.value === 'local' || online.value === 'offline' || online.value === 'unconfigured')
-const localRecordIds = computed(() => new Set(props.local.flatMap((entry) => (entry.recordId ? [entry.recordId] : []))))
+/**
+ * Où en est un QCM de la bibliothèque sur cet ordinateur : `none` (absent), `current` (même version),
+ * `outdated` (une copie existe mais la version en ligne a changé), `present` (copie dont la version
+ * ne peut pas être comparée : QCM publié sans empreinte).
+ */
+function copyState(item: LibraryRecord): 'none' | 'current' | 'outdated' | 'present' {
+  const copy = props.local.find((entry) => (item.fingerprint ? entry.key === item.fingerprint : false) || entry.recordId === item.id)
+  if (!copy) return 'none'
+  if (!item.fingerprint) return 'present'
+  return copy.key === item.fingerprint ? 'current' : 'outdated'
+}
 
 const localItems = computed(() => {
   const search = filters.search.trim().toLocaleLowerCase('fr')
@@ -196,12 +209,16 @@ onBeforeUnmount(() => {
           <p class="flex flex-wrap gap-1.5">
             <span class="qcm-chip" :class="SUBJECT_TONES[entry.subject]">{{ SUBJECT_LABELS[entry.subject] }}</span>
             <span class="qcm-chip">{{ LEVEL_LABELS[entry.level] }}</span>
+            <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip bg-selected">Mise à jour disponible</span>
+            <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
+            <span v-else-if="remote.has(entry.key)" class="qcm-chip">Dans la bibliothèque</span>
           </p>
           <h2 class="text-xl leading-snug font-extrabold break-words">{{ entry.title }}</h2>
           <p class="font-medium text-ink-soft">{{ entry.chapter }}</p>
           <p class="mt-auto pt-1 text-sm font-bold text-ink-soft">{{ countLabel(entry.questionCount) }} · ouvert {{ formatRelativeDay(entry.openedAt) }}</p>
           <div class="flex items-center gap-2">
             <button type="button" class="qcm-block qcm-block-primary qcm-block-sm flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
+            <button v-if="remote.get(entry.key)?.state === 'outdated'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="downloadingId !== ''" :aria-label="`Mettre à jour ${entry.title}`" @click="emit('updateLocal', entry)">Mettre à jour</button>
 <button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
             </button>
@@ -232,7 +249,8 @@ onBeforeUnmount(() => {
           <p class="flex flex-wrap gap-1.5">
             <span class="qcm-chip" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
             <span class="qcm-chip">{{ LEVEL_LABELS[item.level] }}</span>
-            <span v-if="localRecordIds.has(item.id)" class="qcm-chip bg-correct text-correct-ink">Sur cet ordinateur</span>
+            <span v-if="copyState(item) === 'outdated'" class="qcm-chip bg-selected">Mise à jour disponible</span>
+            <span v-else-if="copyState(item) !== 'none'" class="qcm-chip bg-correct text-correct-ink">Sur cet ordinateur</span>
           </p>
           <h2 class="text-xl leading-snug font-extrabold break-words">{{ item.title }}</h2>
           <p class="font-medium text-ink-soft">{{ item.chapter }}</p>
@@ -250,7 +268,7 @@ onBeforeUnmount(() => {
               :aria-label="`Ouvrir ${item.title}`"
               @click="emit('openRecord', item)"
             >
-              {{ downloadingId === item.id ? 'Téléchargement…' : 'Ouvrir' }}
+              {{ downloadingId === item.id ? 'Téléchargement…' : copyState(item) === 'outdated' ? 'Mettre à jour' : 'Ouvrir' }}
             </button>
             <button type="button" class="qcm-icon-button flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>

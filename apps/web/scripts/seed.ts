@@ -3,7 +3,7 @@
  * Usage : PB_URL=http://127.0.0.1:8090 PB_SUPERUSER_EMAIL=... PB_SUPERUSER_PASSWORD=... bun run --filter @qcm/web seed
  */
 import PocketBase from 'pocketbase'
-import { parseQcmYaml, qcmFileName, summarizeQcm, writeQcmArchive } from '@qcm/core'
+import { parseQcmYaml, qcmFileName, qcmFingerprint, summarizeQcm, writeQcmArchive } from '@qcm/core'
 
 const url = process.env.PB_URL ?? 'http://127.0.0.1:8090'
 const email = process.env.PB_SUPERUSER_EMAIL
@@ -47,6 +47,7 @@ form.set('chapter', data.meta.chapter)
 form.set('language', data.meta.language)
 form.set('question_count', String(summary.questionCount))
 form.set('has_images', String(summary.hasImages))
+form.set('fingerprint', qcmFingerprint(data))
 form.set('file', new File([bytes.slice().buffer], qcmFileName(data.meta.title), { type: 'application/zip' }))
 
 const record = await pb.collection('qcms').create(form)

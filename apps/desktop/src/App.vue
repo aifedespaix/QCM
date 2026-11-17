@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { confirm } from '@tauri-apps/plugin-dialog'
-import { QcmFormatError, type QcmHistoryEntry } from '@qcm/core'
+import { QcmFormatError, matchLibrary, qcmFingerprint, type LibraryMatch, type QcmHistoryEntry } from '@qcm/core'
 import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmStatsDashboard, QcmThemeToggle, useQcmHistory } from '@qcm/ui'
-import { LibraryError, downloadLibraryQcm, getLibraryRecord, libraryAvailable, type LibraryRecord } from './lib/library.ts'
+import { LibraryError, downloadLibraryQcm, findLibraryRecords, getLibraryRecord, libraryAvailable, type LibraryRecord } from './lib/library.ts'
 import {
   exportLibraryQcm,
   exportStoredQcm,
@@ -39,7 +39,7 @@ const errorDetails = ref<string[]>([])
 const openCount = ref(0)
 const unlisten: Array<() => void> = []
 
-const { history, recents, recordOpen, recordResult, clearAttempts } = useQcmHistory()
+const { history, recents, recordOpen, recordUpdate, link, recordResult, clearAttempts } = useQcmHistory()
 /** Empreintes des QCM dont l'application garde une copie : eux seuls peuvent être relancés hors-ligne. */
 const stored = ref(new Set<string>())
 /** Clé du QCM en cours dans le suivi. */
@@ -51,6 +51,46 @@ const downloadError = ref('')
 const exportNotice = ref('')
 
 const localQcms = computed(() => recents.value.filter((entry) => stored.value.has(entry.key)))
+/** Lien de chaque QCM de l'ordinateur avec la bibliothèque en ligne (dernier état connu). */
+const remote = ref<ReadonlyMap<string, LibraryMatch>>(new Map())
+
+/** Relit le dossier de l'application : une copie supprimée à la main ne doit plus compter comme « sur cet ordinateur ». */
+async function refreshStored(): Promise<void> {
+  stored.value = await listStoredQcms()
+}
+
+/**
+ * Relie les QCM de l'ordinateur à la bibliothèque en ligne : retrouve le QCM d'un fichier ouvert
+ * depuis le disque (même empreinte de contenu), repère les nouvelles versions et les QCM retirés.
+ * Ne regarde que les copies réellement présentes. Sans réseau, rien ne change : on réessaie plus tard.
+ */
+let syncing = false
+async function syncLibrary(): Promise<void> {
+  if (syncing || !onlineLibrary.value) return
+  syncing = true
+  try {
+    await refreshStored()
+    const entries = localQcms.value
+    if (entries.length === 0) {
+      remote.value = new Map()
+      return
+    }
+    const { records, complete } = await findLibraryRecords({
+      ids: [...new Set(entries.flatMap((entry) => (entry.recordId ? [entry.recordId] : [])))],
+      fingerprints: entries.filter((entry) => !entry.recordId).map((entry) => entry.key),
+    })
+    const matches = matchLibrary(entries, records, complete)
+    for (const entry of entries) {
+      const match = matches.get(entry.key)
+      if (match && match.state !== 'removed' && match.recordId !== entry.recordId) link(entry.key, match.recordId)
+    }
+    remote.value = matches
+  } catch {
+    // Hors-ligne ou bibliothèque muette : on garde le dernier état connu.
+  } finally {
+    syncing = false
+  }
+}
 
 /** Mise à jour : proposée uniquement sur l'écran d'accueil, jamais pendant un QCM. */
 const update = shallowRef<AvailableUpdate | null>(null)
@@ -83,9 +123,10 @@ function showError(error: unknown): void {
 }
 
 /** Lance le lecteur et note l'ouverture dans le suivi. */
-function play(qcm: OpenedQcm, extra: { recordId?: string; fileName?: string } = {}): string {
+function play(qcm: OpenedQcm, extra: { recordId?: string; fileName?: string } = {}, replaces?: string): string {
   opened.value = qcm
-  currentKey = recordOpen(qcm.data, extra)
+  // Nouvelle version d'un QCM de la bibliothèque : elle prend la place de l'ancienne (suivi conservé).
+  currentKey = replaces && replaces !== qcmFingerprint(qcm.data) ? recordUpdate(replaces, qcm.data, extra) : recordOpen(qcm.data, extra)
   openCount.value += 1
   overlay.value = 'player'
   return currentKey
@@ -99,12 +140,22 @@ async function openPath(path: string, recordId?: string): Promise<void> {
   overlay.value = 'loading'
   try {
     const qcm = await loadQcm(path)
-    const key = play(qcm, recordId ? { recordId } : { fileName: qcm.fileName })
+    const key = qcmFingerprint(qcm.data)
+    // La copie est faite AVANT d'écrire quoi que ce soit dans le suivi : on ne note « sur cet ordinateur » que ce qui y est vraiment.
+    let kept = false
     try {
       await storeQcm(path, key)
-      stored.value = new Set(stored.value).add(key)
+      kept = true
     } catch {
       // Copie impossible (disque plein…) : le QCM se joue quand même, il ne sera pas dans la liste.
+    }
+    // Version précédente du même QCM en ligne : la nouvelle la remplace (suivi repris, ancienne copie retirée).
+    const previous = kept && recordId ? localQcms.value.find((entry) => entry.recordId === recordId && entry.key !== key) : undefined
+    play(qcm, recordId ? { recordId } : { fileName: qcm.fileName }, previous?.key)
+    if (kept) {
+      if (previous) await removeStoredQcm(previous.key).catch(() => {})
+      await refreshStored()
+      void syncLibrary()
     }
   } catch (error) {
     showError(error)
@@ -123,11 +174,21 @@ async function openStored(key: string): Promise<void> {
   }
 }
 
-async function openRecord(record: Pick<LibraryRecord, 'id' | 'file'>): Promise<void> {
+async function openRecord(record: Pick<LibraryRecord, 'id' | 'file' | 'fingerprint'>): Promise<void> {
   if (downloadingId.value) return
   downloadingId.value = record.id
   downloadError.value = ''
   try {
+    // La copie de l'ordinateur est déjà la version en ligne : inutile de la télécharger à nouveau.
+    const same = record.fingerprint ? localQcms.value.find((entry) => entry.key === record.fingerprint) : undefined
+    if (same) {
+      try {
+        play(await loadStoredQcm(same.key), { recordId: record.id })
+        return
+      } catch {
+        await refreshStored() // copie disparue : on retélécharge
+      }
+    }
     const path = await downloadLibraryQcm(record)
     await openPath(path, record.id)
   } catch (error) {
@@ -167,6 +228,17 @@ async function reopen(key: string): Promise<void> {
   }
 }
 
+/** « Mettre à jour » un QCM de l'ordinateur : retélécharge la version en ligne, qui remplace l'ancienne. */
+async function updateLocal(entry: QcmHistoryEntry): Promise<void> {
+  if (!entry.recordId) return
+  downloadError.value = ''
+  try {
+    await openRecord(await getLibraryRecord(entry.recordId))
+  } catch {
+    downloadError.value = 'La mise à jour n\'a pas abouti. Vérifie la connexion à Internet, puis réessaie.'
+  }
+}
+
 async function removeLocal(entry: QcmHistoryEntry): Promise<void> {
   const sure = await confirm(`Retirer « ${entry.title} » de cet ordinateur ? Le suivi déjà enregistré est conservé.`, {
     title: 'Retirer ce QCM',
@@ -175,7 +247,7 @@ async function removeLocal(entry: QcmHistoryEntry): Promise<void> {
   })
   if (!sure) return
   await removeStoredQcm(entry.key).catch(() => {})
-  stored.value = await listStoredQcms()
+  await refreshStored()
 }
 
 /**
@@ -238,12 +310,23 @@ function onKeydown(event: KeyboardEvent): void {
   go('home')
 }
 
+function onBackOnline(): void {
+  void syncLibrary()
+}
+
+// Chaque visite de la bibliothèque revérifie les copies présentes et les versions en ligne.
+watch(page, (value) => {
+  if (value === 'library') void syncLibrary()
+})
+
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('online', onBackOnline)
   unlisten.push(await onOpenFileRequest(() => void openPending()))
   unlisten.push(await onQcmFileDrop((path) => void openPath(path)))
-  stored.value = await listStoredQcms()
+  await refreshStored()
   onlineLibrary.value = await libraryAvailable()
+  void syncLibrary()
   if (!(await openPending())) overlay.value = 'none'
   // Sans réseau, `checkForUpdate` renvoie `null` : rien ne s'affiche.
   update.value = await checkForUpdate()
@@ -251,6 +334,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('online', onBackOnline)
   for (const stop of unlisten) stop()
 })
 </script>
@@ -329,6 +413,7 @@ onBeforeUnmount(() => {
       <LibraryView
         v-else-if="page === 'library'"
         :local="localQcms"
+        :remote="remote"
         :downloading-id="downloadingId"
         :download-error="downloadError"
         :export-notice="exportNotice"
@@ -336,6 +421,7 @@ onBeforeUnmount(() => {
         @export-record="exportQcm({ title: $event.title, record: $event })"
         @export-local="exportQcm({ title: $event.title, key: $event.key })"
         @open-local="openStored"
+        @update-local="updateLocal"
         @remove-local="removeLocal"
         @choose-file="chooseFile"
       />

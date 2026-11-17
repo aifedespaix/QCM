@@ -181,6 +181,32 @@ export function removeEntry(history: QcmHistory, key: string): QcmHistory {
   }
 }
 
+/** Rattache un QCM déjà connu à son enregistrement en ligne, sans toucher à sa date d'ouverture. */
+export function linkEntry(history: QcmHistory, key: string, recordId: string): QcmHistory {
+  const current = history.entries.find((entry) => entry.key === key)
+  if (!current || current.recordId === recordId) return history
+  return { ...history, entries: history.entries.map((entry) => (entry.key === key ? { ...entry, recordId } : entry)) }
+}
+
+/**
+ * Le QCM `oldKey` a été remplacé par une nouvelle version (`entry`) : la nouvelle prend sa place
+ * dans le suivi. Les passages sont repris question par question, seulement si l'énoncé n'a pas
+ * changé (un `q1` réécrit ne doit pas hériter des résultats de l'ancien `q1`).
+ */
+export function replaceEntry(history: QcmHistory, oldKey: string, entry: QcmHistoryEntry): QcmHistory {
+  const old = history.entries.find((item) => item.key === oldKey)
+  if (!old || oldKey === entry.key) return upsertEntry(history, entry)
+  const carried = history.attempts
+    .filter((attempt) => attempt.key === oldKey)
+    .flatMap((attempt): QcmAttempt[] => {
+      const questions = attempt.questions.filter((question) => old.prompts[question.id] === entry.prompts[question.id] && question.id in entry.prompts)
+      return questions.length > 0 ? [{ ...attempt, key: entry.key, total: Math.min(attempt.total, entry.questionCount), questions }] : []
+    })
+  const rest = removeEntry(history, oldKey)
+  const merged = upsertEntry(rest, { ...entry, ...(entry.recordId || !old.recordId ? {} : { recordId: old.recordId }) })
+  return { ...merged, attempts: [...merged.attempts, ...carried].slice(-HISTORY_LIMITS.maxAttempts) }
+}
+
 /** QCM du plus récemment ouvert au plus ancien. */
 export function recentEntries(history: QcmHistory): QcmHistoryEntry[] {
   return [...history.entries].sort((a, b) => b.openedAt - a.openedAt)
@@ -374,4 +400,53 @@ export function formatRelativeDay(time: number, now = Date.now()): string {
   if (days === 1) return 'hier'
   if (days < 7) return `il y a ${days} jours`
   return `le ${new Date(time).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`
+}
+
+// ---------------------------------------------------------------- Lien avec la bibliothèque en ligne
+
+/** Ce que la bibliothèque en ligne dit d'un QCM publié (seuls les champs utiles au lien). */
+export interface LibraryLinkRecord {
+  id: string
+  /** Empreinte du contenu publié (`qcmFingerprint`) ; vide pour un QCM publié avant son introduction. */
+  fingerprint?: string
+}
+
+/**
+ * `current` : même contenu qu'en ligne. `outdated` : une autre version est en ligne.
+ * `linked` : en ligne, mais sa version ne peut pas être comparée (pas d'empreinte publiée).
+ * `removed` : n'est plus publié.
+ */
+export type LibrarySyncState = 'current' | 'outdated' | 'linked' | 'removed'
+
+export interface LibraryMatch {
+  recordId: string
+  state: LibrarySyncState
+}
+
+/**
+ * Rapproche des QCM de l'ordinateur des enregistrements trouvés en ligne.
+ * L'empreinte identique prime (le contenu EST le même QCM, même ouvert depuis un fichier déplacé) ;
+ * à défaut, l'identifiant mémorisé au téléchargement dit de quel QCM il s'agit et si sa version a changé.
+ * `complete` : la recherche a renvoyé tous les résultats ; sinon on ne conclut jamais « retiré ».
+ */
+export function matchLibrary(
+  entries: ReadonlyArray<Pick<QcmHistoryEntry, 'key' | 'recordId'>>,
+  found: readonly LibraryLinkRecord[],
+  complete = true,
+): Map<string, LibraryMatch> {
+  const byId = new Map(found.map((record) => [record.id, record]))
+  const matches = new Map<string, LibraryMatch>()
+  for (const entry of entries) {
+    const same = found.filter((record) => record.fingerprint === entry.key)
+    const twin = same.find((record) => record.id === entry.recordId) ?? same[0]
+    if (twin) {
+      matches.set(entry.key, { recordId: twin.id, state: 'current' })
+      continue
+    }
+    if (!entry.recordId) continue
+    const record = byId.get(entry.recordId)
+    if (record) matches.set(entry.key, { recordId: record.id, state: record.fingerprint ? 'outdated' : 'linked' })
+    else if (complete) matches.set(entry.key, { recordId: entry.recordId, state: 'removed' })
+  }
+  return matches
 }

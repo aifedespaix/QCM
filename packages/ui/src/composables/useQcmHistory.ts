@@ -3,9 +3,11 @@ import {
   addAttempt,
   emptyHistory,
   entryFromQcm,
+  linkEntry,
   parseHistory,
   recentEntries,
   removeEntry,
+  replaceEntry,
   upsertEntry,
   type QcmData,
   type QcmHistory,
@@ -54,6 +56,16 @@ export function useQcmHistory() {
     recordOpen(data: QcmData, extra: { recordId?: string; fileName?: string } = {}): string {
       const entry = entryFromQcm(data, extra)
       write(upsertEntry(history.value, entry))
+      return entry.key
+    },
+    /** Rattache un QCM connu à son enregistrement en ligne. */
+    link(key: string, recordId: string): void {
+      write(linkEntry(history.value, key, recordId))
+    },
+    /** Une nouvelle version remplace `oldKey` : les résultats des questions inchangées sont conservés. */
+    recordUpdate(oldKey: string, data: QcmData, extra: { recordId?: string; fileName?: string } = {}): string {
+      const entry = entryFromQcm(data, extra)
+      write(replaceEntry(history.value, oldKey, entry))
       return entry.key
     },
     recordResult(key: string, result: QcmSessionResult): void {

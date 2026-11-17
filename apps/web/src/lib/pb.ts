@@ -3,6 +3,7 @@ import { readonly, ref } from 'vue'
 import {
   QCM_MIME,
   qcmFileName,
+  qcmFingerprint,
   readQcmArchive,
   summarizeQcm,
   type Level,
@@ -50,6 +51,8 @@ export interface QcmRecord extends RecordModel {
   question_count: number
   has_images: boolean
   file: string
+  /** Empreinte du contenu (`qcmFingerprint`) ; vide avant son introduction. */
+  fingerprint?: string
   thumbnail: string
   status: 'pending' | 'published' | 'hidden'
   rating_avg: number
@@ -237,6 +240,7 @@ function qcmForm(input: PublishInput): FormData {
   form.set('language', meta.language)
   form.set('question_count', String(summary.questionCount))
   form.set('has_images', String(summary.hasImages))
+  form.set('fingerprint', qcmFingerprint(input.data))
   form.set('file', new File([toBlobPart(input.bytes)], qcmFileName(meta.title), { type: QCM_MIME }))
   if (input.thumbnail) {
     form.set('thumbnail', new File([toBlobPart(input.thumbnail)], 'miniature.webp', { type: 'image/webp' }))

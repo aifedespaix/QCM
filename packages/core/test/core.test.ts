@@ -8,6 +8,9 @@ import {
   computeStats,
   emptyHistory,
   entryFromQcm,
+  linkEntry,
+  matchLibrary,
+  replaceEntry,
   formatRelativeDay,
   parseHistory,
   qcmFingerprint,
@@ -247,5 +250,63 @@ describe('suivi des révisions', () => {
     expect(formatRelativeDay(now, now)).toBe('aujourd\'hui')
     expect(formatRelativeDay(now - DAY, now)).toBe('hier')
     expect(formatRelativeDay(now - 3 * DAY, now)).toBe('il y a 3 jours')
+  })
+})
+
+describe('lien avec la bibliothèque en ligne', () => {
+  const qcm = parseQcmYaml(EXAMPLE)
+  const key = qcmFingerprint(qcm)
+
+  test('même empreinte : relié sans identifiant mémorisé (fichier ouvert depuis le disque)', () => {
+    const matches = matchLibrary([{ key }], [{ id: 'r1', fingerprint: key }])
+    expect(matches.get(key)).toEqual({ recordId: 'r1', state: 'current' })
+  })
+
+  test('identifiant connu mais contenu différent : mise à jour disponible', () => {
+    const matches = matchLibrary([{ key, recordId: 'r1' }], [{ id: 'r1', fingerprint: 'autre' }])
+    expect(matches.get(key)).toEqual({ recordId: 'r1', state: 'outdated' })
+  })
+
+  test('QCM en ligne sans empreinte : relié, version non comparable', () => {
+    expect(matchLibrary([{ key, recordId: 'r1' }], [{ id: 'r1' }]).get(key)?.state).toBe('linked')
+  })
+
+  test('« retiré » seulement si la réponse est complète ; jamais de lien inventé', () => {
+    expect(matchLibrary([{ key, recordId: 'r1' }], []).get(key)?.state).toBe('removed')
+    expect(matchLibrary([{ key, recordId: 'r1' }], [], false).has(key)).toBe(false)
+    expect(matchLibrary([{ key }], [{ id: 'r2', fingerprint: 'autre' }]).has(key)).toBe(false)
+  })
+
+  test('doublons en ligne : on garde celui déjà mémorisé', () => {
+    const found = [{ id: 'a', fingerprint: key }, { id: 'b', fingerprint: key }]
+    expect(matchLibrary([{ key, recordId: 'b' }], found).get(key)?.recordId).toBe('b')
+  })
+
+  test('linkEntry n\'écrit que pour un QCM connu', () => {
+    const history = upsertEntry(emptyHistory(), entryFromQcm(qcm, {}, 1))
+    expect(linkEntry(history, key, 'r1').entries[0]?.recordId).toBe('r1')
+    expect(linkEntry(history, 'inconnu', 'r1')).toBe(history)
+  })
+
+  test('nouvelle version : le suivi des questions inchangées est repris, pas celui des questions réécrites', () => {
+    const entry = entryFromQcm(qcm, { recordId: 'r1' }, 1)
+    const [first, second] = qcm.questions
+    let history = upsertEntry(emptyHistory(), entry)
+    history = addAttempt(history, entry.key, {
+      total: 2,
+      completed: true,
+      questions: [
+        { id: first!.id, wrong: 0, revealed: false },
+        { id: second!.id, wrong: 1, revealed: false },
+      ],
+    }, 2)
+    const edited = { ...qcm, questions: qcm.questions.map((question, index) => (index === 1 ? { ...question, prompt: 'Énoncé réécrit' } : question)) }
+    const next = entryFromQcm(edited, { recordId: 'r1' }, 3)
+    const result = replaceEntry(history, entry.key, next)
+    expect(result.entries.map((item) => item.key)).toEqual([next.key])
+    expect(result.entries[0]?.recordId).toBe('r1')
+    expect(result.attempts).toHaveLength(1)
+    expect(result.attempts[0]?.key).toBe(next.key)
+    expect(result.attempts[0]?.questions.map((question) => question.id)).toEqual([first!.id])
   })
 })
