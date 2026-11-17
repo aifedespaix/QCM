@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex" />
+<meta name="theme-color" content="#f6f1e7" />
+<title>Hors connexion · QCM</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<style>
+  :root { color-scheme: light dark; --bg:#f6f1e7; --ink:#2b2d42; --primary:#bfd7ea; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#23262f; --ink:#ece7db; --primary:#3a5874; } }
+  body { margin:0; min-height:100dvh; display:grid; place-items:center; padding:24px; box-sizing:border-box; background:var(--bg); color:var(--ink); font:500 18px/1.5 system-ui,sans-serif; text-align:center; }
+  main { max-width:28rem; display:flex; flex-direction:column; gap:16px; align-items:center; }
+  h1 { margin:0; font-size:2rem; }
+  a, button { min-height:48px; padding:0 24px; display:inline-flex; align-items:center; border:2px solid var(--ink); border-radius:16px; background:var(--primary); color:var(--ink); font:800 1.1rem system-ui,sans-serif; text-decoration:none; cursor:pointer; }
+</style>
+</head>
+<body>
+<main>
+  <img src="/icon-192.png" width="96" height="96" alt="" />
+  <h1>Pas de connexion</h1>
+  <p>Cette page n'a pas encore été ouverte sur cet appareil. Dès que le réseau revient, tout refonctionne.</p>
+  <button type="button" onclick="location.reload()">Réessayer</button>
+  <a href="/">Retour à l'accueil</a>
+</main>
+</body>
+</html>

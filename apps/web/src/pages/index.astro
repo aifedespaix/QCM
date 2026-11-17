@@ -43,6 +43,12 @@ const creatorPoints = [
   'Tu enregistres un fichier .qcm ou tu le proposes à la bibliothèque.',
 ]
 
+const appTiles = [
+  { href: '/bibliotheque', title: 'Bibliothèque', text: 'Choisir un QCM et réviser.', tone: 'bg-badge-a', main: true, icon: 'M12 6.5C10 5 7 4.5 4 5v13c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V5c-3-.5-6 0-8 1.5zM12 6.5v13' },
+  { href: '/editeur', title: 'Créer un QCM', text: 'Écrire ou coller un QCM, en 4 étapes.', tone: 'bg-badge-b', main: false, icon: 'M4 20l1-4.5L16.5 4l3.5 3.5L8.5 19 4 20zM14 6.5l3.5 3.5' },
+  { href: '/statistiques', title: 'Suivi', text: 'Ce qui est acquis, ce qui est à revoir.', tone: 'bg-badge-c', main: false, icon: 'M5 20V10M12 20V4M19 20v-7' },
+]
+
 const mockChoices = [
   { letter: 'A', text: '2/4', tone: 'bg-badge-a', correct: true },
   { letter: 'B', text: '1/3', tone: 'bg-badge-b', correct: false },
@@ -51,7 +57,46 @@ const mockChoices = [
 ]
 ---
 
-<Base title="Réviser au calme" bodyClass="home-glow bg-no-repeat">
+<Base
+  title="Réviser au calme"
+  description="QCM, le lecteur de questionnaires calme pour les élèves : grands boutons, une question à la fois, sans publicité ni chronomètre. Bibliothèque gratuite, éditeur et suivi pour les parents."
+  bodyClass="home-glow bg-no-repeat"
+  jsonLd={{
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'QCM',
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web, Windows 10, Windows 11, Android, iOS',
+    inLanguage: 'fr',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    description: 'Lecteur de questionnaires à choix multiples calme : une question à la fois, sans publicité, sans chronomètre, sans score.',
+  }}
+>
+  <!-- Accueil de l'app installée : un récap des fonctions, à portée de pouce. -->
+  <section class="app-only flex flex-col gap-5 pt-1" aria-labelledby="app-titre">
+    <h1 id="app-titre" class="text-3xl font-extrabold">Que veux-tu faire ?</h1>
+    <ul class="grid gap-4 sm:grid-cols-2">
+      {
+        appTiles.map((tile) => (
+          <li>
+            <a href={tile.href} class:list={['qcm-card flex items-center gap-4 p-5 no-underline', tile.main && 'bg-primary']}>
+              <span class:list={['qcm-tile', tile.tone]} aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d={tile.icon} /></svg>
+              </span>
+              <span class="flex flex-1 flex-col">
+                <span class="text-xl font-extrabold">{tile.title}</span>
+                <span class="font-medium text-ink-soft">{tile.text}</span>
+              </span>
+              <svg class="flex-none" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="text-center text-base font-medium text-ink-soft">Les pages déjà ouvertes restent disponibles sans réseau.</p>
+  </section>
+
+  <div class="web-only">
   <section class="grid items-center gap-10 pt-4 lg:grid-cols-[1.05fr_1fr] lg:pt-10">
     <div class="flex flex-col gap-6">
       <p class="qcm-chip self-start border-2 border-line bg-surface px-4 py-1.5 text-sm whitespace-normal">Gratuit · Sans publicité · Sans chronomètre</p>
@@ -172,4 +217,5 @@ const mockChoices = [
       <p class="text-base font-medium">L'éditeur fonctionne sans compte.</p>
     </div>
   </section>
+  </div>
 </Base>

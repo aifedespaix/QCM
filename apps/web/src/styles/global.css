@@ -15,6 +15,12 @@
   }
 }
 
+/* Contenu propre au site web ou à l'app installée (voir la détection dans Base.astro). */
+html[data-standalone] .web-only,
+html:not([data-standalone]) .app-only {
+  display: none !important;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
