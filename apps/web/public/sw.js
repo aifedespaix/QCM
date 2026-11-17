@@ -3,7 +3,7 @@
  * - Pages : réseau d'abord, copie en cache si le réseau échoue, sinon page « hors connexion ».
  * - Tout ce qui n'est pas du même domaine (PocketBase, etc.) ou pas en GET passe sans interception.
  * Incrémenter VERSION force le renouvellement des caches. */
-const VERSION = 'v2'
+const VERSION = 'v3'
 const PAGES = `qcm-pages-${VERSION}`
 const ASSETS = `qcm-assets-${VERSION}`
 const OFFLINE_URL = '/offline.html'
@@ -37,6 +37,8 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  // PocketBase (API, fichiers, administration) est servi sous le même domaine : jamais de cache ici.
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_/')) return
 
   if (request.mode === 'navigate') {
     event.respondWith(
