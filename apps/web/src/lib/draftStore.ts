@@ -19,7 +19,9 @@ export interface StoredDraft {
     questions: {
       prompt: string
       choices: { text: string }[]
-      correctIndex: number
+      /** Brouillons plus anciens : `correctIndex` seul. */
+      correctIndexes?: number[]
+      correctIndex?: number
       hint: string
       explanation: string
       image: { path: string; bytes: Uint8Array } | null
@@ -60,7 +62,7 @@ export function serializeDraft(draft: Draft): StoredDraft['data'] {
     questions: draft.questions.map((question) => ({
       prompt: question.prompt,
       choices: question.choices.map((choice) => ({ text: choice.text })),
-      correctIndex: question.correctIndex,
+      correctIndexes: [...question.correctIndexes],
       hint: question.hint,
       explanation: question.explanation,
       image: question.image ? { path: question.image.path, bytes: question.image.bytes } : null,

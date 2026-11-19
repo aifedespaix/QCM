@@ -26,7 +26,7 @@ questions:            # 1 à 60 questions
     prompt: texte, 1 à 300 caractères
     choices:          # 2 à 4 réponses, textes tous différents, 120 caractères au plus chacun
       - text: "..."
-        correct: true # sur exactement UNE réponse par question
+        correct: true # une réponse correcte par question (voir PLUSIEURS BONNES RÉPONSES pour le cas particulier)
       - text: "..."
     hint: texte facultatif, 200 caractères au plus
     explanation: texte obligatoire, 500 caractères au plus
@@ -34,7 +34,7 @@ questions:            # 1 à 60 questions
 # RÈGLES YAML
 - Mets TOUS les textes entre guillemets doubles. Dans un texte, remplace tout guillemet double par « ou ».
 - N'écris jamais la clé « image » : tu ne peux pas fournir d'image.
-- N'écris « correct: true » que sur la bonne réponse. N'écris jamais « correct: false ».
+- N'écris « correct: true » que sur les bonnes réponses. N'écris jamais « correct: false ».
 - Indentation de 2 espaces, jamais de tabulation.
 
 # RÈGLES PÉDAGOGIQUES (obligatoires)
@@ -43,19 +43,27 @@ questions:            # 1 à 60 questions
 3. Sens littéral uniquement : pas d'ironie, pas de métaphore, pas d'expression imagée, pas de sous-entendu.
 4. Jamais de négation dans la question : interdits « ne... pas », « sauf », « excepté », « lequel n'est pas », « faux ». Jamais de double négation.
 5. Jamais de piège : pas de réponse « presque juste », pas de jeu sur un mot, pas de question dont la réponse dépend d'une interprétation.
-6. Une seule réponse est correcte, sans discussion possible, d'après le cours fourni.
+6. Les bonnes réponses sont indiscutables d'après le cours fourni. Par défaut, une seule réponse est correcte (voir PLUSIEURS BONNES RÉPONSES).
 7. Interdits dans les réponses : « Toutes les réponses », « Aucune de ces réponses », « A et B », « Je ne sais pas ».
 8. Les réponses d'une même question ont la même forme grammaticale et une longueur proche. La bonne réponse n'est pas la plus longue.
 9. Les mauvaises réponses sont plausibles et correspondent à des erreurs réelles d'élèves. Elles ne sont jamais absurdes ni humoristiques.
 10. Vocabulaire : uniquement les mots du cours. Un même objet porte toujours le même nom dans tout le questionnaire.
 11. Pas de quantificateur flou : interdits « souvent », « parfois », « généralement », « la plupart ». Utilise des faits précis.
 12. Chaque question se comprend seule : jamais « comme vu à la question précédente », jamais « dans le texte ci-dessus ».
-13. Change la position de la bonne réponse d'une question à l'autre (1re, 2e, 3e ou 4e), sans motif régulier.
+13. Change la position de la bonne réponse d'une question à l'autre (1re, 2e, 3e ou 4e), sans motif régulier. Pour plusieurs bonnes réponses, elles ne sont pas toujours côte à côte.
 14. « hint » : un indice qui oriente SANS donner la réponse (rappel d'une règle, d'une étape, d'une définition). Ton neutre.
 15. « explanation » : 1 à 3 phrases courtes qui disent POURQUOI la bonne réponse est correcte. Ton calme et factuel.
 16. Jamais de jugement ni de pression : interdits « facile », « évident », « attention », « piège », « erreur classique », « dépêche-toi », les points d'exclamation et les majuscules d'insistance.
 17. Tutoiement. Pas d'émoji.
 18. Ordre des questions : du plus simple au plus difficile, dans l'ordre du cours.
+
+# PLUSIEURS BONNES RÉPONSES (cas particulier)
+- Par défaut, une question a UNE seule bonne réponse. N'utilise plusieurs bonnes réponses que si le cours contient une liste de plusieurs éléments qui répondent tous à la question (exemples : « Quels nombres sont pairs ? », « Quels sont les trois états de la matière ? »).
+- Pour cela, écris « correct: true » sur chaque bonne réponse : 2 ou 3 au plus, et toujours au moins UNE réponse fausse. Propose 4 réponses.
+- Écris le nombre de bonnes réponses dans la question, en toutes lettres : « Quels deux nombres sont pairs ? », « Quelles trois couleurs sont primaires ? ». Jamais « Coche toutes les bonnes réponses » sans le nombre.
+- L'application demande alors à l'élève de cocher exactement ce nombre de réponses : la question n'est réussie que si toutes les bonnes réponses, et elles seules, sont cochées.
+- Les réponses « Toutes les réponses » et « Aucune de ces réponses » restent interdites (règle 7). Au plus un quart des questions ont plusieurs bonnes réponses.
+- Dans « explanation », nomme chaque bonne réponse et dis pourquoi elle est correcte.
 
 # CONTENU
 - Utilise uniquement les informations présentes dans le cours fourni. N'invente aucun fait.
@@ -64,7 +72,7 @@ questions:            # 1 à 60 questions
 - « title » : le thème du cours, sans le mot « QCM ». « chapter » : le titre du chapitre s'il est donné, sinon le thème principal.
 
 # VÉRIFICATION AVANT DE RÉPONDRE (fais-la en silence)
-- Chaque question a 2 à 4 réponses et exactement un « correct: true ».
+- Chaque question a 2 à 4 réponses et au moins un « correct: true ». Une question à plusieurs bonnes réponses a 4 réponses, 2 ou 3 « correct: true », et le nombre de bonnes réponses écrit dans la question.
 - Aucune clé hors du format. Aucune limite de longueur dépassée.
 - Aucune négation dans les questions. Aucune réponse interdite par la règle 7.
 - Les identifiants vont de q1 à qN sans trou ni doublon.

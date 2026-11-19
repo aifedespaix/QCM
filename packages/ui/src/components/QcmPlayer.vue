@@ -37,7 +37,7 @@ const emit = defineEmits<{
 
 const sound = useQcmSound()
 const player = useQcmPlayer(() => props.qcm, sound)
-const { phase, index, total, question, selectedIndex, triedIndexes, correctIndex, isLast } = player
+const { phase, index, total, question, selectedIndexes, triedIndexes, correctIndexes, multiple, isLast } = player
 
 const summary = computed(() => summarizeQcm(props.qcm))
 const imageUrl = computed(() => {
@@ -47,11 +47,15 @@ const imageUrl = computed(() => {
 const resolved = computed(() => phase.value === 'correct' || phase.value === 'revealed')
 const LETTERS = ['A', 'B', 'C', 'D'] as const
 const inQuestion = computed(() => phase.value !== 'intro' && phase.value !== 'done' && question.value !== undefined)
-const answer = computed(() => {
-  const choice = question.value?.choices[correctIndex.value]
-  const letter = LETTERS[correctIndex.value]
-  return choice && letter ? { letter, text: choice.text } : null
-})
+const answers = computed(() =>
+  correctIndexes.value.flatMap((position) => {
+    const choice = question.value?.choices[position]
+    const letter = LETTERS[position]
+    return choice && letter ? [{ letter, text: choice.text }] : []
+  }),
+)
+/** Nombre de bonnes réponses à cocher, seulement quand la question en demande plusieurs. */
+const answerCount = computed(() => (multiple.value ? correctIndexes.value.length : 0))
 /** Jusqu'à 12 questions : un segment par question. Au-delà, une barre continue. */
 const segmented = computed(() => total.value <= 12)
 
@@ -170,15 +174,16 @@ onBeforeUnmount(() => {
         recours (texte très long sur un très petit écran).
       -->
       <div class="qcm-stage-column flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pt-1 pb-3 sm:gap-5">
-        <QcmQuestionCard :key="question.id" class="flex-[1_1_0]" :prompt="question.prompt" :image-url="imageUrl" />
+        <QcmQuestionCard :key="question.id" class="flex-[1_1_0]" :prompt="question.prompt" :image-url="imageUrl" :answer-count="answerCount" />
         <QcmChoiceGrid
           :key="`choices-${question.id}`"
           :class="imageUrl ? 'flex-[1_1_0]' : 'flex-[2_1_0]'"
           :dense="imageUrl !== undefined"
           :choices="question.choices"
-          :selected-index="selectedIndex"
+          :selected-indexes="selectedIndexes"
           :tried-indexes="triedIndexes"
-          :correct-index="resolved ? correctIndex : null"
+          :correct-indexes="resolved ? correctIndexes : null"
+          :multiple="multiple"
           @select="player.select($event)"
         />
       </div>
@@ -188,11 +193,12 @@ onBeforeUnmount(() => {
           :key="`dock-${question.id}`"
           class="qcm-stage-column pt-2 pb-3 sm:pt-3 sm:pb-4"
           :kind="phase === 'retry' ? 'retry' : phase === 'correct' ? 'correct' : phase === 'revealed' ? 'revealed' : 'answering'"
-          :selected-letter="selectedIndex === null ? null : LETTERS[selectedIndex]"
+          :selected-letters="selectedIndexes.map((position) => LETTERS[position] ?? '')"
+          :answer-count="answerCount"
           :has-tried="triedIndexes.length > 0"
           :hint="question.hint"
           :explanation="question.explanation"
-          :answer="answer"
+          :answers="answers"
           :is-last="isLast"
           :show-keys="keyboard"
           @validate="guarded(player.validate)"

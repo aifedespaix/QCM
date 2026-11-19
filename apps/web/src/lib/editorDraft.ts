@@ -2,7 +2,7 @@ import { reactive } from 'vue'
 import {
   LIMITS,
   QCM_FORMAT_VERSION,
-  correctIndexOf,
+  correctIndexesOf,
   extractQcmYaml,
   imageToWebp,
   mediaPathFor,
@@ -32,7 +32,8 @@ export interface DraftQuestion {
   key: number
   prompt: string
   choices: { text: string }[]
-  correctIndex: number
+  /** Position des bonnes réponses (une ou plusieurs). */
+  correctIndexes: number[]
   hint: string
   explanation: string
   image: DraftImage | null
@@ -60,7 +61,7 @@ export function emptyQuestion(): DraftQuestion {
     key: nextKey++,
     prompt: '',
     choices: [{ text: '' }, { text: '' }],
-    correctIndex: 0,
+    correctIndexes: [0],
     hint: '',
     explanation: '',
     image: null,
@@ -106,6 +107,7 @@ export function duplicateQuestion(draft: Draft, index: number): number {
     ...source,
     key: nextKey++,
     choices: source.choices.map((choice) => ({ text: choice.text })),
+    correctIndexes: [...source.correctIndexes],
     image: null,
   })
   return index + 1
@@ -134,8 +136,8 @@ export function addChoice(question: DraftQuestion): void {
 export function removeChoice(question: DraftQuestion, index: number): void {
   if (question.choices.length <= LIMITS.minChoices) return
   question.choices.splice(index, 1)
-  if (question.correctIndex === index) question.correctIndex = 0
-  else if (question.correctIndex > index) question.correctIndex -= 1
+  question.correctIndexes = question.correctIndexes.filter((item) => item !== index).map((item) => (item > index ? item - 1 : item))
+  if (question.correctIndexes.length === 0) question.correctIndexes = [0]
 }
 
 /** Convertit l'image déposée en WebP (1280 px max) et l'attache à la question. */
@@ -179,7 +181,7 @@ export function draftToData(draft: Draft): QcmData {
       ...(question.image ? { image: question.image.path } : {}),
       choices: question.choices.map((choice, choiceIndex) => ({
         text: choice.text,
-        correct: choiceIndex === question.correctIndex,
+        correct: question.correctIndexes.includes(choiceIndex),
       })),
       ...(question.hint.trim() ? { hint: question.hint } : {}),
       explanation: question.explanation,
@@ -217,12 +219,18 @@ export function loadArchiveIntoDraft(draft: Draft, archive: QcmArchive): void {
       key: nextKey++,
       prompt: question.prompt,
       choices: question.choices.map((choice) => ({ text: choice.text })),
-      correctIndex: correctIndexOf(question),
+      correctIndexes: correctIndexesOf(question),
       hint: question.hint ?? '',
       explanation: question.explanation,
       image: question.image && bytes ? { path: question.image, bytes, url: blobUrl(bytes) } : null,
     }
   })
+}
+
+/** Brouillons enregistrés avant les réponses multiples : `correctIndex` seul. */
+function sanitizeCorrect(question: { correctIndexes?: number[]; correctIndex?: number }): number[] {
+  const list = question.correctIndexes ?? (typeof question.correctIndex === 'number' ? [question.correctIndex] : [0])
+  return list.length > 0 ? [...list] : [0]
 }
 
 /** Remplace le brouillon par un brouillon enregistré dans le navigateur (voir `draftStore.ts`). */
@@ -236,7 +244,7 @@ export function restoreDraft(draft: Draft, stored: StoredDraftData): void {
     key: nextKey++,
     prompt: question.prompt,
     choices: question.choices.map((choice) => ({ text: choice.text })),
-    correctIndex: question.correctIndex,
+    correctIndexes: sanitizeCorrect(question),
     hint: question.hint,
     explanation: question.explanation,
     image: question.image ? { path: question.image.path, bytes: question.image.bytes, url: blobUrl(question.image.bytes) } : null,

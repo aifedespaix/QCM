@@ -1,5 +1,5 @@
 import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
-import { correctIndexOf, type QcmData, type QcmQuestion, type QuestionResult } from '@qcm/core'
+import { correctIndexOf, correctIndexesOf, isMultipleAnswer, type QcmData, type QcmQuestion, type QuestionResult } from '@qcm/core'
 
 /**
  * Machine à états du lecteur QCM.
@@ -24,9 +24,12 @@ export interface QcmPlayerSounds {
 export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlayerSounds = {}) {
   const phase = ref<QcmPhase>('intro')
   const index = ref(0)
-  const selectedIndex = ref<number | null>(null)
-  /** Réponses déjà essayées sur la question en cours : elles restent grisées. */
+  /** Réponses cochées (une seule, ou plusieurs si la question a plusieurs bonnes réponses). */
+  const selectedIndexes = ref<number[]>([])
+  /** Mauvaises réponses déjà essayées sur la question en cours : elles restent grisées. */
   const triedIndexes = ref<number[]>([])
+  /** Validations ratées sur la question en cours (pour le suivi). */
+  const wrongCount = ref(0)
   /** Résultat de chaque question terminée depuis `start` (pour le suivi, jamais affiché à l'élève). */
   const results = ref<QuestionResult[]>([])
 
@@ -34,11 +37,17 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
   const total = computed(() => questions.value.length)
   const question = computed<QcmQuestion | undefined>(() => questions.value[index.value])
   const correctIndex = computed(() => (question.value ? correctIndexOf(question.value) : -1))
+  const correctIndexes = computed(() => (question.value ? correctIndexesOf(question.value) : []))
+  /** `true` si la question demande de cocher plusieurs réponses. */
+  const multiple = computed(() => (question.value ? isMultipleAnswer(question.value) : false))
+  /** Première réponse cochée (`null` si rien n'est coché) : pratique pour les questions à réponse unique. */
+  const selectedIndex = computed(() => selectedIndexes.value[0] ?? null)
   const isLast = computed(() => index.value >= total.value - 1)
 
   function resetQuestion(): void {
-    selectedIndex.value = null
+    selectedIndexes.value = []
     triedIndexes.value = []
+    wrongCount.value = 0
   }
 
   function start(): void {
@@ -53,20 +62,31 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
     const choices = question.value?.choices ?? []
     if (choiceIndex < 0 || choiceIndex >= choices.length) return
     if (triedIndexes.value.includes(choiceIndex)) return
-    selectedIndex.value = choiceIndex
+    if (multiple.value) {
+      // Plusieurs bonnes réponses : chaque appui coche ou décoche, dans l'ordre des réponses.
+      selectedIndexes.value = selectedIndexes.value.includes(choiceIndex)
+        ? selectedIndexes.value.filter((item) => item !== choiceIndex)
+        : [...selectedIndexes.value, choiceIndex].sort((a, b) => a - b)
+    } else {
+      selectedIndexes.value = [choiceIndex]
+    }
     phase.value = 'answering'
     sounds.playSelect?.()
   }
 
   function validate(): void {
-    if (phase.value !== 'answering' || selectedIndex.value === null) return
-    if (selectedIndex.value === correctIndex.value) {
+    if (phase.value !== 'answering' || selectedIndexes.value.length === 0) return
+    const expected = correctIndexes.value
+    if (selectedIndexes.value.length === expected.length && selectedIndexes.value.every((item) => expected.includes(item))) {
       phase.value = 'correct'
       sounds.playCorrect?.()
       return
     }
-    triedIndexes.value = [...triedIndexes.value, selectedIndex.value]
-    selectedIndex.value = null
+    // Seules les réponses fausses sont grisées : une bonne réponse cochée à moitié ne se révèle jamais.
+    const wrong = selectedIndexes.value.filter((item) => !expected.includes(item))
+    triedIndexes.value = [...triedIndexes.value, ...wrong]
+    wrongCount.value += 1
+    selectedIndexes.value = []
     phase.value = 'retry'
     sounds.playSoft?.()
   }
@@ -78,7 +98,7 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
   /** « Voir la réponse » : montre la bonne réponse, sans pénalité. */
   function reveal(): void {
     if (phase.value !== 'retry' && phase.value !== 'answering') return
-    selectedIndex.value = null
+    selectedIndexes.value = []
     phase.value = 'revealed'
   }
 
@@ -87,7 +107,7 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
     if (question.value) {
       results.value = [
         ...results.value,
-        { id: question.value.id, wrong: triedIndexes.value.length, revealed: phase.value === 'revealed' },
+        { id: question.value.id, wrong: wrongCount.value, revealed: phase.value === 'revealed' },
       ]
     }
     if (isLast.value) {
@@ -137,7 +157,7 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
     if (event.key === 'Enter' || event.key === ' ') {
       // Un bouton qui a le focus garde son comportement natif, sauf une réponse (role="radio") :
       // après un clic sur une réponse, Entrée doit valider et non re-sélectionner.
-      if (inside('button:not([role="radio"]), a[href]')) return false
+      if (inside('button:not([role="radio"]):not([role="checkbox"]), a[href]')) return false
       if (phase.value === 'done') return false
       primary()
       return true
@@ -158,7 +178,11 @@ export function useQcmPlayer(source: MaybeRefOrGetter<QcmData>, sounds: QcmPlaye
     total,
     question,
     selectedIndex,
+    selectedIndexes,
     triedIndexes,
+    wrongCount,
+    multiple,
+    correctIndexes,
     results,
     correctIndex,
     isLast,

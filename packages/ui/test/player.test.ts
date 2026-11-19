@@ -96,4 +96,53 @@ describe('useQcmPlayer', () => {
     expect(player.phase.value).toBe('intro')
     expect(player.index.value).toBe(0)
   })
+
+  test('question à plusieurs bonnes réponses : cocher, décocher, valider', () => {
+    const multi = validateQcm({
+      version: 1,
+      meta: { title: 'Multi', subject: 'maths', level: '6e', chapter: 'Chapitre 1' },
+      questions: [
+        {
+          id: 'q1',
+          prompt: 'Quels nombres sont pairs ?',
+          choices: [{ text: '2', correct: true }, { text: '3' }, { text: '4', correct: true }, { text: '5' }],
+          explanation: '2 et 4 sont pairs.',
+        },
+      ],
+    })
+    const player = useQcmPlayer(multi)
+    player.start()
+    expect(player.multiple.value).toBe(true)
+    expect(player.correctIndexes.value).toEqual([0, 2])
+
+    // Cocher puis décocher.
+    player.select(2)
+    player.select(0)
+    expect(player.selectedIndexes.value).toEqual([0, 2])
+    player.select(0)
+    expect(player.selectedIndexes.value).toEqual([2])
+
+    // Réponse incomplète : refusée, rien n'est grisé (on ne révèle pas la bonne réponse partielle).
+    player.validate()
+    expect(player.phase.value).toBe('retry')
+    expect(player.triedIndexes.value).toEqual([])
+    expect(player.selectedIndexes.value).toEqual([])
+
+    // Une mauvaise réponse en plus : elle est grisée.
+    player.select(0)
+    player.select(2)
+    player.select(1)
+    player.validate()
+    expect(player.phase.value).toBe('retry')
+    expect(player.triedIndexes.value).toEqual([1])
+    player.select(1) // grisée : ignorée
+    expect(player.selectedIndexes.value).toEqual([])
+
+    player.select(2)
+    player.select(0)
+    player.validate()
+    expect(player.phase.value).toBe('correct')
+    player.next()
+    expect(player.results.value).toEqual([{ id: 'q1', wrong: 2, revealed: false }])
+  })
 })

@@ -103,11 +103,15 @@ export const QuestionSchema = z
   })
   .superRefine((question, ctx) => {
     const correctCount = question.choices.filter((choice) => choice.correct).length
-    if (correctCount !== 1) {
+    // Une ou plusieurs bonnes réponses, mais jamais toutes : au moins une mauvaise réponse reste à écarter.
+    if (correctCount < 1 || correctCount > question.choices.length - 1) {
       ctx.addIssue({
         code: 'custom',
         path: ['choices'],
-        message: `Il faut exactement 1 bonne réponse (trouvé : ${correctCount}).`,
+        message:
+          correctCount < 1
+            ? 'Il faut au moins 1 bonne réponse (correct: true).'
+            : `Il faut au moins 1 mauvaise réponse : toutes les réponses sont marquées correctes (trouvé : ${correctCount} sur ${question.choices.length}).`,
       })
     }
     const seen = new Set<string>()
@@ -182,7 +186,17 @@ export function summarizeQcm(qcm: QcmData): QcmSummary {
   }
 }
 
-/** Index de la bonne réponse d'une question valide. */
+/** Index de la (première) bonne réponse d'une question valide. */
 export function correctIndexOf(question: QcmQuestion): number {
   return question.choices.findIndex((choice) => choice.correct)
+}
+
+/** Index de toutes les bonnes réponses d'une question valide, dans l'ordre. */
+export function correctIndexesOf(question: QcmQuestion): number[] {
+  return question.choices.flatMap((choice, index) => (choice.correct ? [index] : []))
+}
+
+/** `true` si la question a plusieurs bonnes réponses : l'élève doit toutes les cocher. */
+export function isMultipleAnswer(question: QcmQuestion): boolean {
+  return question.choices.filter((choice) => choice.correct).length > 1
 }

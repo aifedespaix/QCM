@@ -28,7 +28,7 @@ export const QCM_ERROR_CODES = Object.keys(DEFAULT_MESSAGES) as QcmErrorCode[]
 
 export class QcmFormatError extends Error {
   readonly code: QcmErrorCode
-  /** Une ligne par problème, par exemple `questions[2].choices : Il faut exactement 1 bonne réponse`. */
+  /** Une ligne par problème, par exemple `questions[2].choices : Il faut au moins 1 bonne réponse`. */
   readonly details: string[]
 
   constructor(code: QcmErrorCode, details: string[] = [], message?: string) {

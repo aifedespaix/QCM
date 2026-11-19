@@ -14,20 +14,22 @@ const props = withDefaults(
   defineProps<{
     /** `answering` : choix en cours. `retry` : pas encore. `correct` / `revealed` : question résolue. */
     kind: 'answering' | 'retry' | 'correct' | 'revealed'
-    /** Lettre de la réponse choisie (A à D), ou `null` si rien n'est choisi. */
-    selectedLetter?: string | null
+    /** Lettres des réponses choisies (A à D) ; vide si rien n'est choisi. */
+    selectedLetters?: readonly string[]
+    /** Nombre de bonnes réponses à cocher quand il y en a plusieurs (`0` ou `1` : réponse unique). */
+    answerCount?: number
     /** Au moins une réponse a déjà été essayée : l'indice reste affiché. */
     hasTried?: boolean
     hint?: string
     explanation?: string
-    /** Bonne réponse, rappelée dans le message une fois la question résolue. */
-    answer?: { letter: string; text: string } | null
+    /** Bonne(s) réponse(s), rappelée(s) dans le message une fois la question résolue. */
+    answers?: readonly { letter: string; text: string }[]
     /** Dernière question : le bouton dit « Terminer ». */
     isLast?: boolean
     /** Affiche les rappels de touches du clavier. */
     showKeys?: boolean
   }>(),
-  { selectedLetter: null, hasTried: false, hint: undefined, explanation: undefined, answer: null, isLast: false, showKeys: true },
+  { selectedLetters: () => [], answerCount: 0, hasTried: false, hint: undefined, explanation: undefined, answers: () => [], isLast: false, showKeys: true },
 )
 
 const emit = defineEmits<{
@@ -36,14 +38,20 @@ const emit = defineEmits<{
   reveal: []
 }>()
 
+const multiple = computed(() => props.answerCount > 1)
+const selectedLetter = computed(() => (props.selectedLetters.length === 0 ? null : props.selectedLetters.join(' · ')))
 const resolved = computed(() => props.kind === 'correct' || props.kind === 'revealed')
 const hinting = computed(() => !resolved.value && (props.kind === 'retry' || props.hasTried))
 
 const status = computed(() => {
-  if (props.kind === 'correct') return { title: 'Bonne réponse.', icon: 'M5 12.5l4.5 4.5L19 7.5' }
+  if (props.kind === 'correct') return { title: multiple.value ? 'Bonnes réponses.' : 'Bonne réponse.', icon: 'M5 12.5l4.5 4.5L19 7.5' }
   if (props.kind === 'revealed') return { title: 'Voici la réponse.', icon: 'M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12zM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z' }
   if (props.kind === 'retry') return { title: 'Pas encore.', icon: 'M4 12a8 8 0 1 0 2.6-5.9M4 4.5v4h4' }
-  if (props.selectedLetter) return { title: `Réponse ${props.selectedLetter} choisie`, icon: '' }
+  if (multiple.value) {
+    if (props.selectedLetters.length > 0) return { title: `Réponses ${selectedLetter.value} (${props.selectedLetters.length} sur ${props.answerCount})`, icon: '' }
+    return { title: `Choisis ${props.answerCount} réponses`, icon: '' }
+  }
+  if (props.selectedLetters.length > 0) return { title: `Réponse ${props.selectedLetters[0]} choisie`, icon: '' }
   return { title: props.hasTried ? 'Choisis une autre réponse' : 'Choisis une réponse', icon: '' }
 })
 
@@ -57,7 +65,11 @@ const message = computed(() => {
 /** Consigne tant que rien n'est joué : version tactile, et version clavier sur grand écran. */
 const guide = computed(() => {
   if (resolved.value || hinting.value) return null
-  if (props.selectedLetter) return { touch: 'Tu peux encore changer, puis valider.', keys: 'Tu peux encore changer. Entrée pour valider.' }
+  if (multiple.value) {
+    if (props.selectedLetters.length > 0) return { touch: 'Touche une réponse pour la décocher, puis valide.', keys: 'Touche une réponse pour la décocher. Entrée pour valider.' }
+    return { touch: 'Touche toutes les bonnes réponses, puis valide.', keys: 'Touches A, B, C, D pour cocher, puis Entrée.' }
+  }
+  if (props.selectedLetters.length > 0) return { touch: 'Tu peux encore changer, puis valider.', keys: 'Tu peux encore changer. Entrée pour valider.' }
   return { touch: 'Touche une réponse, puis valide.', keys: 'Touches A, B, C, D pour choisir, puis Entrée.' }
 })
 
@@ -70,7 +82,7 @@ const tone = computed(() => {
 
 const announcement = computed(() => {
   if (props.kind === 'answering') return ''
-  const answer = resolved.value && props.answer ? `Réponse ${props.answer.letter} : ${props.answer.text}.` : ''
+  const answer = resolved.value ? props.answers.map((item) => `Réponse ${item.letter} : ${item.text}.`).join(' ') : ''
   return [status.value.title, answer, message.value].filter(Boolean).join(' ')
 })
 
@@ -126,7 +138,7 @@ function onPrimary(): void {
             <svg v-if="status.icon" :key="kind" class="qcm-pop" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
               <path :d="status.icon" />
             </svg>
-            <template v-else>{{ selectedLetter ?? '?' }}</template>
+            <template v-else>{{ multiple ? (selectedLetters.length || '?') : (selectedLetter ?? '?') }}</template>
           </span>
           <p class="min-w-0 flex-1 truncate text-lg leading-none font-extrabold">{{ status.title }}</p>
           <button v-if="hinting" type="button" class="qcm-dock-link" @click="emit('reveal')">Voir la réponse</button>
@@ -137,9 +149,9 @@ function onPrimary(): void {
           class="min-h-0 text-[0.95rem] leading-[1.3] font-medium"
           :class="[open ? 'overflow-y-auto' : 'line-clamp-2', !resolved && !hinting ? 'text-ink-soft' : '', expanded ? 'pb-8' : '']"
         >
-          <p v-if="resolved && answer" class="mb-1 flex items-center gap-2 font-extrabold">
-            <span class="flex size-6 flex-none items-center justify-center rounded-lg border-2 border-line bg-surface text-xs text-ink" aria-hidden="true">{{ answer.letter }}</span>
-            <span class="min-w-0 break-words">{{ answer.text }}</span>
+          <p v-for="item in resolved ? answers : []" :key="item.letter" class="mb-1 flex items-center gap-2 font-extrabold">
+            <span class="flex size-6 flex-none items-center justify-center rounded-lg border-2 border-line bg-surface text-xs text-ink" aria-hidden="true">{{ item.letter }}</span>
+            <span class="min-w-0 break-words">{{ item.text }}</span>
           </p>
           <p v-if="guide">
             <span :class="showKeys ? 'sm:hidden' : ''">{{ guide.touch }}</span>

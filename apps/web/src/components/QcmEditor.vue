@@ -741,21 +741,20 @@ onBeforeUnmount(() => {
             </div>
 
             <fieldset class="flex flex-col gap-2.5">
-              <legend class="qcm-label w-full">Réponses <span class="qcm-label-aside">coche la bonne réponse</span></legend>
+              <legend class="qcm-label w-full">Réponses <span class="qcm-label-aside">coche la ou les bonnes réponses</span></legend>
               <div
                 v-for="(choice, choiceIndex) in question.choices"
                 :key="choiceIndex"
                 class="flex items-center gap-2 rounded-2xl border-2 p-1.5 pr-2 transition-colors sm:gap-3"
-                :class="question.correctIndex === choiceIndex ? 'border-line bg-correct' : 'border-transparent'"
+                :class="question.correctIndexes.includes(choiceIndex) ? 'border-line bg-correct' : 'border-transparent'"
               >
-                <label class="flex size-11 flex-none cursor-pointer items-center justify-center" :title="`La réponse ${LETTERS[choiceIndex]} est la bonne`">
+                <label class="flex size-11 flex-none cursor-pointer items-center justify-center" :title="`La réponse ${LETTERS[choiceIndex]} est correcte`">
                   <input
-                    v-model="question.correctIndex"
-                    type="radio"
+                    v-model="question.correctIndexes"
+                    type="checkbox"
                     class="size-6 cursor-pointer accent-[var(--qcm-correct-ink)]"
-                    :name="`correct-${question.key}`"
                     :value="choiceIndex"
-                    :aria-label="`La réponse ${LETTERS[choiceIndex]} est la bonne`"
+                    :aria-label="`La réponse ${LETTERS[choiceIndex]} est correcte`"
                   />
                 </label>
                 <span class="qcm-key hidden sm:inline-flex" :class="BADGES[choiceIndex]" aria-hidden="true">{{ LETTERS[choiceIndex] }}</span>

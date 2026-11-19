@@ -19,6 +19,8 @@ import {
   upsertEntry,
   extractQcmYaml,
   correctIndexOf,
+  correctIndexesOf,
+  isMultipleAnswer,
   fitWithin,
   isWebp,
   mediaPathFor,
@@ -77,9 +79,20 @@ describe('schema', () => {
     ])
   })
 
-  test('refuse zéro ou plusieurs bonnes réponses', () => {
+  test('refuse zéro bonne réponse, ou toutes les réponses correctes', () => {
     expect(codeOf(() => parseQcmYaml(MINIMAL.replace('correct: true', 'correct: false')))).toBe('E_SCHEMA')
     expect(codeOf(() => parseQcmYaml(MINIMAL.replace('- text: 5', '- text: 5\n        correct: true')))).toBe('E_SCHEMA')
+  })
+
+  test('accepte plusieurs bonnes réponses tant qu\'une mauvaise reste', () => {
+    const multi = MINIMAL.replace(
+      '- text: 5',
+      '- text: 5\n        correct: true\n      - text: 6',
+    )
+    const question = parseQcmYaml(multi).questions[0]!
+    expect(correctIndexesOf(question)).toEqual([0, 1])
+    expect(isMultipleAnswer(question)).toBe(true)
+    expect(isMultipleAnswer(parseQcmYaml(MINIMAL).questions[0]!)).toBe(false)
   })
 
   test('refuse les clés inconnues, les identifiants en double et une mauvaise version', () => {

@@ -15,7 +15,7 @@ Règles :
 |---|---|---|---|
 | Parsing YAML côté Rust | `serde_yaml` dans Tauri | **Rust ne lit pas le YAML.** Il dézippe, renvoie le texte brut de `data.yaml`, et sert les images. La validation est faite par `@qcm/core` (Zod) dans la webview. | `serde_yaml` est archivé. Surtout : un seul schéma (Zod) au lieu de deux (Zod + structs serde) qui divergeraient. |
 | Mode Astro | hybride / SSR | **100 % statique** (`output: 'static'`), îlots Vue `client:only` qui appellent PocketBase depuis le navigateur. | Le mode `hybrid` n'existe plus dans Astro. Aucun serveur Node à héberger : un simple nginx. |
-| Format d'une réponse | (libre) | `correct: true` posé sur **une** réponse, pas d'index `answer: 2`. | Robuste au réordonnancement, lisible, moins d'erreurs pour un LLM. |
+| Format d'une réponse | (libre) | `correct: true` posé sur chaque bonne réponse (une ou plusieurs, jamais toutes), pas d'index `answer: 2`. | Robuste au réordonnancement, lisible, moins d'erreurs pour un LLM. |
 | Flux d'erreur | « réessayer ou passer » | Deux étapes : **choisir** puis **Valider**. Après une erreur : indice facultatif, la réponse essayée est grisée, boutons « Réessayer » et « Voir la réponse ». | La validation explicite limite les réponses impulsives (TDAH). « Voir la réponse » remplace « passer » : l'élève repart avec la bonne information. |
 | Écran de fin | (libre) | Aucun score, aucun pourcentage, aucune étoile. | Zéro culpabilité. |
 | Suivi | (demandé ensuite) | Les résultats de chaque passage sont enregistrés **sur l'appareil** (`localStorage`, clé `qcm:history`) et montrés sur un écran séparé « Suivi des révisions », destiné aux parents. Le lecteur et l'accueil de l'élève n'affichent toujours aucun score. | Les parents voient quoi retravailler sans que l'élève soit noté pendant qu'il révise. Rien n'est envoyé sur Internet. |
@@ -190,7 +190,7 @@ questions:                      # 1 à 60 questions
     image: media/q1_schema.webp # facultatif
     choices:                    # 2 à 4 réponses, textes tous différents
       - text: "Texte"           # obligatoire, 1 à 120 caractères
-        correct: true           # exactement une réponse par question porte correct: true
+        correct: true           # au moins une réponse par question porte correct: true (plusieurs possibles, jamais toutes)
       - text: "Texte"
     hint: "Texte"               # facultatif, 200 caractères au plus, affiché après une erreur
     explanation: "Texte"        # obligatoire, 500 caractères au plus, affiché avec la bonne réponse
@@ -208,7 +208,7 @@ Les clés inconnues sont refusées (`z.strictObject`).
 | `parseQcmYaml(text)` / `stringifyQcmYaml(data)` | Texte YAML ↔ données validées |
 | `readQcmArchive(bytes)` / `writeQcmArchive({ data, media })` | Octets `.qcm` ↔ `{ data, media: Map<chemin, Uint8Array> }` |
 | `summarizeQcm(data)` | `{ questionCount, hasImages, imagePaths }` |
-| `correctIndexOf(question)` | Index de la bonne réponse |
+| `correctIndexOf(question)`, `correctIndexesOf(question)`, `isMultipleAnswer(question)` | Index de la première bonne réponse, de toutes les bonnes réponses, et test « plusieurs bonnes réponses » |
 | `imageToWebp(blob, options?)` | Navigateur uniquement : image → WebP, 1280 px au plus, qualité 0.82 |
 | `fitWithin`, `mediaPathFor`, `qcmFileName`, `isWebp` | Utilitaires |
 | `QCM_AI_PROMPT`, `extractQcmYaml(text)`, `aiCorrectionMessage(details)` | Prompt IA (identique à `docs/skill-ingestion-cours.md`, vérifié par un test), nettoyage d'un texte collé (bloc Markdown, phrases autour), message de correction à renvoyer à l'assistant |
@@ -267,7 +267,7 @@ Chaque application importe le thème ainsi dans son CSS d'entrée (le chemin `@s
 |---|---|---|---|
 | `QcmIntroCard` | `meta: QcmMeta`, `questionCount: number`, `hasImages: boolean` | `start` | — |
 | `QcmQuestionCard` | `index: number` (base 0), `total: number`, `prompt: string`, `imageUrl?: string` | — | défaut : grille + feedback |
-| `QcmChoiceGrid` | `choices: readonly { text: string }[]`, `selectedIndex: number \| null`, `triedIndexes: readonly number[]`, `correctIndex: number \| null`, `locked?: boolean` | `select(index: number)` | — |
+| `QcmChoiceGrid` | `choices: readonly { text: string }[]`, `selectedIndexes: readonly number[]`, `triedIndexes: readonly number[]`, `correctIndexes: readonly number[] \| null`, `multiple?: boolean`, `locked?: boolean` | `select(index: number)` | — |
 | `QcmAnswerDock` | `kind: 'answering' \| 'retry' \| 'correct' \| 'revealed'`, `selectedLetter?: string \| null`, `hasTried?: boolean`, `hint?: string`, `explanation?: string`, `isLast?: boolean`, `showKeys?: boolean` | `validate`, `continue`, `reveal` | — |
 | `QcmCompletionScreen` | `title: string`, `questionCount: number`, `closable?: boolean` | `restart`, `close` | — |
 | `QcmPlayer` | `qcm: QcmData`, `resolveMedia?: (path: string) => string \| undefined`, `closable?: boolean` (défaut `false`), `keyboard?: boolean` (défaut `true`) | `close`, `complete`, `result(QcmSessionResult)` : à la fin, ou à la fermeture après au moins une question (`completed: false`) | — |
@@ -277,7 +277,7 @@ Chaque application importe le thème ainsi dans son CSS d'entrée (le chemin `@s
 
 `QcmAnswerDock` : barre d'action à position fixe (état à gauche, bouton principal à droite) ; l'indice ou l'explication se déplie sous la barre, le bouton ne bouge jamais.
 
-`QcmChoiceGrid` : grille 1 colonne sous 640 px, 2 colonnes (2×2) au-delà. `correctIndex` non nul = bonne réponse mise en avant et grille figée.
+`QcmChoiceGrid` : grille 1 colonne sous 640 px, 2 colonnes (2×2) au-delà. `correctIndexes` non nul = bonnes réponses mises en avant et grille figée.
 
 Machine à états de `useQcmPlayer` :
 
