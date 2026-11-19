@@ -32,6 +32,14 @@ services:
     restart: unless-stopped
     depends_on:
       - qcm-pocketbase
+    # Vérifie le trajet complet site -> nginx -> PocketBase (celui qui a lâché : connexion impossible
+    # alors que PocketBase tourne). Le test interne de PocketBase, lui, ne voit pas ce genre de panne.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider -T 4 http://127.0.0.1/api/health || exit 1"]
+      interval: 30s
+      timeout: 6s
+      retries: 3
+      start_period: 15s
     expose:
       - "80"
 
