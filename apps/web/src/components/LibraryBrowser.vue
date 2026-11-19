@@ -58,11 +58,49 @@ function onEscape(event: KeyboardEvent): void {
   if (event.key === 'Escape' && sheetOpen.value) sheetOpen.value = false
 }
 
+/** Dernière première page vue sans filtre : affichée tout de suite, puis rafraîchie. */
+const CACHE_KEY = 'qcm:library:first-page'
+const AUTO_RETRY_DELAYS_MS = [3000, 6000, 12000]
+let autoRetryTimer: ReturnType<typeof setTimeout> | undefined
+let autoRetries = 0
+
+function isDefaultQuery(): boolean {
+  return page.value === 1 && !mineActive.value && !filtered.value && filters.sort === 'recent'
+}
+
+function readCache(): { items: QcmRecord[]; totalPages: number; totalItems: number } | null {
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY)
+    return raw ? (JSON.parse(raw) as { items: QcmRecord[]; totalPages: number; totalItems: number }) : null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(value: { items: QcmRecord[]; totalPages: number; totalItems: number }): void {
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(value))
+  } catch {
+    // Stockage plein ou bloqué : la liste s'affiche quand même.
+  }
+}
+
 let loadId = 0
 async function load(): Promise<void> {
   // Une réponse tardive d'une ancienne requête ne doit pas écraser la plus récente.
   const id = ++loadId
-  state.value = 'loading'
+  clearTimeout(autoRetryTimer)
+  // Liste déjà vue : on l'affiche sans attendre le réseau, et on la rafraîchit en arrière-plan.
+  const cached = isDefaultQuery() && items.value.length === 0 ? readCache() : null
+  if (cached) {
+    items.value = cached.items
+    totalPages.value = cached.totalPages
+    totalItems.value = cached.totalItems
+    state.value = 'ready'
+  } else {
+    state.value = 'loading'
+  }
+  const showingStale = cached !== null
   try {
     const { mine: _mine, ...query } = filters
     const result = await listQcms({ ...query, page: page.value, ...(mineActive.value && user.value ? { owner: user.value.id } : {}) })
@@ -71,8 +109,15 @@ async function load(): Promise<void> {
     totalPages.value = Math.max(1, result.totalPages)
     totalItems.value = result.totalItems
     state.value = 'ready'
+    autoRetries = 0
+    if (isDefaultQuery()) writeCache({ items: result.items, totalPages: totalPages.value, totalItems: totalItems.value })
   } catch {
-    if (id === loadId) state.value = 'error'
+    if (id !== loadId) return
+    // La copie en mémoire reste affichée : une panne passagère ne vide pas la page.
+    if (!showingStale) state.value = 'error'
+    // On réessaie seul quelques fois avant de laisser la main au bouton « Réessayer ».
+    const delay = AUTO_RETRY_DELAYS_MS[autoRetries++]
+    if (delay !== undefined) autoRetryTimer = setTimeout(() => void load(), delay)
   }
 }
 
@@ -117,14 +162,28 @@ function onOnline(): void {
   if (state.value === 'error') void load()
 }
 
+// Retour sur l'onglet ou page restaurée depuis le cache du navigateur : une requête a pu être
+// suspendue en arrière-plan. Si la liste n'est pas là, on relance.
+function onWake(): void {
+  if (document.visibilityState === 'visible' && state.value !== 'ready') {
+    autoRetries = 0
+    void load()
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onEscape)
   window.addEventListener('online', onOnline)
+  window.addEventListener('pageshow', onWake)
+  document.addEventListener('visibilitychange', onWake)
   void load()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onEscape)
   window.removeEventListener('online', onOnline)
+  window.removeEventListener('pageshow', onWake)
+  document.removeEventListener('visibilitychange', onWake)
+  clearTimeout(autoRetryTimer)
 })
 </script>
 

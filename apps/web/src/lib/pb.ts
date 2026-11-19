@@ -1,4 +1,5 @@
 import PocketBase, { type RecordModel } from 'pocketbase'
+import { FILE_TIMEOUT_MS, withGetTimeout, withRetry } from './retry.ts'
 import { readonly, ref } from 'vue'
 import {
   QCM_MIME,
@@ -15,23 +16,8 @@ import {
 export const pb = new PocketBase(import.meta.env.PUBLIC_PB_URL || 'http://127.0.0.1:8090')
 // Les îlots Vue relancent parfois la même requête : on désactive l'annulation automatique.
 pb.autoCancellation(false)
-
-/**
- * Rejoue une lecture quand le réseau a flanché (coupure brève, mobile, serveur qui redémarre).
- * Les erreurs « normales » du serveur (4xx : introuvable, refusé…) ne sont pas rejouées.
- */
-export async function withRetry<T>(run: () => Promise<T>, attempts = 3): Promise<T> {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await run()
-    } catch (error) {
-      const status = (error as { status?: number } | null)?.status
-      const transient = status === undefined || status === 0 || status >= 500 || status === 408 || status === 429
-      if (!transient || attempt >= attempts) throw error
-      await new Promise((resolve) => setTimeout(resolve, 400 * attempt))
-    }
-  }
-}
+// Toute lecture a un délai maximal : une requête bloquée devient une erreur, rejouée par `withRetry`.
+pb.beforeSend = (url, options) => ({ url, options: withGetTimeout(options) })
 
 export interface UserRecord extends RecordModel {
   name: string
@@ -191,7 +177,7 @@ export function qcmDownloadUrl(record: QcmRecord): string {
  */
 export async function downloadQcm(record: QcmRecord): Promise<void> {
   try {
-    const response = await fetch(pb.files.getURL(record, record.file))
+    const response = await fetch(pb.files.getURL(record, record.file), { signal: AbortSignal.timeout(FILE_TIMEOUT_MS) })
     if (!response.ok) throw new Error(String(response.status))
     saveQcmLocally(new Uint8Array(await response.arrayBuffer()), record.title)
   } catch {
@@ -207,7 +193,7 @@ export function qcmThumbnailUrl(record: QcmRecord): string | undefined {
 /** Télécharge et valide l'archive pour la jouer dans le navigateur. */
 export async function fetchQcmArchive(record: QcmRecord): Promise<QcmArchive> {
   const bytes = await withRetry(async () => {
-    const response = await fetch(pb.files.getURL(record, record.file))
+    const response = await fetch(pb.files.getURL(record, record.file), { signal: AbortSignal.timeout(FILE_TIMEOUT_MS) })
     if (!response.ok) throw Object.assign(new Error(`Téléchargement impossible (${response.status})`), { status: response.status })
     return new Uint8Array(await response.arrayBuffer())
   })
