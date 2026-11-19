@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import QcmImageViewer from './QcmImageViewer.vue'
 
 /**
  * Zone de l'énoncé : le texte de la question et, s'il y en a une, son image.
  *
  * Elle occupe une part fixe de l'écran (voir `QcmPlayer`) : l'énoncé est centré dedans,
  * et l'image prend toute la place qui reste sans jamais pousser les réponses.
+ * Un appui sur l'image l'ouvre en grand (zoom, déplacement) pour bien voir les détails.
  */
 const props = defineProps<{
   prompt: string
@@ -14,6 +16,8 @@ const props = defineProps<{
   /** Nombre de bonnes réponses à cocher quand il y en a plusieurs ; `0` ou `1` : réponse unique. */
   answerCount?: number
 }>()
+
+const viewerOpen = ref(false)
 
 /** Un énoncé long est écrit un peu plus petit pour tenir sans défilement. */
 const promptSize = computed(() => {
@@ -32,14 +36,30 @@ const promptSize = computed(() => {
     </p>
     <h2 id="qcm-question-prompt" class="leading-snug font-extrabold text-balance text-ink" :class="promptSize">{{ prompt }}</h2>
 
-    <!-- L'image remplit l'espace restant : hauteur souple, jamais moins de 5rem. -->
+    <!-- L'image remplit l'espace restant (hauteur souple, avec un minimum confortable) : un appui l'agrandit. -->
     <div v-if="imageUrl" class="qcm-question-image relative flex-[1_1_0]">
-      <img
-        :src="imageUrl"
-        alt="Image de la question"
-        class="absolute inset-0 size-full rounded-2xl object-contain"
-        draggable="false"
-      />
+      <button
+        type="button"
+        class="qcm-image-button absolute inset-0"
+        aria-haspopup="dialog"
+        aria-label="Agrandir l'image de la question"
+        title="Agrandir l'image"
+        @click="viewerOpen = true"
+      >
+        <img
+          :src="imageUrl"
+          alt="Image de la question"
+          class="size-full rounded-2xl object-contain"
+          draggable="false"
+        />
+        <!-- Toujours visible : sur tactile, il n'y a pas de survol pour deviner que l'image s'agrandit. -->
+        <span class="qcm-image-zoom-chip" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.500" cy="10.500" r="6.500" /><path d="M15.500 15.500L21 21M10.500 8v5M8 10.500h5" /></svg>
+          <span>Agrandir</span>
+        </span>
+      </button>
     </div>
+
+    <QcmImageViewer v-if="viewerOpen && imageUrl" :src="imageUrl" alt="Image de la question" @close="viewerOpen = false" />
   </section>
 </template>
