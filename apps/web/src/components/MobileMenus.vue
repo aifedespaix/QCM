@@ -16,6 +16,7 @@ const error = ref('')
 const pendingCount = ref(0)
 const onAdminPage = window.location.pathname.startsWith('/admin')
 const onStatsPage = window.location.pathname.startsWith('/statistiques')
+const onAgentPage = window.location.pathname.startsWith('/agent')
 
 const initial = computed(() => (user.value?.name?.trim()[0] ?? '?').toLocaleUpperCase('fr'))
 
@@ -99,6 +100,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         </button>
         <a href="/statistiques" class="qcm-block qcm-block-quiet qcm-block-sm w-full justify-between no-underline" :aria-current="onStatsPage ? 'page' : undefined">
           Suivi des révisions
+          <span aria-hidden="true">→</span>
+        </a>
+        <a v-if="user" href="/agent" class="qcm-block qcm-block-quiet qcm-block-sm w-full justify-between no-underline" :aria-current="onAgentPage ? 'page' : undefined">
+          Agent IA
           <span aria-hidden="true">→</span>
         </a>
       </template>

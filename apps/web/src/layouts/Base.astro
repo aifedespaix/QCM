@@ -160,13 +160,13 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
             <QcmLogo size={48} />
             <span class="flex flex-col">
               <span class="site-brand-name">QCM</span>
-              <span class="site-brand-tagline">Réviser au calme</span>
+              <span class="site-brand-tagline lg:max-2xl:hidden">Réviser au calme</span>
             </span>
           </a>
           <nav aria-label="Navigation principale" class="hidden items-center gap-1 lg:flex">
             {
               links.map((link) => (
-                <a href={link.href} class="site-nav-link" aria-current={current(link.href === '/bibliotheque' ? inLibrary : path.startsWith(link.href))}>
+                <a href={link.href} class="site-nav-link whitespace-nowrap lg:max-xl:px-2" aria-current={current(link.href === '/bibliotheque' ? inLibrary : path.startsWith(link.href))}>
                   {link.label}
                 </a>
               ))
