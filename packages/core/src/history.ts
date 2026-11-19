@@ -393,6 +393,46 @@ export function computeStats(history: QcmHistory, options: { since?: number; now
   }
 }
 
+export interface Suggestion {
+  entry: QcmHistoryEntry
+  /** `unplayed` : connu de l'appareil mais jamais fait. */
+  status: QcmStatus | 'unplayed'
+  sameSubject: boolean
+}
+
+/**
+ * QCM à proposer à la fin d'un QCM : ceux de la même matière d'abord, puis les moins maîtrisés.
+ * Un QCM acquis (réussi du premier coup à 80 % ou plus au dernier passage) n'est jamais proposé,
+ * ni le QCM qui vient d'être fait. Liste vide : tout est maîtrisé.
+ */
+export function suggestNext(
+  history: QcmHistory,
+  currentKey: string,
+  options: { limit?: number; canOpen?: (entry: QcmHistoryEntry) => boolean } = {},
+): Suggestion[] {
+  const limit = options.limit ?? 4
+  const canOpen = options.canOpen ?? (() => true)
+  const current = history.entries.find((entry) => entry.key === currentKey)
+  const stats = new Map(computeStats(history).qcms.map((item) => [item.entry.key, item]))
+  const order: Record<QcmStatus | 'unplayed', number> = { review: 0, progress: 1, started: 2, unplayed: 3, acquired: 4 }
+  return history.entries
+    .filter((entry) => entry.key !== currentKey && canOpen(entry))
+    .map((entry): Suggestion & { rate: number } => {
+      const stat = stats.get(entry.key)
+      return { entry, status: stat?.status ?? 'unplayed', sameSubject: entry.subject === current?.subject, rate: stat?.rate ?? 0 }
+    })
+    .filter((item) => item.status !== 'acquired')
+    .sort(
+      (a, b) =>
+        Number(b.sameSubject) - Number(a.sameSubject) ||
+        order[a.status] - order[b.status] ||
+        a.rate - b.rate ||
+        b.entry.openedAt - a.entry.openedAt,
+    )
+    .slice(0, limit)
+    .map(({ rate: _rate, ...item }) => item)
+}
+
 /** « aujourd'hui », « hier », « il y a 3 jours », puis la date. */
 export function formatRelativeDay(time: number, now = Date.now()): string {
   const days = Math.round((startOfDay(now) - startOfDay(time)) / 86_400_000)

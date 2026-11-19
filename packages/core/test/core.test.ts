@@ -16,6 +16,7 @@ import {
   qcmFingerprint,
   removeEntry,
   statusOfRate,
+  suggestNext,
   upsertEntry,
   extractQcmYaml,
   correctIndexOf,
@@ -321,5 +322,48 @@ describe('lien avec la bibliothèque en ligne', () => {
     expect(result.attempts).toHaveLength(1)
     expect(result.attempts[0]?.key).toBe(next.key)
     expect(result.attempts[0]?.questions.map((question) => question.id)).toEqual([first!.id])
+  })
+})
+
+describe('suggestNext', () => {
+  const entry = (key: string, subject: 'maths' | 'francais', openedAt: number) => ({
+    key,
+    title: key,
+    subject,
+    level: '6e' as const,
+    chapter: 'c',
+    questionCount: 2,
+    prompts: { q1: 'a', q2: 'b' },
+    openedAt,
+  })
+  const result = (wrong: number) => ({
+    total: 2,
+    completed: true,
+    questions: [
+      { id: 'q1', wrong: 0, revealed: false },
+      { id: 'q2', wrong, revealed: false },
+    ],
+  })
+
+  test('propose la même matière d\'abord, jamais un QCM acquis ni le QCM courant', () => {
+    let history = emptyHistory()
+    for (const item of [entry('cur', 'maths', 1), entry('ok', 'maths', 2), entry('weak', 'francais', 3), entry('new', 'maths', 4), entry('mid', 'maths', 5)]) {
+      history = upsertEntry(history, item)
+    }
+    history = addAttempt(history, 'cur', result(0))
+    history = addAttempt(history, 'ok', result(0))
+    history = addAttempt(history, 'weak', { ...result(1), questions: [{ id: 'q1', wrong: 1, revealed: false }, { id: 'q2', wrong: 1, revealed: true }] })
+    history = addAttempt(history, 'mid', result(1))
+    const keys = suggestNext(history, 'cur').map((item) => item.entry.key)
+    expect(keys).toEqual(['mid', 'new', 'weak'])
+    expect(suggestNext(history, 'cur', { limit: 1 })).toHaveLength(1)
+    expect(suggestNext(history, 'cur', { canOpen: (item) => item.key !== 'mid' }).map((item) => item.entry.key)).toEqual(['new', 'weak'])
+  })
+
+  test('liste vide quand tout est maîtrisé', () => {
+    let history = upsertEntry(upsertEntry(emptyHistory(), entry('a', 'maths', 1)), entry('b', 'maths', 2))
+    history = addAttempt(history, 'a', result(0))
+    history = addAttempt(history, 'b', result(0))
+    expect(suggestNext(history, 'a')).toEqual([])
   })
 })

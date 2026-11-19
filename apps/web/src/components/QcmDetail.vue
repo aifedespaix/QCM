@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { LEVEL_LABELS, SUBJECT_LABELS, type QcmArchive } from '@qcm/core'
-import { QcmPlayer, useQcmHistory } from '@qcm/ui'
-import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
+import { LEVEL_LABELS, SUBJECT_LABELS, suggestNext, type QcmArchive } from '@qcm/core'
+import { QcmPlayer, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
+import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, listQcms, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
 import ConfirmDialog from './ConfirmDialog.vue'
 import QcmReviews from './QcmReviews.vue'
@@ -15,9 +15,51 @@ const STATUS: Record<QcmRecord['status'], { label: string; tone: string; icon: I
 }
 
 const { user } = useAuth()
-const { recordOpen, recordResult } = useQcmHistory()
+const { history, recordOpen, recordResult } = useQcmHistory()
 /** Clé du QCM dans le suivi local (posée au lancement du lecteur). */
-let historyKey = ''
+const historyKey = ref('')
+const SUGGESTION_COUNT = 4
+/** QCM de la bibliothèque jamais faits, même matière : complètent les propositions de fin. */
+const unplayed = shallowRef<QcmSuggestion[]>([])
+const REASONS = { review: 'À revoir', progress: 'En progrès', started: 'À terminer', unplayed: 'Pas encore fait' } as const
+
+/** Fin de QCM : d'abord ce qui n'est pas maîtrisé sur cet appareil, puis du neuf dans la même matière. */
+const suggestions = computed<QcmSuggestion[]>(() => {
+  const known = suggestNext(history.value, historyKey.value, { limit: SUGGESTION_COUNT, canOpen: (entry) => !!entry.recordId }).map(
+    ({ entry, status }): QcmSuggestion => ({
+      key: entry.recordId!,
+      title: entry.title,
+      subject: entry.subject,
+      level: entry.level,
+      chapter: entry.chapter,
+      reason: status === 'acquired' ? '' : REASONS[status],
+    }),
+  )
+  const seen = new Set([record.value?.id, ...history.value.entries.map((entry) => entry.recordId), ...known.map((item) => item.key)])
+  return [...known, ...unplayed.value.filter((item) => !seen.has(item.key))].slice(0, SUGGESTION_COUNT)
+})
+
+async function loadUnplayed(): Promise<void> {
+  const current = record.value
+  if (!current) return
+  try {
+    const { items } = await listQcms({ subject: current.subject })
+    unplayed.value = items.map((item) => ({
+      key: item.id,
+      title: item.title,
+      subject: item.subject,
+      level: item.level,
+      chapter: item.chapter,
+      reason: REASONS.unplayed,
+    }))
+  } catch {
+    unplayed.value = []
+  }
+}
+
+function playSuggestion(id: string): void {
+  window.location.href = `/qcm?id=${id}&jouer=1`
+}
 const state = ref<'loading' | 'ready' | 'missing'>('loading')
 const record = shallowRef<QcmRecord | null>(null)
 const archive = shallowRef<QcmArchive | null>(null)
@@ -69,13 +111,18 @@ async function play(): Promise<void> {
   starting.value = true
   try {
     archive.value ??= await fetchQcmArchive(record.value)
-    historyKey = recordOpen(archive.value.data, { recordId: record.value.id })
+    historyKey.value = recordOpen(archive.value.data, { recordId: record.value.id })
     playing.value = true
+    void loadUnplayed()
   } catch {
     playError.value = 'Ce QCM ne peut pas être lu en ligne pour le moment. Tu peux le télécharger.'
   } finally {
     starting.value = false
   }
+}
+
+function goLibrary(): void {
+  window.location.href = '/bibliotheque'
 }
 
 async function copyLink(): Promise<void> {
@@ -165,7 +212,7 @@ onBeforeUnmount(() => {
 
   <template v-else>
     <!-- Plein écran : le site s'efface, il ne reste que la question. La fiche garde son état derrière. -->
-    <QcmPlayer v-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive @close="playing = false" @result="recordResult(historyKey, $event)" />
+    <QcmPlayer v-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive :suggestions="suggestions" @close="playing = false" @suggest="playSuggestion" @library="goLibrary" @result="recordResult(historyKey, $event)" />
 
     <div v-show="!playing" class="mx-auto flex max-w-6xl flex-col gap-4">
       <a href="/bibliotheque" class="qcm-text-button -ml-2 self-start">

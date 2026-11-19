@@ -173,7 +173,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <form class="qcm-panel grid grid-cols-2 gap-4 p-4 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent>
+    <form class="qcm-panel sticky top-2 z-20 grid grid-cols-2 gap-4 p-4 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent>
       <div class="col-span-2 lg:col-span-1">
         <label class="qcm-label" for="lib-search">Rechercher</label>
         <input id="lib-search" v-model="filters.search" class="qcm-field" type="search" placeholder="Un titre, un chapitre, un mot…" />

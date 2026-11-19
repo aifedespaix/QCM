@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { confirm } from '@tauri-apps/plugin-dialog'
-import { QcmFormatError, matchLibrary, qcmFingerprint, type LibraryMatch, type QcmHistoryEntry } from '@qcm/core'
-import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmStatsDashboard, QcmThemeToggle, useQcmHistory } from '@qcm/ui'
+import { QcmFormatError, matchLibrary, qcmFingerprint, suggestNext, type LibraryMatch, type QcmHistoryEntry } from '@qcm/core'
+import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmStatsDashboard, QcmThemeToggle, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
 import { LibraryError, downloadLibraryQcm, findLibraryRecords, getLibraryRecord, libraryAvailable, type LibraryRecord } from './lib/library.ts'
 import {
   exportLibraryQcm,
@@ -61,6 +61,9 @@ const { history, recents, recordOpen, recordUpdate, link, recordResult, clearAtt
 const stored = ref(new Set<string>())
 /** Clé du QCM en cours dans le suivi. */
 let currentKey = ''
+/** Même clé, réactive : les propositions de fin de QCM en dépendent. */
+const playingKey = ref('')
+const SUGGESTION_REASONS = { review: 'À revoir', progress: 'En progrès', started: 'À terminer', unplayed: 'Pas encore fait' } as const
 const onlineLibrary = ref(false)
 const downloadingId = ref('')
 const downloadError = ref('')
@@ -144,6 +147,7 @@ function play(qcm: OpenedQcm, extra: { recordId?: string; fileName?: string } = 
   opened.value = qcm
   // Nouvelle version d'un QCM de la bibliothèque : elle prend la place de l'ancienne (suivi conservé).
   currentKey = replaces && replaces !== qcmFingerprint(qcm.data) ? recordUpdate(replaces, qcm.data, extra) : recordOpen(qcm.data, extra)
+  playingKey.value = currentKey
   openCount.value += 1
   overlay.value = 'player'
   return currentKey
@@ -229,6 +233,23 @@ async function openRecord(record: Pick<LibraryRecord, 'id' | 'file' | 'fingerpri
 /** « Relancer » depuis le suivi : copie locale d'abord, sinon nouveau téléchargement. */
 function canReopen(entry: QcmHistoryEntry): boolean {
   return stored.value.has(entry.key) || (onlineLibrary.value && !!entry.recordId)
+}
+
+/** Fin de QCM : les QCM de l'ordinateur (ou rouvrables) qui ne sont pas encore maîtrisés. */
+const suggestions = computed<QcmSuggestion[]>(() =>
+  suggestNext(history.value, playingKey.value, { canOpen: canReopen }).map(({ entry, status }) => ({
+    key: entry.key,
+    title: entry.title,
+    subject: entry.subject,
+    level: entry.level,
+    chapter: entry.chapter,
+    reason: status === 'acquired' ? '' : SUGGESTION_REASONS[status],
+  })),
+)
+
+function openLibraryFromPlayer(): void {
+  closeOverlay()
+  go('library')
 }
 
 async function reopen(key: string): Promise<void> {
@@ -380,7 +401,7 @@ onBeforeUnmount(() => {
   <LoadingScreen v-if="overlay === 'loading'" />
 
   <div v-if="overlay === 'player' && opened" class="h-dvh">
-    <QcmPlayer :key="openCount" :qcm="opened.data" :resolve-media="resolveMedia" closable @close="closeOverlay" @result="recordResult(currentKey, $event)" />
+    <QcmPlayer :key="openCount" :qcm="opened.data" :resolve-media="resolveMedia" closable :suggestions="suggestions" @close="closeOverlay" @suggest="reopen" @library="openLibraryFromPlayer" @result="recordResult(currentKey, $event)" />
   </div>
 
   <!-- Reste monté (simplement masqué) pendant un QCM : au retour, la bibliothèque est telle qu'on l'a laissée. -->

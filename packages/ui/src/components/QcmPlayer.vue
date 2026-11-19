@@ -5,7 +5,7 @@ import { useQcmPlayer } from '../composables/useQcmPlayer.ts'
 import { useQcmSound } from '../composables/useQcmSound.ts'
 import QcmAnswerDock from './QcmAnswerDock.vue'
 import QcmChoiceGrid from './QcmChoiceGrid.vue'
-import QcmCompletionScreen from './QcmCompletionScreen.vue'
+import QcmCompletionScreen, { type QcmSuggestion } from './QcmCompletionScreen.vue'
 import QcmIntroCard from './QcmIntroCard.vue'
 import QcmQuestionCard from './QcmQuestionCard.vue'
 import QcmSoundToggle from './QcmSoundToggle.vue'
@@ -21,13 +21,19 @@ const props = withDefaults(
     immersive?: boolean
     /** Écoute le clavier sur `window`. Mettre `false` quand le lecteur est intégré dans un formulaire. */
     keyboard?: boolean
+    /** QCM à proposer sur l'écran de fin (`undefined` : aucun ; tableau vide : « tu maîtrises tout »). */
+    suggestions?: readonly QcmSuggestion[]
   }>(),
-  { resolveMedia: undefined, closable: false, immersive: false, keyboard: true },
+  { resolveMedia: undefined, closable: false, immersive: false, keyboard: true, suggestions: undefined },
 )
 
 const emit = defineEmits<{
   close: []
   complete: []
+  /** Un QCM proposé sur l'écran de fin a été choisi. */
+  suggest: [key: string]
+  /** « Retourner à la bibliothèque » sur l'écran de fin. */
+  library: []
   /**
    * Résultat d'un passage, pour le suivi : émis à la fin du QCM, ou quand il est quitté
    * après au moins une question terminée (`completed: false`).
@@ -162,8 +168,11 @@ onBeforeUnmount(() => {
         :title="qcm.meta.title"
         :question-count="summary.questionCount"
         :closable="closable"
+        :suggestions="suggestions"
         @restart="player.restart()"
         @close="emit('close')"
+        @open="emit('suggest', $event)"
+        @library="emit('library')"
       />
     </div>
 

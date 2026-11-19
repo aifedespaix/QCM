@@ -96,14 +96,14 @@ function dayLabel(day: number): string {
 <template>
   <div class="flex flex-col gap-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <div role="radiogroup" aria-label="Période" class="inline-flex gap-1 rounded-2xl bg-sunken p-1">
+      <div role="radiogroup" aria-label="Période" class="flex w-full gap-1 rounded-2xl bg-sunken p-1 sm:inline-flex sm:w-auto">
         <button
           v-for="item in PERIODS"
           :key="item.id"
           type="button"
           role="radio"
           :aria-checked="period === item.id"
-          class="min-h-10 cursor-pointer rounded-xl border-2 px-4 text-sm font-bold"
+          class="min-h-11 flex-1 cursor-pointer rounded-xl border-2 px-3 text-sm font-bold sm:flex-none sm:px-4"
           :class="period === item.id ? 'border-line bg-surface shadow-block-sm' : 'border-transparent text-ink-soft hover:text-ink'"
           @click="period = item.id"
         >
@@ -128,23 +128,23 @@ function dayLabel(day: number): string {
 
     <template v-else>
       <!-- ───────────── Vue d'ensemble ───────────── -->
-      <section class="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="Vue d'ensemble">
-        <div class="qcm-panel flex flex-col gap-1 p-5">
+      <section class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4" aria-label="Vue d'ensemble">
+        <div class="qcm-panel flex min-w-0 flex-col gap-1 p-4 sm:p-5">
           <p class="text-sm font-bold text-ink-soft">QCM faits</p>
-          <p class="text-4xl leading-none font-extrabold tabular-nums">{{ stats.sessions }}</p>
+          <p class="text-3xl leading-none font-extrabold tabular-nums sm:text-4xl">{{ stats.sessions }}</p>
           <p class="text-sm font-semibold text-ink-soft">{{ stats.completedSessions }} terminés jusqu'au bout</p>
         </div>
-        <div class="qcm-panel flex flex-col gap-1 p-5">
+        <div class="qcm-panel flex min-w-0 flex-col gap-1 p-4 sm:p-5">
           <p class="text-sm font-bold text-ink-soft">Questions vues</p>
-          <p class="text-4xl leading-none font-extrabold tabular-nums">{{ stats.counts.seen }}</p>
+          <p class="text-3xl leading-none font-extrabold tabular-nums sm:text-4xl">{{ stats.counts.seen }}</p>
           <p class="text-sm font-semibold text-ink-soft">{{ stats.qcms.length === 1 ? '1 QCM différent' : `${stats.qcms.length} QCM différents` }}</p>
         </div>
-        <div class="qcm-panel flex flex-col gap-1 p-5">
+        <div class="qcm-panel col-span-2 flex min-w-0 flex-col gap-1 p-4 sm:p-5 lg:col-span-1">
           <p class="text-sm font-bold text-ink-soft">Réussies du premier coup</p>
-          <p class="text-4xl leading-none font-extrabold tabular-nums">{{ percent(stats.rate) }}</p>
+          <p class="text-3xl leading-none font-extrabold tabular-nums sm:text-4xl">{{ percent(stats.rate) }}</p>
           <p class="text-sm font-semibold text-ink-soft">{{ stats.counts.first }} questions sur {{ stats.counts.seen }}</p>
         </div>
-        <div class="qcm-panel flex flex-col gap-2 p-5">
+        <div class="qcm-panel col-span-2 flex min-w-0 flex-col gap-2 p-4 sm:p-5 lg:col-span-1">
           <p class="text-sm font-bold text-ink-soft">Cette semaine</p>
           <ol class="flex h-12 items-end gap-1.5" :aria-label="`${stats.activeDays} jours avec révision sur les 7 derniers`">
             <li v-for="day in stats.week" :key="day.day" class="flex h-full flex-1 flex-col justify-end gap-1" :title="`${dayLabel(day.day)} : ${day.questions} questions`">
@@ -161,11 +161,11 @@ function dayLabel(day: number): string {
         </div>
       </section>
 
-      <section class="qcm-panel flex flex-col gap-3 p-5" aria-label="Répartition des réponses">
+      <section class="qcm-panel flex flex-col gap-3 p-4 sm:p-5" aria-label="Répartition des réponses">
         <div class="flex h-5 overflow-hidden rounded-full border-2 border-line bg-sunken" aria-hidden="true">
           <span v-for="item in LEGEND" :key="item.id" class="h-full" :class="item.tone" :style="{ width: share(stats.counts, item.id) }" />
         </div>
-        <ul class="flex flex-wrap gap-x-6 gap-y-1 text-sm font-bold">
+        <ul class="flex flex-col gap-1.5 text-sm font-bold sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
           <li v-for="item in LEGEND" :key="item.id" class="flex items-center gap-2">
             <span class="size-3.5 rounded-full border-2 border-line" :class="item.tone" aria-hidden="true" />
             {{ item.label }} : {{ stats.counts[item.id] }}
@@ -175,9 +175,9 @@ function dayLabel(day: number): string {
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <!-- ───────────── À retravailler ───────────── -->
-        <section class="qcm-panel flex flex-col gap-4 p-5 sm:p-6" aria-labelledby="stats-work">
+        <section class="qcm-panel flex flex-col gap-4 p-4 sm:p-6" aria-labelledby="stats-work">
           <header>
-            <h2 id="stats-work" class="text-2xl font-extrabold">À retravailler</h2>
+            <h2 id="stats-work" class="text-xl sm:text-2xl font-extrabold">À retravailler</h2>
             <p class="text-ink-soft">Les QCM les plus fragiles d'abord, d'après le dernier passage.</p>
           </header>
           <p v-if="toWork.length === 0" class="qcm-note qcm-note-correct">Rien à signaler : tous les QCM de la période sont acquis.</p>
@@ -224,7 +224,7 @@ function dayLabel(day: number): string {
                   </li>
                 </ul>
               </details>
-              <button v-if="canOpen(item.entry)" type="button" class="qcm-block qcm-block-quiet qcm-block-sm sm:self-start" @click="emit('open', item.entry.key)">
+              <button v-if="canOpen(item.entry)" type="button" class="qcm-block qcm-block-quiet qcm-block-sm justify-center sm:self-start" @click="emit('open', item.entry.key)">
                 Relancer ce QCM
               </button>
             </li>
@@ -233,8 +233,8 @@ function dayLabel(day: number): string {
 
         <div class="flex flex-col gap-6">
           <!-- ───────────── Acquis ───────────── -->
-          <section class="qcm-panel flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="stats-ok">
-            <h2 id="stats-ok" class="text-2xl font-extrabold">Acquis</h2>
+          <section class="qcm-panel flex flex-col gap-3 p-4 sm:p-6" aria-labelledby="stats-ok">
+            <h2 id="stats-ok" class="text-xl sm:text-2xl font-extrabold">Acquis</h2>
             <p v-if="acquired.length === 0" class="text-ink-soft">Un QCM passe ici quand 8 questions sur 10 sont réussies du premier coup.</p>
             <ul v-else class="flex flex-col">
               <li v-for="item in acquired" :key="item.entry.key" class="flex items-center gap-3 border-t-[1.5px] border-line-soft py-2.5 first:border-t-0">
@@ -242,7 +242,7 @@ function dayLabel(day: number): string {
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                 </span>
                 <div class="min-w-0 flex-1">
-                  <p class="truncate font-bold">
+                  <p class="font-bold break-words sm:truncate">
                     <a v-if="linkFor(item.entry)" :href="linkFor(item.entry)!" class="underline decoration-2 underline-offset-4 hover:bg-sunken">{{ item.entry.title }}</a>
                     <template v-else>{{ item.entry.title }}</template>
                   </p>
@@ -262,8 +262,8 @@ function dayLabel(day: number): string {
           </section>
 
           <!-- ───────────── Par matière ───────────── -->
-          <section class="qcm-panel flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="stats-subjects">
-            <h2 id="stats-subjects" class="text-2xl font-extrabold">Par matière</h2>
+          <section class="qcm-panel flex flex-col gap-3 p-4 sm:p-6" aria-labelledby="stats-subjects">
+            <h2 id="stats-subjects" class="text-xl sm:text-2xl font-extrabold">Par matière</h2>
             <ul class="flex flex-col gap-3">
               <li v-for="item in stats.subjects" :key="item.subject">
                 <p class="flex items-baseline justify-between gap-3 text-sm font-bold">
@@ -286,8 +286,8 @@ function dayLabel(day: number): string {
       </div>
 
       <!-- ───────────── Historique ───────────── -->
-      <section class="qcm-panel flex flex-col gap-3 p-5 sm:p-6" aria-labelledby="stats-history">
-        <h2 id="stats-history" class="text-2xl font-extrabold">Historique</h2>
+      <section class="qcm-panel flex flex-col gap-3 p-4 sm:p-6" aria-labelledby="stats-history">
+        <h2 id="stats-history" class="text-xl sm:text-2xl font-extrabold">Historique</h2>
         <ol class="flex flex-col">
           <li
             v-for="row in stats.timeline.slice(0, timelineSize)"
@@ -295,7 +295,7 @@ function dayLabel(day: number): string {
             class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t-[1.5px] border-line-soft py-2.5 first:border-t-0 sm:grid-cols-[8rem_minmax(0,1fr)_minmax(0,12rem)_auto]"
           >
             <p class="text-sm font-semibold text-ink-soft max-sm:col-span-2">{{ formatRelativeDay(row.attempt.at) }}</p>
-            <p class="truncate font-bold">
+            <p class="font-bold break-words sm:truncate">
               <a v-if="linkFor(row.entry)" :href="linkFor(row.entry)!" class="underline decoration-2 underline-offset-4 hover:bg-sunken">{{ row.entry.title }}</a>
               <template v-else>{{ row.entry.title }}</template>
             </p>
