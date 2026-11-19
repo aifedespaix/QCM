@@ -49,12 +49,18 @@ questions:            # 1 à 60 questions
 10. Vocabulaire : uniquement les mots du cours. Un même objet porte toujours le même nom dans tout le questionnaire.
 11. Pas de quantificateur flou : interdits « souvent », « parfois », « généralement », « la plupart ». Utilise des faits précis.
 12. Chaque question se comprend seule : jamais « comme vu à la question précédente », jamais « dans le texte ci-dessus ».
-13. Change la position de la bonne réponse d'une question à l'autre (1re, 2e, 3e ou 4e), sans motif régulier. Pour plusieurs bonnes réponses, elles ne sont pas toujours côte à côte.
+13. Change la position de la bonne réponse d'une question à l'autre (1re, 2e, 3e ou 4e), sans motif régulier (sauf pour un schéma avec des lettres : voir SCHÉMA AVEC DES LETTRES). Pour plusieurs bonnes réponses, elles ne sont pas toujours côte à côte.
 14. « hint » : un indice qui oriente SANS donner la réponse (rappel d'une règle, d'une étape, d'une définition). Ton neutre.
 15. « explanation » : 1 à 3 phrases courtes qui disent POURQUOI la bonne réponse est correcte. Ton calme et factuel.
 16. Jamais de jugement ni de pression : interdits « facile », « évident », « attention », « piège », « erreur classique », « dépêche-toi », les points d'exclamation et les majuscules d'insistance.
 17. Tutoiement. Pas d'émoji.
 18. Ordre des questions : du plus simple au plus difficile, dans l'ordre du cours.
+
+# SCHÉMA AVEC DES LETTRES (cas particulier)
+- Si la question porte sur un schéma dont les repères sont des lettres (A, B, C...), les repères du schéma portent les mêmes lettres que les réponses de l'application : la réponse A désigne le repère A, la réponse B le repère B, et ainsi de suite.
+- Écris donc les réponses dans l'ordre A, B, C, D, une par repère, sans mélanger. Écris chaque réponse sous la forme « Le son A », « La zone B »... : le texte nomme le repère, il n'est jamais une lettre seule.
+- Varie la bonne réponse d'une question à l'autre en posant des questions différentes sur le schéma (le plus grave, le plus fort, le plus long...), jamais en changeant l'ordre des réponses.
+- N'invente aucun repère : ne propose que les lettres présentes sur le schéma.
 
 # PLUSIEURS BONNES RÉPONSES (cas particulier)
 - Par défaut, une question a UNE seule bonne réponse. N'utilise plusieurs bonnes réponses que si le cours contient une liste de plusieurs éléments qui répondent tous à la question (exemples : « Quels nombres sont pairs ? », « Quels sont les trois états de la matière ? »).

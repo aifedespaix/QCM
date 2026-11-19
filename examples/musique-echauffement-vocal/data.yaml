@@ -82,9 +82,9 @@ questions:
     prompt: "Quelle lettre désigne le son le plus grave ?"
     image: media/hauteur.webp
     choices:
-      - text: "A"
-      - text: "B"
-      - text: "C"
+      - text: "Le son A"
+      - text: "Le son B"
+      - text: "Le son C"
         correct: true
     hint: "Un son grave est placé en bas."
     explanation: "Le son C est le plus bas : c'est le son grave. Le son A est médium et le son B est aigu."
@@ -92,29 +92,29 @@ questions:
     prompt: "Quelle lettre désigne le son le plus aigu ?"
     image: media/hauteur.webp
     choices:
-      - text: "B"
+      - text: "Le son A"
+      - text: "Le son B"
         correct: true
-      - text: "A"
-      - text: "C"
+      - text: "Le son C"
     hint: "Un son aigu est placé en haut."
     explanation: "Le son B est le plus haut : c'est le son aigu."
   - id: q10
     prompt: "Quelle lettre désigne la nuance forte ?"
     image: media/nuance.webp
     choices:
-      - text: "B"
-      - text: "C"
-      - text: "A"
+      - text: "Le son A"
         correct: true
+      - text: "Le son B"
+      - text: "Le son C"
     hint: "Une nuance forte correspond à un son puissant : toutes les cases sont remplies."
     explanation: "Le son A est le plus fort : c'est la nuance forte. Le son C est mezzo et le son B est piano."
   - id: q11
     prompt: "Quelle lettre désigne le son long ?"
     image: media/duree.webp
     choices:
-      - text: "B"
-      - text: "A"
+      - text: "Le son A"
         correct: true
+      - text: "Le son B"
     hint: "Un son long dure plus longtemps sur la flèche du temps."
     explanation: "Le son A dure plus longtemps que le son B : c'est le son long. Le son B est un son court."
   - id: q12
