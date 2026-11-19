@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<defs><radialGradient id="gH" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9c0ca"/></radialGradient><radialGradient id="gC" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#6b7078"/><stop offset="1" stop-color="#16181b"/></radialGradient><radialGradient id="gN" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#8db3ff"/><stop offset="1" stop-color="#1d4fc4"/></radialGradient><radialGradient id="gO" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#ff9a90"/><stop offset="1" stop-color="#c0140a"/></radialGradient>
+  <radialGradient id="gProton" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ffa571"/><stop offset="1" stop-color="#c2410c"/></radialGradient>
+  <radialGradient id="gNeutron" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#d5d9df"/><stop offset="1" stop-color="#6b7280"/></radialGradient>
+  <radialGradient id="gElectron" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#7fa8ff"/><stop offset="1" stop-color="#1d4ed8"/></radialGradient>
+  <radialGradient id="cloud"><stop offset="0" stop-color="#3b82f6" stop-opacity="0.38"/><stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.2"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+  <linearGradient id="stick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="0.5" stop-color="#9ca3af"/><stop offset="1" stop-color="#6b7280"/></linearGradient>
+  </defs><rect width="960" height="600" fill="#fbfcfe"/>
+
+  <line x1="480" y1="95" x2="480" y2="500" stroke="#e5e7eb" stroke-width="2"/>
+  <text x="240" y="62" font-size="26" fill="#1f2937" text-anchor="middle" font-weight="600">Modèle compact</text><text x="720" y="62" font-size="26" fill="#1f2937" text-anchor="middle" font-weight="600">Modèle éclaté</text>
+  <circle cx="213.81" cy="246.38" r="81.6" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="303.4" cy="302.28" r="81.6" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="202.79" cy="341.63" r="81.6" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="240" cy="281.54" r="105.4" fill="url(#gN)" stroke="#173f9c" stroke-width="1.5"/><line x1="752.53" y1="283.48" x2="823.48" y2="306.69" stroke="#7b8494" stroke-width="14" stroke-linecap="round"/>
+         <line x1="752.53" y1="280.96" x2="823.48" y2="304.17" stroke="#d1d5db" stroke-width="4.8999999999999995" stroke-linecap="round" opacity="0.8"/><line x1="701.98" y1="301.93" x2="658.44" y2="372.26" stroke="#7b8494" stroke-width="14" stroke-linecap="round"/>
+         <line x1="701.98" y1="299.41" x2="658.44" y2="369.74" stroke="#d1d5db" stroke-width="4.8999999999999995" stroke-linecap="round" opacity="0.8"/><line x1="699.55" y1="245.39" x2="682.68" y2="222.73" stroke="#7b8494" stroke-width="14" stroke-linecap="round"/>
+         <line x1="699.55" y1="242.87" x2="682.68" y2="220.21" stroke="#d1d5db" stroke-width="4.8999999999999995" stroke-linecap="round" opacity="0.8"/><circle cx="666.85" cy="201.48" r="33.12" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="848.66" cy="314.93" r="33.12" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="644.49" cy="394.78" r="33.12" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="720" cy="272.83" r="42.78" fill="url(#gN)" stroke="#173f9c" stroke-width="1.5"/><circle cx="228" cy="548" r="14" fill="url(#gN)" stroke="#173f9c" stroke-width="1.5"/><text x="252" y="556" font-size="20" fill="#1f2937" text-anchor="start" font-weight="400">bleu : azote (N)</text><circle cx="498" cy="548" r="14" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><text x="522" y="556" font-size="20" fill="#1f2937" text-anchor="start" font-weight="400">blanc : hydrogène (H)</text>
+</svg>

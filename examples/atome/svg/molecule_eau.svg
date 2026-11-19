@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<defs><radialGradient id="gH" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9c0ca"/></radialGradient><radialGradient id="gC" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#6b7078"/><stop offset="1" stop-color="#16181b"/></radialGradient><radialGradient id="gN" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#8db3ff"/><stop offset="1" stop-color="#1d4fc4"/></radialGradient><radialGradient id="gO" cx="38%" cy="32%" r="75%" fx="32%" fy="26%">
+      <stop offset="0" stop-color="#ff9a90"/><stop offset="1" stop-color="#c0140a"/></radialGradient>
+  <radialGradient id="gProton" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ffa571"/><stop offset="1" stop-color="#c2410c"/></radialGradient>
+  <radialGradient id="gNeutron" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#d5d9df"/><stop offset="1" stop-color="#6b7280"/></radialGradient>
+  <radialGradient id="gElectron" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#7fa8ff"/><stop offset="1" stop-color="#1d4ed8"/></radialGradient>
+  <radialGradient id="cloud"><stop offset="0" stop-color="#3b82f6" stop-opacity="0.38"/><stop offset="0.55" stop-color="#3b82f6" stop-opacity="0.2"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+  <linearGradient id="stick" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5e7eb"/><stop offset="0.5" stop-color="#9ca3af"/><stop offset="1" stop-color="#6b7280"/></linearGradient>
+  </defs><rect width="960" height="600" fill="#fbfcfe"/>
+
+  <line x1="480" y1="95" x2="480" y2="500" stroke="#e5e7eb" stroke-width="2"/>
+  <text x="240" y="62" font-size="26" fill="#1f2937" text-anchor="middle" font-weight="600">Modèle compact</text><text x="720" y="62" font-size="26" fill="#1f2937" text-anchor="middle" font-weight="600">Modèle éclaté</text>
+  <circle cx="240" cy="303.6" r="103.36" fill="url(#gO)" stroke="#9a0f07" stroke-width="1.5"/><circle cx="188.52" cy="263.75" r="81.6" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="291.48" cy="263.75" r="81.6" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><line x1="693.46" y1="297.06" x2="636.49" y2="252.95" stroke="#7b8494" stroke-width="14" stroke-linecap="round"/>
+         <line x1="693.46" y1="294.54" x2="636.49" y2="250.43" stroke="#d1d5db" stroke-width="4.8999999999999995" stroke-linecap="round" opacity="0.8"/><line x1="746.54" y1="297.06" x2="803.51" y2="252.95" stroke="#7b8494" stroke-width="14" stroke-linecap="round"/>
+         <line x1="746.54" y1="294.54" x2="803.51" y2="250.43" stroke="#d1d5db" stroke-width="4.8999999999999995" stroke-linecap="round" opacity="0.8"/><circle cx="720" cy="317.6" r="41.95" fill="url(#gO)" stroke="#9a0f07" stroke-width="1.5"/><circle cx="615.53" cy="236.73" r="33.12" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="824.47" cy="236.73" r="33.12" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><circle cx="228" cy="548" r="14" fill="url(#gO)" stroke="#9a0f07" stroke-width="1.5"/><text x="252" y="556" font-size="20" fill="#1f2937" text-anchor="start" font-weight="400">rouge : oxygène (O)</text><circle cx="498" cy="548" r="14" fill="url(#gH)" stroke="#8d96a3" stroke-width="1.5"/><text x="522" y="556" font-size="20" fill="#1f2937" text-anchor="start" font-weight="400">blanc : hydrogène (H)</text>
+</svg>
