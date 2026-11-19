@@ -334,3 +334,29 @@ export function updateComment(id: string, text: string) {
 export function deleteComment(id: string) {
   return pb.collection('comments').delete(id)
 }
+
+// ---------------------------------------------------------------- Jetons d'agent
+
+export interface AgentTokenRecord extends RecordModel {
+  name: string
+  /** Début du jeton (8 caractères), pour le reconnaître dans la liste. */
+  prefix: string
+  expires: string
+  last_used: string
+  created: string
+}
+
+export const AGENT_TOKEN_DAYS = [7, 30, 90] as const
+
+export function listAgentTokens(): Promise<AgentTokenRecord[]> {
+  return pb.collection('agent_tokens').getFullList<AgentTokenRecord>({ sort: '-created' })
+}
+
+/** Crée un jeton. Sa valeur n'est renvoyée qu'ici : le serveur n'en garde que le hachage. */
+export function createAgentToken(name: string, days: (typeof AGENT_TOKEN_DAYS)[number]): Promise<{ id: string; token: string; expires: string }> {
+  return pb.send('/api/qcm/agent-tokens', { method: 'POST', body: { name, days } })
+}
+
+export function revokeAgentToken(id: string): Promise<boolean> {
+  return pb.collection('agent_tokens').delete(id)
+}

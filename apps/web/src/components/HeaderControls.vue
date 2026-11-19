@@ -7,6 +7,7 @@ const { user, loginWithGoogle, logout } = useAuth()
 const error = ref('')
 const pendingCount = ref(0)
 const onAdminPage = window.location.pathname.startsWith('/admin')
+const onAgentPage = window.location.pathname.startsWith('/agent')
 
 const initial = computed(() => (user.value?.name?.trim()[0] ?? '?').toLocaleUpperCase('fr'))
 
@@ -38,6 +39,7 @@ watch(
       Modération
       <span v-if="pendingCount > 0" class="qcm-chip bg-retry text-retry-ink" :aria-label="`${pendingCount} QCM à valider`">{{ pendingCount }}</span>
     </a>
+    <a v-if="user" href="/agent" class="site-nav-link" :aria-current="onAgentPage ? 'page' : undefined">Agent IA</a>
     <template v-if="user">
       <span class="flex items-center gap-2 pr-1" :title="user.name || 'Mon compte'">
         <span class="flex size-10 items-center justify-center rounded-full border-2 border-line bg-selected text-base font-extrabold" aria-hidden="true">{{ initial }}</span>

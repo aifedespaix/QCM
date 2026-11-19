@@ -1,0 +1,8 @@
+---
+import AgentTokens from '../components/AgentTokens.vue'
+import Base from '../layouts/Base.astro'
+---
+
+<Base noindex title="Agent IA" description="Crée un jeton pour qu'un agent publie des QCM à ton nom.">
+  <AgentTokens client:only="vue" />
+</Base>
