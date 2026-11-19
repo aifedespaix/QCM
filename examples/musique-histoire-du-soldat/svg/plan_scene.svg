@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<rect width="960" height="600" fill="#fbfcfe"/>
+
+  <text x="480" y="56" font-size="28" fill="#1f2937" text-anchor="middle" font-weight="600">Plan de scène</text>
+  <rect x="100" y="90" width="760" height="400" rx="26" fill="#eef2f8" stroke="#c7d0de" stroke-width="3"/>
+  <circle cx="210" cy="150" r="15" fill="#e8590c"/>
+   <path d="M 186 210 Q 186 172 210 172 Q 234 172 234 210 Z" fill="#e8590c"/><circle cx="210" cy="260" r="15" fill="#e8590c"/>
+   <path d="M 186 320 Q 186 282 210 282 Q 234 282 234 320 Z" fill="#e8590c"/><circle cx="210" cy="370" r="15" fill="#e8590c"/>
+   <path d="M 186 430 Q 186 392 210 392 Q 234 392 234 430 Z" fill="#e8590c"/><circle cx="420" cy="200" r="34" fill="#2563eb"/><circle cx="420" cy="200" r="14" fill="#ffffff" opacity="0.9"/><circle cx="540" cy="200" r="34" fill="#2563eb"/><circle cx="540" cy="200" r="14" fill="#ffffff" opacity="0.9"/><circle cx="660" cy="200" r="34" fill="#2563eb"/><circle cx="660" cy="200" r="14" fill="#ffffff" opacity="0.9"/><circle cx="780" cy="200" r="34" fill="#2563eb"/><circle cx="780" cy="200" r="14" fill="#ffffff" opacity="0.9"/><circle cx="480" cy="350" r="34" fill="#2563eb"/><circle cx="480" cy="350" r="14" fill="#ffffff" opacity="0.9"/><circle cx="600" cy="350" r="34" fill="#2563eb"/><circle cx="600" cy="350" r="14" fill="#ffffff" opacity="0.9"/><circle cx="720" cy="350" r="34" fill="#2563eb"/><circle cx="720" cy="350" r="14" fill="#ffffff" opacity="0.9"/>
+  <circle cx="292" cy="553" r="12" fill="#e8590c"/><text x="314" y="560" font-size="22" fill="#1f2937" text-anchor="start" font-weight="400">récitant</text><circle cx="458" cy="553" r="12" fill="#2563eb"/><text x="480" y="560" font-size="22" fill="#1f2937" text-anchor="start" font-weight="400">instrumentiste</text>
+</svg>

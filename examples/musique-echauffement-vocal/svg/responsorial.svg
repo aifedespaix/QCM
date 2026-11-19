@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<rect width="960" height="600" fill="#fbfcfe"/>
+
+  <circle cx="190" cy="167" r="16.5" fill="#e8590c"/>
+   <path d="M 163.6 233 Q 163.6 191.2 190 191.2 Q 216.4 191.2 216.4 233 Z" fill="#e8590c"/>
+  <path d="M 262 205 l 24 -14 v -42 a 18 18 0 0 1 18 -18 h 460 a 18 18 0 0 1 18 18 v 72 a 18 18 0 0 1 -18 18 h -460 a 18 18 0 0 1 -18 -18 z" fill="#fff" stroke="#e8590c" stroke-width="4"/>
+  <text x="550" y="200" font-size="28" fill="#1f2937" text-anchor="middle" font-weight="400">bada bada bada bada</text>
+  <path d="M 480 285 v 60" stroke="#1f2937" stroke-width="5"/><path d="M 462 331 L 480 363 L 498 331 Z" fill="#1f2937"/>
+  <circle cx="320" cy="413" r="13.5" fill="#2563eb"/>
+   <path d="M 298.4 467 Q 298.4 432.8 320 432.8 Q 341.6 432.8 341.6 467 Z" fill="#2563eb"/><circle cx="400" cy="413" r="13.5" fill="#2563eb"/>
+   <path d="M 378.4 467 Q 378.4 432.8 400 432.8 Q 421.6 432.8 421.6 467 Z" fill="#2563eb"/><circle cx="480" cy="413" r="13.5" fill="#2563eb"/>
+   <path d="M 458.4 467 Q 458.4 432.8 480 432.8 Q 501.6 432.8 501.6 467 Z" fill="#2563eb"/><circle cx="560" cy="413" r="13.5" fill="#2563eb"/>
+   <path d="M 538.4 467 Q 538.4 432.8 560 432.8 Q 581.6 432.8 581.6 467 Z" fill="#2563eb"/><circle cx="640" cy="413" r="13.5" fill="#2563eb"/>
+   <path d="M 618.4 467 Q 618.4 432.8 640 432.8 Q 661.6 432.8 661.6 467 Z" fill="#2563eb"/>
+  <text x="480" y="535" font-size="28" fill="#1f2937" text-anchor="middle" font-weight="400">bada bada bada bada</text>
+</svg>

@@ -1,12 +1,12 @@
 version: 1
 meta:
-  title: "L'atome et les molécules"
+  title: "L'atome"
   subject: physique-chimie
   level: 3e
-  chapter: "Constitution de la matière"
+  chapter: "Constitution de la matière : l'atome"
   language: fr
   author: "Équipe QCM"
-  description: "Vingt questions avec schémas : noyau, nucléons, nuage électronique, charges, tailles, couleurs des atomes, formules et liaisons des molécules."
+  description: "Dix questions avec schémas : noyau, nucléons, nuage électronique, charges, neutralité, masse, taille et ion."
 questions:
   - id: q1
     prompt: "Sur le schéma d'un atome de carbone, comment s'appelle la partie A, au centre de l'atome ?"
@@ -109,112 +109,3 @@ questions:
       - text: "Un atome neutre"
     hint: "Il y a maintenant plus de protons que d'électrons."
     explanation: "Avec un électron en moins, il reste une charge positive en trop. La particule est un ion positif."
-  - id: q11
-    prompt: "Dans les modèles moléculaires, quelle sphère représente un atome de carbone ?"
-    image: media/atomes_couleurs.webp
-    choices:
-      - text: "La sphère A"
-      - text: "La sphère B"
-      - text: "La sphère C"
-        correct: true
-      - text: "La sphère D"
-    hint: "Le carbone est la couleur la plus sombre. C'est aussi la plus grande sphère."
-    explanation: "Le carbone est représenté en noir. Sa sphère est la plus grande des quatre."
-  - id: q12
-    prompt: "Dans ces mêmes modèles, quelle sphère représente un atome d'oxygène ?"
-    image: media/atomes_couleurs.webp
-    choices:
-      - text: "La sphère A"
-      - text: "La sphère B"
-        correct: true
-      - text: "La sphère C"
-      - text: "La sphère D"
-    hint: "L'oxygène est représenté en rouge."
-    explanation: "L'oxygène est représenté en rouge. L'hydrogène est blanc, le carbone noir et l'azote bleu."
-  - id: q13
-    prompt: "Comment appelle-t-on un groupe d'atomes liés entre eux ?"
-    choices:
-      - text: "Un ion"
-      - text: "Un nucléon"
-      - text: "Un noyau"
-      - text: "Une molécule"
-        correct: true
-    hint: "L'eau et le dioxyde de carbone en sont des exemples."
-    explanation: "Une molécule est un groupe d'atomes liés entre eux. L'eau (H₂O) est une molécule de trois atomes."
-  - id: q14
-    prompt: "Quelle est la formule de la molécule représentée dans le modèle éclaté ?"
-    image: media/molecule_eau.webp
-    choices:
-      - text: "H₂O"
-        correct: true
-      - text: "HO₂"
-      - text: "H₂O₂"
-      - text: "OH"
-    hint: "Compte les atomes de chaque couleur et lis la légende."
-    explanation: "Le modèle montre 2 atomes d'hydrogène (blancs) et 1 atome d'oxygène (rouge). La formule est H₂O : le chiffre 2 s'écrit en bas, après H."
-  - id: q15
-    prompt: "Quelle est la formule de la molécule représentée dans le modèle éclaté ?"
-    image: media/molecule_co2.webp
-    choices:
-      - text: "C₂O"
-      - text: "CO"
-      - text: "C₂O₂"
-      - text: "CO₂"
-        correct: true
-    hint: "Compte les atomes de chaque couleur. Un seul atome ne prend pas de chiffre."
-    explanation: "Le modèle montre 1 atome de carbone (noir) et 2 atomes d'oxygène (rouges). La formule est CO₂, le dioxyde de carbone."
-  - id: q16
-    prompt: "Quelle est la formule de la molécule représentée dans le modèle éclaté ?"
-    image: media/molecule_ch4.webp
-    choices:
-      - text: "CH₂"
-      - text: "C₄H"
-      - text: "CH₄"
-        correct: true
-      - text: "C₄H₄"
-    hint: "Compte les atomes blancs autour de l'atome noir."
-    explanation: "Le modèle montre 1 atome de carbone (noir) et 4 atomes d'hydrogène (blancs). La formule est CH₄, le méthane."
-  - id: q17
-    prompt: "Quelle est la formule de la molécule représentée dans le modèle éclaté ?"
-    image: media/molecule_nh3.webp
-    choices:
-      - text: "NH₃"
-        correct: true
-      - text: "N₃H"
-      - text: "NH₂"
-      - text: "N₃H₃"
-    hint: "L'atome bleu est l'azote, symbole N."
-    explanation: "Le modèle montre 1 atome d'azote (bleu) et 3 atomes d'hydrogène (blancs). La formule est NH₃, l'ammoniac."
-  - id: q18
-    prompt: "Cette molécule contient deux atomes d'oxygène liés entre eux. Quelle est sa formule ?"
-    image: media/molecule_o2.webp
-    choices:
-      - text: "O"
-      - text: "2O"
-      - text: "O₃"
-      - text: "O₂"
-        correct: true
-    hint: "Le chiffre qui indique le nombre d'atomes s'écrit en bas, après le symbole."
-    explanation: "La molécule contient 2 atomes d'oxygène : sa formule est O₂, le dioxygène. Le modèle éclaté montre deux traits entre les atomes."
-  - id: q19
-    prompt: "Dans le modèle éclaté du méthane, combien de liaisons relient l'atome de carbone aux atomes d'hydrogène ?"
-    image: media/molecule_ch4.webp
-    choices:
-      - text: "1"
-      - text: "2"
-      - text: "3"
-      - text: "4"
-        correct: true
-    hint: "Chaque bâton gris représente une liaison."
-    explanation: "Chaque atome d'hydrogène est relié au carbone par une liaison. Il y a 4 hydrogènes, donc 4 liaisons : le carbone forme 4 liaisons."
-  - id: q20
-    prompt: "Dans la molécule H₂, les nuages électroniques des deux atomes se chevauchent. Que se passe-t-il dans la zone A ?"
-    image: media/liaison_h2.webp
-    choices:
-      - text: "Les deux noyaux fusionnent en un seul noyau"
-      - text: "Les deux atomes partagent deux électrons"
-        correct: true
-      - text: "Un atome donne tous ses électrons à l'autre"
-      - text: "Les deux atomes perdent tous leurs électrons"
-    hint: "C'est ce partage qui forme la liaison entre les deux atomes."
-    explanation: "Dans la zone A, deux électrons sont partagés entre les deux atomes. Ce doublet d'électrons forme la liaison covalente."

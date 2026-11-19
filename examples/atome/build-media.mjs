@@ -1,6 +1,6 @@
 /**
  * Génère les schémas du QCM « L'atome et les molécules » : SVG (dossier svg/) puis WebP (dossier media/).
- * Usage : node examples/atome/build-media.mjs
+ * Usage : node examples/atome/build-media.mjs (écrit dans examples/atome et examples/molecules)
  * Les schémas sont dessinés par code, pas par un modèle d'images : les nombres de particules,
  * les liaisons et les couleurs sont donc exacts.
  */
@@ -276,9 +276,14 @@ const IMAGES = {
   ...MOLECULES,
 }
 
-mkdirSync(join(here, 'svg'), { recursive: true })
-mkdirSync(join(here, 'media'), { recursive: true })
-for (const [name, content] of Object.entries(IMAGES)) writeFileSync(join(here, 'svg', `${name}.svg`), content)
+// Deux QCM : « L'atome » (examples/atome) et « Les molécules » (examples/molecules).
+const FOLDER = { atome_carbone: 'atome', noyau_azote: 'atome' }
+const folderOf = (name) => join(here, '..', FOLDER[name] ?? 'molecules')
+for (const name of Object.keys(IMAGES)) {
+  mkdirSync(join(folderOf(name), 'svg'), { recursive: true })
+  mkdirSync(join(folderOf(name), 'media'), { recursive: true })
+  writeFileSync(join(folderOf(name), 'svg', `${name}.svg`), IMAGES[name])
+}
 
 /* ---------- Conversion SVG → WebP (Chromium, Canvas) ---------- */
 const { chromium } = createRequire(import.meta.url)('playwright')
@@ -300,7 +305,7 @@ for (const [name, content] of Object.entries(IMAGES)) {
     content,
   )
   const bytes = Buffer.from(b64, 'base64')
-  writeFileSync(join(here, 'media', `${name}.webp`), bytes)
-  console.log(`media/${name}.webp ${bytes.length} octets`)
+  writeFileSync(join(folderOf(name), 'media', `${name}.webp`), bytes)
+  console.log(`${FOLDER[name] ?? 'molecules'}/media/${name}.webp ${bytes.length} octets`)
 }
 await browser.close()

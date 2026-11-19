@@ -1,0 +1,140 @@
+version: 1
+meta:
+  title: "L'échauffement vocal"
+  subject: musique
+  level: 3e
+  chapter: "Le rituel d'échauffement vocal"
+  language: fr
+  author: "Équipe QCM"
+  description: "Treize questions sur le rituel d'échauffement vocal : mise en corps, mise en souffle, mise en voix, hauteur, nuance, durée et technique responsoriale."
+questions:
+  - id: q1
+    prompt: "Par où commence-t-on la mise en corps ?"
+    choices:
+      - text: "Par le bas du corps, puis vers le haut"
+        correct: true
+      - text: "Par la tête, puis vers le bas"
+      - text: "Par les mains seulement"
+      - text: "Par la bouche seulement"
+    hint: "On prépare le corps à chanter du bas vers le haut."
+    explanation: "La mise en corps prépare le corps à chanter en commençant par le bas du corps (pieds, bassin), puis le dos, les épaules, le cou et la tête."
+  - id: q2
+    prompt: "Quelle position des pieds prend-on au début de la mise en corps ?"
+    choices:
+      - text: "Les pieds croisés"
+      - text: "Les pieds parallèles"
+        correct: true
+      - text: "Les pieds très écartés"
+      - text: "Les pieds sur la pointe"
+    hint: "Les deux pieds pointent dans la même direction."
+    explanation: "On commence avec les pieds parallèles. Cette position aide à se tenir droit et à bien chanter."
+  - id: q3
+    prompt: "Quelle partie du corps masse-t-on à la fin de la mise en corps ?"
+    choices:
+      - text: "Les genoux"
+      - text: "Le ventre"
+      - text: "Les pieds"
+      - text: "Le visage"
+        correct: true
+    hint: "On masse cette partie du corps, puis on peut bâiller."
+    explanation: "La mise en corps se termine par le visage : on le masse et on bâille pour détendre la bouche."
+  - id: q4
+    prompt: "Sur quoi joue-t-on pendant la mise en souffle ?"
+    choices:
+      - text: "Des mélodies sur huit notes"
+      - text: "Des paroles de chansons"
+      - text: "Des rythmes sur 4 temps"
+        correct: true
+      - text: "Des cris très aigus"
+    hint: "Le mot « temps » est dans la réponse."
+    explanation: "Pendant la mise en souffle, on joue avec des rythmes sur 4 temps, avec des sons comme « tchi tcha tcho » ou « ksi ksa kso »."
+  - id: q5
+    prompt: "Pendant la mise en souffle, que sens-tu au niveau du cou ?"
+    choices:
+      - text: "Des vibrations fortes"
+      - text: "Aucune vibration"
+        correct: true
+      - text: "Une grande tension"
+      - text: "De la chaleur"
+    hint: "Dans cet exercice, seul le souffle travaille."
+    explanation: "Pendant la mise en souffle, tu ne sens pas de vibrations au niveau du cou. Les vibrations arrivent à l'étape suivante, la mise en voix."
+  - id: q6
+    prompt: "Quel exercice fait sentir des vibrations au niveau du cou ?"
+    choices:
+      - text: "La mise en souffle"
+      - text: "La mise en corps"
+      - text: "La mise en voix"
+        correct: true
+      - text: "L'évaluation du rituel"
+    hint: "Le son de la voix se forme dans la gorge."
+    explanation: "Pendant la mise en voix, tu dois sentir les vibrations au niveau du cou : la voix se met à sonner."
+  - id: q7
+    prompt: "Avec quoi joue-t-on pendant la mise en voix ?"
+    choices:
+      - text: "Des onomatopées"
+        correct: true
+      - text: "Des chiffres"
+      - text: "Des prénoms"
+      - text: "Des dates"
+    hint: "Ce sont des mots qui imitent un bruit."
+    explanation: "Pendant la mise en voix, on joue avec des onomatopées, sur la hauteur, l'intensité et la durée."
+  - id: q8
+    prompt: "Quelle lettre désigne le son le plus grave ?"
+    image: media/hauteur.webp
+    choices:
+      - text: "A"
+      - text: "B"
+      - text: "C"
+        correct: true
+    hint: "Un son grave est placé en bas."
+    explanation: "Le son C est le plus bas : c'est le son grave. Le son A est médium et le son B est aigu."
+  - id: q9
+    prompt: "Quelle lettre désigne le son le plus aigu ?"
+    image: media/hauteur.webp
+    choices:
+      - text: "B"
+        correct: true
+      - text: "A"
+      - text: "C"
+    hint: "Un son aigu est placé en haut."
+    explanation: "Le son B est le plus haut : c'est le son aigu."
+  - id: q10
+    prompt: "Quelle lettre désigne la nuance forte ?"
+    image: media/nuance.webp
+    choices:
+      - text: "B"
+      - text: "C"
+      - text: "A"
+        correct: true
+    hint: "Une nuance forte correspond à un son puissant : toutes les cases sont remplies."
+    explanation: "Le son A est le plus fort : c'est la nuance forte. Le son C est mezzo et le son B est piano."
+  - id: q11
+    prompt: "Quelle lettre désigne le son long ?"
+    image: media/duree.webp
+    choices:
+      - text: "B"
+      - text: "A"
+        correct: true
+    hint: "Un son long dure plus longtemps sur la flèche du temps."
+    explanation: "Le son A dure plus longtemps que le son B : c'est le son long. Le son B est un son court."
+  - id: q12
+    prompt: "Comment s'appelle la technique où une personne chante et le groupe répète ?"
+    image: media/responsorial.webp
+    choices:
+      - text: "La mise en souffle"
+      - text: "La technique responsoriale"
+        correct: true
+      - text: "La mise en corps"
+      - text: "La mise en voix"
+    hint: "Sur le schéma, le groupe répond à la personne seule."
+    explanation: "Dans la technique responsoriale, une personne chante, puis le groupe répète ce qu'elle vient de chanter."
+  - id: q13
+    prompt: "Laquelle de ces consignes aide à bien chanter ?"
+    choices:
+      - text: "Se pencher vers l'avant"
+      - text: "Croiser les pieds"
+      - text: "Se tenir droit, les pieds à plat"
+        correct: true
+      - text: "Lever les talons"
+    hint: "Pense à la position du corps avant de chanter."
+    explanation: "Pour bien chanter, il faut respirer, articuler, faire résonner la voix, se tenir droit et poser les pieds à plat."

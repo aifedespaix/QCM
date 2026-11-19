@@ -1,0 +1,132 @@
+version: 1
+meta:
+  title: "L'Histoire du soldat de Stravinsky"
+  subject: musique
+  level: 3e
+  chapter: "Œuvre de référence : L'Histoire du soldat"
+  language: fr
+  author: "Équipe QCM"
+  description: "Douze questions sur l'œuvre de référence de la séquence « La voix est-elle toujours porteuse de sens ? » : mélodrame, récitants, instruments et contexte."
+questions:
+  - id: q1
+    prompt: "Qui a composé « L'Histoire du soldat » ?"
+    choices:
+      - text: "Igor Stravinsky"
+        correct: true
+      - text: "Robert Desnos"
+      - text: "Luciano Berio"
+      - text: "Georges Aperghis"
+    hint: "Ce compositeur est russe et vit en Suisse pendant la Première Guerre mondiale."
+    explanation: "« L'Histoire du soldat » est une œuvre du compositeur Igor Stravinsky. Robert Desnos est l'auteur du poème « La Voix »."
+  - id: q2
+    prompt: "Comment appelle-t-on ce spectacle musical théâtralisé, aussi nommé musique de scène ?"
+    choices:
+      - text: "Un opéra"
+      - text: "Un mélodrame"
+        correct: true
+      - text: "Une opérette"
+      - text: "Une comédie musicale"
+    hint: "Ce mot commence par « mélo »."
+    explanation: "« L'Histoire du soldat » est un mélodrame : une musique de scène, c'est-à-dire un spectacle musical théâtralisé. Les récitants parlent le texte au lieu de le chanter."
+  - id: q3
+    prompt: "Combien de récitants jouent dans l'œuvre ? Compte les personnages orange du plan de scène."
+    image: media/plan_scene.webp
+    choices:
+      - text: "2"
+      - text: "3"
+        correct: true
+      - text: "7"
+      - text: "10"
+    hint: "Les récitants sont les personnages orange, à gauche de la scène."
+    explanation: "L'œuvre est écrite pour 3 récitants : le lecteur, le soldat et le diable."
+  - id: q4
+    prompt: "Quels sont les trois récitants de l'œuvre ?"
+    choices:
+      - text: "Le lecteur, le soldat, le roi"
+      - text: "Le soldat, le diable, la princesse"
+      - text: "Le lecteur, le soldat, le diable"
+        correct: true
+      - text: "Le soldat, le diable, le chef d'orchestre"
+    hint: "Un des trois raconte l'histoire : c'est le lecteur, aussi appelé narrateur."
+    explanation: "Les trois récitants sont le lecteur (le narrateur), le soldat et le diable. Dans le dialogue, le soldat et le diable se répondent, et le narrateur raconte."
+  - id: q5
+    prompt: "Combien d'instrumentistes jouent dans l'œuvre ? Compte les cercles bleus du plan de scène."
+    image: media/plan_scene.webp
+    choices:
+      - text: "3"
+      - text: "5"
+      - text: "7"
+        correct: true
+      - text: "10"
+    hint: "Compte les cercles bleus : il y a deux rangées."
+    explanation: "L'œuvre demande 7 instrumentistes, un par instrument : violon, contrebasse, basson, cornet à pistons, trombone, clarinette, et percussions."
+  - id: q6
+    prompt: "Lequel de ces instruments fait partie des sept instruments de l'œuvre ?"
+    choices:
+      - text: "La flûte traversière"
+      - text: "Le piano"
+      - text: "Le basson"
+        correct: true
+      - text: "La harpe"
+    hint: "C'est un instrument à vent en bois, au son grave."
+    explanation: "Les sept instruments sont le violon, la contrebasse, le basson, le cornet à pistons, le trombone, la clarinette et les percussions. Le basson en fait partie."
+  - id: q7
+    prompt: "Dans quel pays vit Stravinsky quand il conçoit cette œuvre ?"
+    choices:
+      - text: "La Russie"
+      - text: "La France"
+      - text: "L'Allemagne"
+      - text: "La Suisse"
+        correct: true
+    hint: "Ce pays est voisin de la France et reste neutre pendant la guerre."
+    explanation: "Stravinsky vit en Suisse. Il y travaille avec son ami, l'écrivain Ramuz."
+  - id: q8
+    prompt: "Quel écrivain travaille avec Stravinsky sur cette œuvre ?"
+    choices:
+      - text: "Robert Desnos"
+      - text: "Ramuz"
+        correct: true
+      - text: "Molière"
+      - text: "Victor Hugo"
+    hint: "C'est un écrivain suisse, ami de Stravinsky."
+    explanation: "Stravinsky conçoit l'œuvre avec son ami, l'écrivain Ramuz. Robert Desnos est le poète du projet musical « La Voix »."
+  - id: q9
+    prompt: "Pendant quel événement historique Stravinsky conçoit-il cette œuvre ?"
+    choices:
+      - text: "La Première Guerre mondiale"
+        correct: true
+      - text: "La Révolution française"
+      - text: "La Seconde Guerre mondiale"
+      - text: "La guerre de Cent Ans"
+    hint: "L'œuvre date des années 1910."
+    explanation: "Stravinsky conçoit l'œuvre pendant la Première Guerre mondiale, entre 1917 et 1918."
+  - id: q10
+    prompt: "Pourquoi Stravinsky conçoit-il une œuvre avec très peu de moyens ?"
+    choices:
+      - text: "Parce que le public demande une musique très courte"
+      - text: "Parce que Stravinsky préfère les petits instruments"
+      - text: "Parce que la guerre crée des difficultés financières"
+        correct: true
+      - text: "Parce que les grands orchestres sont interdits"
+    hint: "Pense aux difficultés matérielles et financières de cette époque."
+    explanation: "À cause de la guerre, Stravinsky manque d'argent. Il conçoit donc une œuvre « économique », qui demande peu de personnes et peu de matériel."
+  - id: q11
+    prompt: "Où peut-on jouer l'œuvre, grâce à ses petits moyens ?"
+    choices:
+      - text: "Dans n'importe quelle salle, ou en plein air"
+        correct: true
+      - text: "Dans un grand opéra seulement"
+      - text: "Dans une église seulement"
+      - text: "Dans un studio d'enregistrement seulement"
+    hint: "Le spectacle peut se déplacer de village en village."
+    explanation: "L'œuvre est économique : elle se déplace de village en village et se joue dans n'importe quelle salle, voire en plein air."
+  - id: q12
+    prompt: "Quel est le rôle des instruments dans une musique de scène narrative ?"
+    choices:
+      - text: "Ils remplacent les dialogues"
+      - text: "Ils accompagnent l'action et relient les dialogues à l'action"
+        correct: true
+      - text: "Ils donnent le temps au public de se reposer"
+      - text: "Ils indiquent aux récitants quand parler"
+    hint: "Les instruments aident à mieux comprendre l'histoire."
+    explanation: "Dans une musique de scène, les instruments accompagnent l'action et créent un lien entre les dialogues et l'action. Ils aident à mieux comprendre l'histoire."

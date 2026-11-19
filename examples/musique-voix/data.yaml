@@ -1,0 +1,151 @@
+version: 1
+meta:
+  title: "La voix : sens, émotion et instrument"
+  subject: musique
+  level: 3e
+  chapter: "La voix est-elle toujours porteuse de sens ?"
+  language: fr
+  author: "Équipe QCM"
+  description: "Quatorze questions : voix porteuse de sens ou d'émotions, théâtre musical, voix comme instrument, partitions graphiques et poème « La Voix » de Robert Desnos."
+questions:
+  - id: q1
+    prompt: "Quand la voix est porteuse de sens, que fait-elle ?"
+    choices:
+      - text: "Elle suit les mots du texte pour rendre l'histoire compréhensible"
+        correct: true
+      - text: "Elle joue avec les sons sans tenir compte des mots"
+      - text: "Elle imite seulement des instruments de musique"
+      - text: "Elle garde le même volume du début à la fin"
+    hint: "Pense à une personne qui raconte une histoire."
+    explanation: "Une voix porteuse de sens suit les inflexions des mots du texte. Elle met en valeur le sens et rend l'histoire intelligible."
+  - id: q2
+    prompt: "Dans un texte « prétexte », à quoi sert le texte ?"
+    choices:
+      - text: "À raconter une histoire compréhensible mot à mot"
+      - text: "À servir de prétexte à l'expression vocale et à ses émotions"
+        correct: true
+      - text: "À donner le rythme aux instruments"
+      - text: "À indiquer les noms des musiciens"
+    hint: "Ici, l'important est la manière de dire, pas le sens des mots."
+    explanation: "Quand la voix ne porte pas le sens, le texte est un « texte prétexte » : il sert à exprimer des émotions avec la voix."
+  - id: q3
+    prompt: "Qu'est-ce qui marque souvent les formes de théâtre musical ?"
+    choices:
+      - text: "Des dialogues parlés"
+        correct: true
+      - text: "Des textes chantés uniquement en chœur"
+      - text: "Des instruments seulement, sans voix"
+      - text: "Des textes écrits en latin"
+    hint: "Les personnages se parlent, en plus de la musique."
+    explanation: "Le théâtre musical regroupe des formes proches de l'opéra, de l'opérette ou de la comédie musicale. Ces formes sont souvent marquées par des dialogues parlés."
+  - id: q4
+    prompt: "Comment s'appelle le genre qui mêle musique, théâtre et dialogues parlés ?"
+    choices:
+      - text: "Le solfège"
+      - text: "La musique concrète"
+      - text: "Le chant grégorien"
+      - text: "Le théâtre musical"
+        correct: true
+    hint: "Le nom du genre contient les mots « théâtre » et « musical »."
+    explanation: "Le théâtre musical est le genre qui associe la musique et le théâtre. « L'Histoire du soldat » de Stravinsky en est un exemple."
+  - id: q5
+    prompt: "Comment utilise-t-on la voix comme un instrument musical ?"
+    choices:
+      - text: "En lisant un texte sans intonation"
+      - text: "En faisant des jeux de voix, des onomatopées ou des imitations"
+        correct: true
+      - text: "En chantant seulement les mots d'un poème"
+      - text: "En parlant toujours très bas"
+    hint: "Pense aux bruits de bouche et aux sons que l'on imite."
+    explanation: "La voix devient un instrument quand elle s'éloigne du discours : jeux de voix, onomatopées, imitations."
+  - id: q6
+    prompt: "Qu'est-ce qu'une onomatopée ?"
+    choices:
+      - text: "Une note écrite sur une partition"
+      - text: "Un mot qui raconte une histoire"
+      - text: "Un mot qui imite un bruit"
+        correct: true
+      - text: "Un instrument à vent"
+    hint: "Par exemple : « tic-tac » ou « bada bada »."
+    explanation: "Une onomatopée est un mot qui imite un bruit ou un son. On s'en sert pour jouer avec la voix."
+  - id: q7
+    prompt: "Ce dessin est un exemple de quel type de partition ?"
+    image: media/partition_graphique.webp
+    choices:
+      - text: "Une partition de piano"
+      - text: "Une partition graphique"
+        correct: true
+      - text: "Une partition de solfège classique"
+      - text: "Une partition de percussions"
+    hint: "Les notes sont remplacées par des formes, des lignes et des couleurs."
+    explanation: "Une partition graphique remplace les notes par des dessins : lignes, points et formes. Chaque musicien l'interprète à sa manière."
+  - id: q8
+    prompt: "Qu'amène la liberté d'écriture des partitions au XXe siècle ?"
+    choices:
+      - text: "Une obligation de jouer plus vite"
+      - text: "Une interdiction d'utiliser la voix"
+      - text: "Un seul tempo pour toutes les œuvres"
+      - text: "Une liberté d'interprétation"
+        correct: true
+    hint: "Une partition moins précise laisse plus de choix au musicien."
+    explanation: "Au XXe siècle, les partitions s'écrivent plus librement, parfois avec des dessins. Les interprètes ont alors plus de liberté pour jouer ou chanter."
+  - id: q9
+    prompt: "Qui est l'auteur de l'œuvre « Stripsody » ?"
+    choices:
+      - text: "Luciano Berio"
+      - text: "Georges Aperghis"
+      - text: "Cathy Berberian"
+        correct: true
+      - text: "Robert Desnos"
+    hint: "C'est une chanteuse et compositrice."
+    explanation: "« Stripsody » est une œuvre de Cathy Berberian. Elle y utilise la voix comme un instrument, avec des onomatopées."
+  - id: q10
+    prompt: "Qui est l'auteur de l'œuvre « Séquenza III » ?"
+    choices:
+      - text: "Luciano Berio"
+        correct: true
+      - text: "Cathy Berberian"
+      - text: "Igor Stravinsky"
+      - text: "Georges Aperghis"
+    hint: "C'est un compositeur italien."
+    explanation: "« Séquenza III » est une œuvre de Luciano Berio. Sa partition est un exemple de liberté d'écriture au XXe siècle."
+  - id: q11
+    prompt: "Qui est l'auteur de l'œuvre « Récitations » ?"
+    choices:
+      - text: "Georges Aperghis"
+        correct: true
+      - text: "Luciano Berio"
+      - text: "Cathy Berberian"
+      - text: "Igor Stravinsky"
+    hint: "C'est un compositeur d'origine grecque."
+    explanation: "« Récitations » est une œuvre de Georges Aperghis. Sa partition dessine une forme de triangle."
+  - id: q12
+    prompt: "Qui a écrit le poème « La Voix » ?"
+    choices:
+      - text: "Charles-Ferdinand Ramuz"
+      - text: "Igor Stravinsky"
+      - text: "Robert Desnos"
+        correct: true
+      - text: "Georges Aperghis"
+    hint: "Ce poème est le support du projet musical de la séquence."
+    explanation: "« La Voix » est un poème de Robert Desnos. Il sert de texte pour le projet musical de la séquence."
+  - id: q13
+    prompt: "Dans le projet musical, que faut-il faire une fois le poème appris ?"
+    choices:
+      - text: "Le chanter sans accompagnement"
+      - text: "Le lire sur une musique instrumentale de son choix"
+        correct: true
+      - text: "Le traduire dans une autre langue"
+      - text: "Le recopier plusieurs fois"
+    hint: "Une musique accompagne la lecture."
+    explanation: "Une fois le poème appris, on le lit sur une musique instrumentale de son choix. On varie l'intonation et le débit selon le sens du texte."
+  - id: q14
+    prompt: "Que doit-on créer en groupe à partir du poème « La Voix » ?"
+    choices:
+      - text: "Une partition graphique"
+        correct: true
+      - text: "Un décor de théâtre"
+      - text: "Un clip vidéo"
+      - text: "Une partition de piano"
+    hint: "Le groupe dessine la musique du poème."
+    explanation: "En groupe, on crée une partition graphique du poème : un dessin qui représente la manière de le dire."
