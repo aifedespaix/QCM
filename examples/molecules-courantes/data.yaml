@@ -1,0 +1,114 @@
+version: 1
+meta:
+  title: "Les molécules courantes"
+  subject: physique-chimie
+  level: 3e
+  chapter: "Constitution de la matière : molécules courantes"
+  language: fr
+  description: "Dix questions sur les molécules courantes : noms, formules, composition et écriture correcte des formules."
+questions:
+  - id: q1
+    prompt: "Une molécule de diazote contient deux atomes d'azote. Quelle est sa formule ?"
+    choices:
+      - text: "N"
+      - text: "2N"
+      - text: "N₂"
+        correct: true
+      - text: "N₃"
+    hint: "Le chiffre qui indique le nombre d'atomes s'écrit en bas, après le symbole."
+    explanation: "Deux atomes d'azote liés forment la molécule N₂, le diazote. Le chiffre 2 s'écrit en indice, après le symbole N."
+  - id: q2
+    prompt: "Quelle est la formule de cette molécule formée de deux atomes de chlore ?"
+    image: media/molecule_cl2.webp
+    choices:
+      - text: "C₂L"
+      - text: "Cl₂"
+        correct: true
+      - text: "2Cl"
+      - text: "Cl"
+    hint: "Le symbole du chlore s'écrit avec une majuscule puis une minuscule."
+    explanation: "Le chlore a pour symbole Cl : C majuscule, l minuscule. Deux atomes liés forment la molécule Cl₂, le dichlore."
+  - id: q3
+    prompt: "Quel est le nom de la molécule de formule CO ?"
+    choices:
+      - text: "Le dioxyde de carbone"
+      - text: "Le dioxygène"
+      - text: "Le monoxyde de carbone"
+        correct: true
+      - text: "Le protoxyde d'azote"
+    hint: "CO contient 1 atome de carbone et 1 atome d'oxygène."
+    explanation: "La molécule CO contient 1 atome de carbone et 1 atome d'oxygène. Elle s'appelle le monoxyde de carbone. Le dioxyde de carbone s'écrit CO₂."
+  - id: q4
+    prompt: "Quelle est la formule du protoxyde d'azote, représenté ici avec 2 atomes d'azote et 1 atome d'oxygène ?"
+    image: media/molecule_n2o.webp
+    choices:
+      - text: "NO₂"
+      - text: "N₂O₂"
+      - text: "N₂"
+      - text: "N₂O"
+        correct: true
+    hint: "Compte les sphères bleues (azote), puis les sphères rouges (oxygène)."
+    explanation: "Le modèle montre 2 atomes d'azote (bleus) et 1 atome d'oxygène (rouge). La formule est N₂O. Un seul atome ne prend pas de chiffre."
+  - id: q5
+    prompt: "Combien d'atomes de carbone contient cette molécule de butane dans le modèle éclaté ?"
+    image: media/molecule_butane.webp
+    choices:
+      - text: "4"
+        correct: true
+      - text: "10"
+      - text: "14"
+      - text: "2"
+    hint: "Les atomes de carbone sont les sphères noires reliées en chaîne."
+    explanation: "Le modèle éclaté montre 4 sphères noires : la molécule de butane contient 4 atomes de carbone, avec 10 atomes d'hydrogène."
+  - id: q6
+    prompt: "Quelle molécule a pour formule C₄H₁₀ ?"
+    choices:
+      - text: "Le méthane"
+      - text: "L'eau"
+      - text: "Le dichlore"
+      - text: "Le butane"
+        correct: true
+    hint: "Cette molécule contient 4 atomes de carbone et 10 atomes d'hydrogène."
+    explanation: "Le butane contient 4 atomes de carbone et 10 atomes d'hydrogène : sa formule est C₄H₁₀. Le méthane s'écrit CH₄."
+  - id: q7
+    prompt: "Que représente l'écriture 2 O ?"
+    choices:
+      - text: "Une molécule de dioxygène"
+      - text: "Deux atomes d'oxygène séparés"
+        correct: true
+      - text: "Un atome d'oxygène"
+      - text: "Une molécule d'eau"
+    hint: "Un chiffre écrit devant le symbole compte des atomes séparés."
+    explanation: "2 O désigne deux atomes d'oxygène séparés. Une molécule de dioxygène s'écrit O₂, avec le chiffre en indice."
+  - id: q8
+    prompt: "Quelle écriture désigne un atome de cobalt, de numéro atomique Z = 27 ?"
+    choices:
+      - text: "CO₂"
+      - text: "C₂₇"
+      - text: "Co"
+        correct: true
+      - text: "27C"
+    hint: "Le symbole d'un élément commence par une majuscule. S'il a deux lettres, la deuxième est une minuscule."
+    explanation: "Le cobalt s'écrit Co : C majuscule, o minuscule. CO, avec deux majuscules, désigne la molécule de monoxyde de carbone."
+  - id: q9
+    prompt: "Quelle molécule contient cinq atomes au total ?"
+    choices:
+      - text: "H₂O"
+      - text: "CH₄"
+        correct: true
+      - text: "N₂O"
+      - text: "CO₂"
+    hint: "Additionne les atomes de chaque sorte : les chiffres en indice et les symboles seuls."
+    explanation: "CH₄ contient 1 atome de carbone et 4 atomes d'hydrogène, soit 5 atomes. H₂O, N₂O et CO₂ en contiennent 3 chacune."
+  - id: q10
+    prompt: "Quelles trois molécules contiennent un seul type d'atome ?"
+    choices:
+      - text: "N₂"
+        correct: true
+      - text: "CO"
+      - text: "Cl₂"
+        correct: true
+      - text: "O₂"
+        correct: true
+    hint: "Regarde les symboles : un seul symbole différent dans la formule."
+    explanation: "N₂ contient seulement de l'azote, Cl₂ seulement du chlore et O₂ seulement de l'oxygène. CO contient du carbone et de l'oxygène."
