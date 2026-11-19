@@ -34,7 +34,22 @@ type Tab = 'online' | 'local'
  */
 type OnlineState = 'loading' | 'ready' | 'offline' | 'unconfigured'
 
-const tab = ref<Tab>('online')
+const TAB_KEY = 'qcm.library.tab'
+function readTab(): Tab {
+  try {
+    return localStorage.getItem(TAB_KEY) === 'local' ? 'local' : 'online'
+  } catch {
+    return 'online'
+  }
+}
+const tab = ref<Tab>(readTab())
+watch(tab, (value) => {
+  try {
+    localStorage.setItem(TAB_KEY, value)
+  } catch {
+    // Stockage indisponible : l'onglet ne sera simplement pas mémorisé.
+  }
+})
 const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; sort: LibrarySort }>({
   search: '',
   subject: '',
@@ -115,11 +130,18 @@ function onOnline(): void {
   if (online.value === 'offline') void load()
 }
 
+// Sans réponse, on réessaie seul de temps en temps : plus besoin de recharger la page.
+let retryTimer: ReturnType<typeof setInterval> | undefined
+
 onMounted(() => {
   void load()
   window.addEventListener('online', onOnline)
+  retryTimer = setInterval(() => {
+    if (online.value === 'offline' && !document.hidden) void load()
+  }, 15000)
 })
 onBeforeUnmount(() => {
+  clearInterval(retryTimer)
   clearTimeout(debounce)
   window.removeEventListener('online', onOnline)
 })

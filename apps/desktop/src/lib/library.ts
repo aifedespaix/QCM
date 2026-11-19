@@ -65,7 +65,31 @@ function quote(value: string): string {
   return `'${value.replace(/\\/g, '\\\\').replace(/'/g, '\\\'')}'`
 }
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Relance une requête réseau qui échoue de façon passagère (réseau pas encore prêt, serveur lent) :
+ * trois essais avant d'abandonner. Une absence définitive (`missing`, `unconfigured`) n'est jamais relancée.
+ */
+export async function withRetry<T>(run: () => Promise<T>, attempts = 3): Promise<T> {
+  let last: unknown
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await run()
+    } catch (error) {
+      last = error
+      if (error instanceof LibraryError && error.reason !== 'offline') throw error
+      if (attempt < attempts - 1) await sleep(600 * (attempt + 1))
+    }
+  }
+  throw last
+}
+
 async function get<T>(path: string): Promise<T> {
+  return withRetry(() => getOnce<T>(path))
+}
+
+async function getOnce<T>(path: string): Promise<T> {
   let text: string
   try {
     text = await invoke<string>('library_get', { path })
@@ -108,11 +132,13 @@ export function getLibraryRecord(id: string): Promise<LibraryRecord> {
 
 /** Télécharge le `.qcm` d'un enregistrement et renvoie le chemin du fichier provisoire. */
 export async function downloadLibraryQcm(record: Pick<LibraryRecord, 'id' | 'file'>): Promise<string> {
-  try {
-    return await invoke<string>('library_download', { recordId: record.id, fileName: record.file })
-  } catch (code) {
-    throw toFailure(code)
-  }
+  return withRetry(async () => {
+    try {
+      return await invoke<string>('library_download', { recordId: record.id, fileName: record.file })
+    } catch (code) {
+      throw toFailure(code)
+    }
+  })
 }
 
 /** Entrées recherchées par requête : garde la réponse sous `perPage`, même avec des doublons en ligne. */

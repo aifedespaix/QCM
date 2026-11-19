@@ -30,7 +30,24 @@ type Page = 'home' | 'library' | 'stats'
 /** Ce qui recouvre l'écran : chargement, lecteur, erreur d'ouverture. */
 type Overlay = 'none' | 'loading' | 'player' | 'error'
 
-const page = ref<Page>('home')
+const PAGE_KEY = 'qcm.page'
+function readPage(): Page {
+  try {
+    const saved = localStorage.getItem(PAGE_KEY)
+    return saved === 'library' || saved === 'stats' ? saved : 'home'
+  } catch {
+    return 'home'
+  }
+}
+/** La page affichée est mémorisée : recharger la fenêtre (F5) ramène au même endroit, pas à l'accueil. */
+const page = ref<Page>(readPage())
+watch(page, (value) => {
+  try {
+    localStorage.setItem(PAGE_KEY, value)
+  } catch {
+    // Stockage indisponible : la page ne sera simplement pas mémorisée.
+  }
+})
 const overlay = ref<Overlay>('loading')
 const opened = shallowRef<OpenedQcm | null>(null)
 const errorMessage = ref('')
@@ -146,6 +163,8 @@ async function openPath(path: string, recordId?: string): Promise<void> {
     try {
       await storeQcm(path, key)
       kept = true
+      // « Sur cet ordinateur » tout de suite, sans attendre la relecture du dossier.
+      stored.value = new Set([...stored.value, key])
     } catch {
       // Copie impossible (disque plein…) : le QCM se joue quand même, il ne sera pas dans la liste.
     }
@@ -322,14 +341,31 @@ watch(page, (value) => {
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   window.addEventListener('online', onBackOnline)
-  unlisten.push(await onOpenFileRequest(() => void openPending()))
-  unlisten.push(await onQcmFileDrop((path) => void openPath(path)))
-  await refreshStored()
-  onlineLibrary.value = await libraryAvailable()
-  void syncLibrary()
-  if (!(await openPending())) overlay.value = 'none'
+  // Chaque étape est isolée : un échec ou une lenteur ne doit jamais laisser l'écran de chargement figé.
+  const safely = async (step: () => Promise<void>): Promise<void> => {
+    try {
+      await step()
+    } catch {
+      // Étape facultative : on continue.
+    }
+  }
+  await safely(async () => void unlisten.push(await onOpenFileRequest(() => void openPending())))
+  await safely(async () => void unlisten.push(await onQcmFileDrop((path) => void openPath(path))))
+  await safely(refreshStored)
+  let pending = false
+  await safely(async () => {
+    pending = await openPending()
+  })
+  if (!pending) overlay.value = 'none'
+  // Le réseau ne bloque plus l'affichage : tout ce qui suit se fait en arrière-plan.
+  void safely(async () => {
+    onlineLibrary.value = await libraryAvailable()
+    await syncLibrary()
+  })
   // Sans réseau, `checkForUpdate` renvoie `null` : rien ne s'affiche.
-  update.value = await checkForUpdate()
+  void safely(async () => {
+    update.value = await checkForUpdate()
+  })
 })
 
 onBeforeUnmount(() => {
@@ -343,11 +379,12 @@ onBeforeUnmount(() => {
   <!-- Pendant un QCM, le lecteur occupe toute la fenêtre : sa croix remplace le bandeau. -->
   <LoadingScreen v-if="overlay === 'loading'" />
 
-  <div v-else-if="overlay === 'player' && opened" class="h-dvh">
+  <div v-if="overlay === 'player' && opened" class="h-dvh">
     <QcmPlayer :key="openCount" :qcm="opened.data" :resolve-media="resolveMedia" closable @close="closeOverlay" @result="recordResult(currentKey, $event)" />
   </div>
 
-  <div v-else class="flex h-dvh flex-col bg-bg text-ink">
+  <!-- Reste monté (simplement masqué) pendant un QCM : au retour, la bibliothèque est telle qu'on l'a laissée. -->
+  <div v-show="overlay !== 'loading' && !(overlay === 'player' && opened)" class="flex h-dvh flex-col bg-bg text-ink">
     <header class="flex flex-none items-center justify-between gap-4 px-6 py-4">
       <div class="flex min-w-0 items-center gap-2">
         <button type="button" class="flex cursor-pointer items-center gap-3 rounded-2xl" aria-label="QCM, accueil" :aria-current="page === 'home' ? 'page' : undefined" @click="go('home')">
