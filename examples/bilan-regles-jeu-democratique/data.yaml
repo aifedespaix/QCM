@@ -1,0 +1,171 @@
+version: 1
+meta:
+  title: "Bilan : les règles du jeu démocratique"
+  subject: emc
+  level: 3e
+  chapter: "Bilan final — Les règles du jeu démocratique"
+  language: fr
+  description: "Seize questions pour réviser tout le chapitre : Constitution, séparation des pouvoirs, institutions européennes et vie démocratique."
+questions:
+  - id: q1
+    prompt: "Quel texte de 1958 définit les règles de la République française ?"
+    choices:
+      - text: "La Constitution"
+        correct: true
+      - text: "Le traité de Maastricht"
+      - text: "La loi de 1905"
+      - text: "Le règlement du Parlement"
+    hint: "Ce texte est la base de la Ve République."
+    explanation: "La Constitution de 1958 fixe les règles de la République française."
+  - id: q2
+    prompt: "Quel principe sépare les religions et l'État ?"
+    choices:
+      - text: "La neutralité fiscale"
+      - text: "La laïcité"
+        correct: true
+      - text: "La séparation des pouvoirs"
+      - text: "La citoyenneté"
+    hint: "Ce principe est lié à la loi de 1905."
+    explanation: "La laïcité organise la séparation entre les religions et l'État."
+  - id: q3
+    prompt: "Quels sont les trois pouvoirs séparés dans la Constitution ?"
+    choices:
+      - text: "Exécutif, législatif et judiciaire"
+        correct: true
+      - text: "Exécutif, militaire et religieux"
+      - text: "Législatif, judiciaire et européen"
+      - text: "Judiciaire, municipal et exécutif"
+    hint: "Un pouvoir fait les lois, un autre les applique, un autre rend la justice."
+    explanation: "Les pouvoirs exécutif, législatif et judiciaire sont séparés et exercés par des personnes différentes."
+  - id: q4
+    prompt: "Qui exerce le pouvoir législatif ?"
+    choices:
+      - text: "Le gouvernement"
+      - text: "Les tribunaux"
+      - text: "Le Parlement"
+        correct: true
+      - text: "Le Conseil de l'UE"
+    hint: "Ce pouvoir vote les lois."
+    explanation: "Le Parlement, composé de l'Assemblée nationale et du Sénat, vote les lois."
+  - id: q5
+    prompt: "Qui exerce le pouvoir exécutif ?"
+    choices:
+      - text: "Le Sénat et l'Assemblée nationale"
+      - text: "Les magistrats"
+      - text: "Les maires"
+      - text: "Le président et le gouvernement"
+        correct: true
+    hint: "Ce pouvoir fait appliquer les lois."
+    explanation: "Le président de la République et le gouvernement exercent le pouvoir exécutif."
+  - id: q6
+    prompt: "Quel pouvoir rend la justice ?"
+    choices:
+      - text: "Le pouvoir judiciaire"
+        correct: true
+      - text: "Le pouvoir législatif"
+      - text: "Le pouvoir exécutif"
+      - text: "Le pouvoir européen"
+    hint: "Les tribunaux et les magistrats l'exercent."
+    explanation: "Le pouvoir judiciaire rend la justice."
+  - id: q7
+    prompt: "Quel texte toute loi doit-elle respecter ?"
+    choices:
+      - text: "Un décret du gouvernement"
+      - text: "Un règlement administratif"
+      - text: "Un arrêté municipal"
+      - text: "La Constitution"
+        correct: true
+    hint: "Elle est au sommet de la hiérarchie des normes."
+    explanation: "Toute loi doit respecter la Constitution, qui est au sommet de la hiérarchie des normes."
+  - id: q8
+    prompt: "Qu'est-il arrivé à la Constitution depuis 1958 ?"
+    choices:
+      - text: "Elle a été supprimée en 1992"
+      - text: "Elle n'a jamais été modifiée"
+      - text: "Elle a connu plusieurs révisions"
+        correct: true
+      - text: "Elle a été remplacée par un traité"
+    hint: "Elle évolue avec la société."
+    explanation: "La Constitution a connu plusieurs révisions depuis 1958 : elle peut évoluer."
+  - id: q9
+    prompt: "Quel est le rôle de la France dans la création de l'Union européenne ?"
+    choices:
+      - text: "Elle est membre fondateur"
+        correct: true
+      - text: "Elle est membre observateur"
+      - text: "Elle est membre depuis 1992 seulement"
+      - text: "Elle est siège unique des institutions"
+    hint: "La France fait partie des premiers pays."
+    explanation: "La France est membre fondateur de l'Union européenne."
+  - id: q10
+    prompt: "Que fait la France des textes européens ?"
+    choices:
+      - text: "Elle les applique"
+        correct: true
+      - text: "Elle les vote seule"
+      - text: "Elle les rédige seule"
+      - text: "Elle les remplace par la Constitution"
+    hint: "Les textes européens ont des effets en France."
+    explanation: "La France applique les textes européens, comme la directive qu'elle transpose dans sa législation."
+  - id: q11
+    prompt: "Quel droit possède un citoyen européen dans l'Union ?"
+    choices:
+      - text: "Le droit de choisir ses lois"
+      - text: "Le droit de circuler et de séjourner librement"
+        correct: true
+      - text: "Le droit de diriger la Commission"
+      - text: "Le droit de modifier la Constitution"
+    hint: "Ce droit est créé par le traité de Maastricht."
+    explanation: "Le citoyen européen peut circuler et séjourner librement dans les États membres."
+  - id: q12
+    prompt: "Comment les citoyens sont-ils représentés dans la vie démocratique ?"
+    choices:
+      - text: "Par les juges"
+      - text: "Par les ministres"
+      - text: "Par les préfets"
+      - text: "Par les élus"
+        correct: true
+    hint: "Les citoyens les choisissent par le vote."
+    explanation: "Les citoyens sont représentés par les élus qu'ils choisissent lors des élections."
+  - id: q13
+    prompt: "Quel moyen permet aux citoyens de voter directement sur un texte ?"
+    choices:
+      - text: "La promulgation"
+      - text: "Le référendum"
+        correct: true
+      - text: "La commission mixte paritaire"
+      - text: "Le triangle institutionnel"
+    hint: "Un exemple est le vote de 1958."
+    explanation: "Le référendum permet aux citoyens de se prononcer directement, comme pour la Constitution de 1958."
+  - id: q14
+    prompt: "Quels trois moyens donnent le pouvoir aux citoyens ?"
+    choices:
+      - text: "Les commissions d'enquête parlementaire"
+      - text: "Les élections"
+        correct: true
+      - text: "Les référendums"
+        correct: true
+      - text: "La QPC"
+        correct: true
+    hint: "Un seul des quatre est une mission du Parlement."
+    explanation: "Les élections, les référendums et la QPC donnent le pouvoir aux citoyens. Les commissions d'enquête parlementaire relèvent de la représentation."
+  - id: q15
+    prompt: "Comment s'appelle le groupe de parlementaires qui enquête sur un sujet ?"
+    choices:
+      - text: "La commission mixte paritaire"
+      - text: "Le Conseil constitutionnel"
+      - text: "Le Conseil européen"
+      - text: "La commission d'enquête parlementaire"
+        correct: true
+    hint: "Son nom contient le mot enquête."
+    explanation: "La commission d'enquête parlementaire est un outil du Parlement. Elle participe à la représentation des citoyens."
+  - id: q16
+    prompt: "Quelle assemblée européenne les citoyens élisent-ils tous les 5 ans ?"
+    choices:
+      - text: "Le Conseil de l'UE"
+      - text: "Le Conseil européen"
+      - text: "Le Parlement européen"
+        correct: true
+      - text: "La Commission européenne"
+    hint: "Les citoyens de chaque pays votent pour ses députés."
+    explanation: "Les citoyens élisent les députés du Parlement européen tous les 5 ans."

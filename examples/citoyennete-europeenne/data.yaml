@@ -1,0 +1,110 @@
+version: 1
+meta:
+  title: "La citoyenneté européenne"
+  subject: emc
+  level: 3e
+  chapter: "La citoyenneté européenne"
+  language: fr
+  description: "Dix questions pour réviser le traité de Maastricht, les droits des citoyens européens et les symboles de l'Union."
+questions:
+  - id: q1
+    prompt: "Quel traité crée la citoyenneté européenne ?"
+    choices:
+      - text: "Le traité de Versailles"
+      - text: "Le traité de Paris"
+      - text: "Le traité de Maastricht"
+        correct: true
+      - text: "Le traité de Rome"
+    hint: "Ce traité porte le nom d'une ville des Pays-Bas."
+    explanation: "Le traité de Maastricht institue la citoyenneté de l'Union. Il met en place les droits des citoyens européens."
+  - id: q2
+    prompt: "En quelle année le traité de Maastricht est-il signé ?"
+    choices:
+      - text: "En 1958"
+      - text: "En 1992"
+        correct: true
+      - text: "En 2005"
+      - text: "En 1989"
+    hint: "C'est dans les années 1990."
+    explanation: "Le traité de Maastricht est signé en 1992. Il crée la citoyenneté de l'Union européenne."
+  - id: q3
+    prompt: "Qui est citoyen de l'Union européenne ?"
+    choices:
+      - text: "Toute personne qui habite en Europe"
+      - text: "Toute personne ayant la nationalité d'un État membre"
+        correct: true
+      - text: "Toute personne qui travaille dans une institution européenne"
+      - text: "Toute personne née dans la capitale d'un État membre"
+    hint: "Relis l'article 8.1 du traité."
+    explanation: "L'article 8.1 dit que toute personne ayant la nationalité d'un État membre est citoyen de l'Union."
+  - id: q4
+    prompt: "Quel droit permet à un citoyen européen de voyager et de vivre dans un autre État membre ?"
+    choices:
+      - text: "Le droit de circuler et de séjourner librement"
+        correct: true
+      - text: "Le droit de voter aux élections nationales"
+      - text: "Le droit de changer de nationalité"
+      - text: "Le droit de siéger au Parlement européen"
+    hint: "Ce droit concerne le territoire des États membres."
+    explanation: "Tout citoyen de l'Union a le droit de circuler et de séjourner librement sur le territoire des États membres."
+  - id: q5
+    prompt: "Quelles deux élections un citoyen européen peut-il voter dans l'État membre où il réside ?"
+    choices:
+      - text: "Les élections municipales"
+        correct: true
+      - text: "Les élections législatives"
+      - text: "Les élections présidentielles"
+      - text: "Les élections du Parlement européen"
+        correct: true
+    hint: "Une élection est locale, l'autre est européenne."
+    explanation: "Les élections municipales et les élections du Parlement européen sont ouvertes au citoyen européen qui réside dans un autre État membre."
+  - id: q6
+    prompt: "Dans quelles conditions un citoyen européen vote-t-il dans l'État membre où il réside ?"
+    choices:
+      - text: "Avec un droit de vote réduit"
+      - text: "Avec une autorisation de son pays d'origine"
+      - text: "Avec un vote réservé aux élus"
+      - text: "Aux mêmes conditions que les ressortissants de cet État"
+        correct: true
+    hint: "L'article 8 B parle de conditions identiques."
+    explanation: "Les articles 8 B1 et 8 B2 donnent les mêmes conditions de vote et d'éligibilité qu'aux ressortissants de l'État de résidence."
+  - id: q7
+    prompt: "Quelle est la devise de l'Union européenne ?"
+    choices:
+      - text: "Liberté, égalité, fraternité"
+      - text: "Unis pour la paix"
+      - text: "Unie dans la diversité"
+        correct: true
+      - text: "Un peuple, une Europe"
+    hint: "Cette devise est écrite sur l'affiche de la Journée de l'Europe."
+    explanation: "La devise de l'Union européenne est « Unie dans la diversité »."
+  - id: q8
+    prompt: "Quel est le nom de l'hymne européen ?"
+    choices:
+      - text: "La Marseillaise"
+      - text: "L'Ode à la joie"
+        correct: true
+      - text: "L'Hymne à l'Europe"
+      - text: "Le Chant des nations"
+    hint: "Le titre parle d'un sentiment positif."
+    explanation: "L'hymne de l'Union européenne s'appelle l'Ode à la joie."
+  - id: q9
+    prompt: "Quelle date est la Journée de l'Europe ?"
+    choices:
+      - text: "Le 1er janvier"
+      - text: "Le 14 juillet"
+      - text: "Le 11 novembre"
+      - text: "Le 9 mai"
+        correct: true
+    hint: "C'est un jour du printemps."
+    explanation: "La Journée de l'Europe est la journée de commémoration de l'Union européenne. Elle a lieu le 9 mai."
+  - id: q10
+    prompt: "Quelle égalité l'article 2 du traité garantit-il ?"
+    choices:
+      - text: "L'égalité des revenus entre les pays"
+      - text: "L'égalité entre les femmes et les hommes"
+        correct: true
+      - text: "L'égalité du nombre d'élus par pays"
+      - text: "L'égalité des langues officielles"
+    hint: "Cette égalité concerne les personnes."
+    explanation: "L'article 2 cite l'égalité entre les femmes et les hommes parmi les valeurs communes de l'Union."
