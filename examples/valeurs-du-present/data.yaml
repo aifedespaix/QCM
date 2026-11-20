@@ -1,0 +1,139 @@
+version: 1
+meta:
+  title: "Les valeurs du présent de l'indicatif"
+  subject: francais
+  level: 3e
+  chapter: "Les emplois (valeurs) du présent de l'indicatif"
+  language: fr
+  description: "Treize questions pour reconnaître le présent d'énonciation, d'habitude, de narration, de passé proche, de futur proche et de vérité générale."
+questions:
+  - id: q1
+    prompt: "Que peut avoir le présent de l'indicatif ?"
+    choices:
+      - text: "Une seule valeur"
+      - text: "Plusieurs emplois ou valeurs"
+        correct: true
+      - text: "Uniquement une valeur de passé"
+      - text: "Uniquement une valeur de futur"
+    hint: "Le titre du cours parle des emplois du présent."
+    explanation: "Le présent de l'indicatif peut avoir plusieurs emplois, appelés aussi valeurs."
+  - id: q2
+    prompt: "Quel est le rôle du présent ponctuel, ou d'énonciation ?"
+    choices:
+      - text: "Évoquer une action qui se répète"
+      - text: "Évoquer un fait très récent"
+      - text: "Évoquer un événement qui se produit au moment où l'on parle"
+        correct: true
+      - text: "Évoquer un événement sur le point d'arriver"
+    hint: "Pense au moment présent de la parole."
+    explanation: "Le présent d'énonciation évoque un événement qui se produit au moment où l'on parle."
+  - id: q3
+    prompt: "Quelle valeur a le présent dans « Je suis en cours de français » ?"
+    choices:
+      - text: "Présent de narration"
+      - text: "Présent d'énonciation"
+        correct: true
+      - text: "Présent de vérité générale"
+      - text: "Présent d'habitude"
+    hint: "La personne parle de ce qu'elle fait maintenant."
+    explanation: "La phrase évoque ce qui se passe au moment où l'on parle : c'est un présent d'énonciation."
+  - id: q4
+    prompt: "Qu'exprime le présent d'habitude ?"
+    choices:
+      - text: "Une action qui se répète"
+        correct: true
+      - text: "Une action qui est terminée"
+      - text: "Un événement qui va arriver"
+      - text: "Une règle valable pour tous"
+    hint: "Le mot habitude indique une répétition."
+    explanation: "Le présent d'habitude exprime une action qui se répète."
+  - id: q5
+    prompt: "Quelle valeur a le présent dans « Ils prennent le bus tous les matins » ?"
+    choices:
+      - text: "Présent d'habitude"
+        correct: true
+      - text: "Présent de futur proche"
+      - text: "Présent d'énonciation"
+      - text: "Présent de passé proche"
+    hint: "Repère l'expression « tous les matins »."
+    explanation: "Prendre le bus tous les matins est une action qui se répète : c'est un présent d'habitude."
+  - id: q6
+    prompt: "Quelle valeur a le présent dans « Nathalie sort de chez moi » ?"
+    choices:
+      - text: "Présent de narration"
+      - text: "Présent d'habitude"
+      - text: "Présent à valeur de passé proche"
+        correct: true
+      - text: "Présent à valeur de futur proche"
+    hint: "Le fait vient juste de se terminer."
+    explanation: "Le présent à valeur de passé proche s'emploie pour un fait très récent."
+  - id: q7
+    prompt: "Quelle valeur a le présent dans « Je pars dans une heure » ?"
+    choices:
+      - text: "Présent à valeur de passé proche"
+      - text: "Présent à valeur de futur proche"
+        correct: true
+      - text: "Présent de vérité générale"
+      - text: "Présent d'énonciation"
+    hint: "L'événement ne s'est pas encore déroulé."
+    explanation: "Le présent à valeur de futur proche évoque un événement sur le point d'arriver."
+  - id: q8
+    prompt: "Quelle valeur a le présent dans « Paul et Virginie se marient dans une semaine » ?"
+    choices:
+      - text: "Présent de narration"
+      - text: "Présent d'habitude"
+      - text: "Présent à valeur de passé proche"
+      - text: "Présent à valeur de futur proche"
+        correct: true
+    hint: "Regarde l'expression « dans une semaine »."
+    explanation: "Le mariage n'a pas encore eu lieu et va arriver bientôt : c'est un présent à valeur de futur proche."
+  - id: q9
+    prompt: "Quel temps remplace le présent de narration dans un récit au passé ?"
+    choices:
+      - text: "Le futur simple"
+      - text: "Le conditionnel présent"
+      - text: "L'imparfait ou le passé simple"
+        correct: true
+      - text: "Le présent d'habitude"
+    hint: "Le récit est écrit au passé."
+    explanation: "Dans un récit au passé, le présent de narration remplace un imparfait ou un passé simple."
+  - id: q10
+    prompt: "Quel effet produit le présent de narration sur le lecteur ?"
+    choices:
+      - text: "Il éloigne l'événement"
+      - text: "Il annonce un événement futur"
+      - text: "Il rend l'événement plus actuel"
+        correct: true
+      - text: "Il décrit une règle générale"
+    hint: "Le lecteur a l'impression de vivre la scène."
+    explanation: "Le présent de narration rend l'événement plus actuel pour le lecteur."
+  - id: q11
+    prompt: "Dans quels textes emploie-t-on le présent de vérité générale ?"
+    choices:
+      - text: "Dans les proverbes et les définitions"
+        correct: true
+      - text: "Dans les récits au passé"
+      - text: "Dans les annonces d'un départ"
+      - text: "Dans les souvenirs récents"
+    hint: "Ce présent exprime un fait toujours vrai."
+    explanation: "Le présent de vérité générale est le temps employé dans les proverbes et les définitions."
+  - id: q12
+    prompt: "Quelle valeur a le présent dans « Tout est bien qui finit bien » ?"
+    choices:
+      - text: "Présent d'énonciation"
+      - text: "Présent de narration"
+      - text: "Présent d'habitude"
+      - text: "Présent de vérité générale"
+        correct: true
+    hint: "Cette phrase est un proverbe."
+    explanation: "Un proverbe exprime un fait toujours vrai : c'est un présent de vérité générale."
+  - id: q13
+    prompt: "Quelle valeur a le présent dans « Le chat appartient à la famille des félidés » ?"
+    choices:
+      - text: "Présent de vérité générale"
+        correct: true
+      - text: "Présent d'énonciation"
+      - text: "Présent à valeur de passé proche"
+      - text: "Présent de narration"
+    hint: "La phrase donne une information qui reste vraie."
+    explanation: "La phrase définit le chat et reste vraie à tout moment : c'est un présent de vérité générale."
