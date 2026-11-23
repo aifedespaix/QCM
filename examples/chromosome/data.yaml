@@ -6,7 +6,7 @@ meta:
   chapter: "L'information génétique : le chromosome"
   language: fr
   author: "Équipe QCM"
-  description: "Dix questions avec schémas pour situer le chromosome dans la cellule, nommer ses parties et retenir son nombre chez l'être humain."
+  description: "Dix questions pour situer le chromosome dans la cellule, ranger les niveaux du plus grand au plus petit, nommer ses parties sur schéma et retenir son nombre."
 questions:
   - id: q1
     prompt: "Dans quelle partie de la cellule se trouvent les chromosomes ?"
@@ -50,7 +50,7 @@ questions:
     hint: "Les chromosomes sont les petites formes violettes à l'intérieur du noyau."
     explanation: "Le repère C montre un chromosome. Il y en a plusieurs dans le noyau."
   - id: q5
-    prompt: "Sur le même schéma, quel repère montre la molécule d'ADN, agrandie à droite ?"
+    prompt: "Sur le même schéma, quel repère montre la molécule d'ADN ?"
     image: media/cellule_noyau_chromosome_adn.webp
     choices:
       - text: "Le repère A"
@@ -58,19 +58,29 @@ questions:
       - text: "Le repère C"
       - text: "Le repère D"
         correct: true
-    hint: "L'ADN a la forme de deux brins enroulés l'un autour de l'autre."
+    hint: "La molécule d'ADN se trouve à l'intérieur d'un chromosome."
     explanation: "Le repère D montre la molécule d'ADN. Elle est contenue dans le chromosome."
   - id: q6
+    prompt: "Quel classement va du plus grand élément au plus petit ?"
+    choices:
+      - text: "Noyau, cellule, chromosome, ADN"
+      - text: "Cellule, noyau, ADN, chromosome"
+      - text: "Cellule, noyau, chromosome, ADN"
+        correct: true
+      - text: "Chromosome, cellule, noyau, ADN"
+    hint: "Chaque élément se trouve à l'intérieur du précédent."
+    explanation: "La cellule contient un noyau. Le noyau contient des chromosomes. Chaque chromosome contient une molécule d'ADN."
+  - id: q7
     prompt: "Quelle molécule forme les chromosomes et contient l'information génétique ?"
     choices:
+      - text: "L'eau"
       - text: "L'ADN"
         correct: true
-      - text: "L'eau"
       - text: "Le glucose"
       - text: "L'oxygène"
     hint: "Ce nom s'écrit avec trois lettres."
     explanation: "Les chromosomes contiennent une molécule d'ADN. L'ADN porte l'information génétique."
-  - id: q7
+  - id: q8
     prompt: "Sur ce chromosome, quel repère montre le centromère ?"
     image: media/chromosome_deux_chromatides.webp
     choices:
@@ -80,26 +90,17 @@ questions:
       - text: "Le repère C"
     hint: "Le centromère est la partie sombre qui relie les deux moitiés du chromosome."
     explanation: "Le repère A montre le centromère. Il relie les deux chromatides."
-  - id: q8
-    prompt: "Sur le même schéma, quel repère montre une chromatide ?"
-    image: media/chromosome_deux_chromatides.webp
-    choices:
-      - text: "Le repère A"
-      - text: "Le repère B"
-        correct: true
-      - text: "Le repère C"
-    hint: "Une chromatide est une seule des deux moitiés allongées du chromosome."
-    explanation: "Le repère B montre une chromatide. Le chromosome en possède deux, reliées par le centromère."
   - id: q9
-    prompt: "Sur le même schéma, quel repère montre le chromosome entier ?"
+    prompt: "Combien de chromatides ce chromosome possède-t-il ?"
     image: media/chromosome_deux_chromatides.webp
     choices:
-      - text: "Le repère A"
-      - text: "Le repère B"
-      - text: "Le repère C"
+      - text: "1"
+      - text: "3"
+      - text: "2"
         correct: true
-    hint: "Le chromosome entier comprend toutes les parties du schéma."
-    explanation: "Le repère C entoure tout le chromosome : les deux chromatides et le centromère."
+      - text: "4"
+    hint: "Compte les moitiés allongées reliées par la partie sombre."
+    explanation: "Ce chromosome a deux chromatides, reliées par le centromère."
   - id: q10
     prompt: "Combien de chromosomes contient le noyau d'une cellule humaine du corps ?"
     choices:
