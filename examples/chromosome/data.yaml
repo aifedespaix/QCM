@@ -1,0 +1,112 @@
+version: 1
+meta:
+  title: "Le chromosome"
+  subject: svt
+  level: 3e
+  chapter: "L'information génétique : le chromosome"
+  language: fr
+  author: "Équipe QCM"
+  description: "Dix questions avec schémas pour situer le chromosome dans la cellule, nommer ses parties et retenir son nombre chez l'être humain."
+questions:
+  - id: q1
+    prompt: "Dans quelle partie de la cellule se trouvent les chromosomes ?"
+    choices:
+      - text: "Dans le cytoplasme"
+      - text: "Dans la membrane"
+      - text: "Dans le noyau"
+        correct: true
+      - text: "Dans l'extérieur de la cellule"
+    hint: "Cette partie est ronde et se trouve au centre de la cellule."
+    explanation: "Les chromosomes sont dans le noyau de la cellule."
+  - id: q2
+    prompt: "Quelle structure du noyau porte l'information génétique ?"
+    choices:
+      - text: "Le chromosome"
+        correct: true
+      - text: "Le cytoplasme"
+      - text: "La membrane"
+    hint: "L'information génétique est rangée dans le noyau, sous une forme précise."
+    explanation: "Le chromosome est le support de l'information génétique. Il se trouve dans le noyau."
+  - id: q3
+    prompt: "Sur le schéma, quel repère montre le noyau de la cellule ?"
+    image: media/cellule_noyau_chromosome_adn.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+        correct: true
+      - text: "Le repère C"
+      - text: "Le repère D"
+    hint: "Le noyau est la partie ronde qui contient les chromosomes."
+    explanation: "Le repère B montre le noyau. Il est au centre de la cellule et contient les chromosomes."
+  - id: q4
+    prompt: "Sur le même schéma, quel repère montre un chromosome ?"
+    image: media/cellule_noyau_chromosome_adn.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+      - text: "Le repère C"
+        correct: true
+      - text: "Le repère D"
+    hint: "Les chromosomes sont les petites formes violettes à l'intérieur du noyau."
+    explanation: "Le repère C montre un chromosome. Il y en a plusieurs dans le noyau."
+  - id: q5
+    prompt: "Sur le même schéma, quel repère montre la molécule d'ADN, agrandie à droite ?"
+    image: media/cellule_noyau_chromosome_adn.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+      - text: "Le repère C"
+      - text: "Le repère D"
+        correct: true
+    hint: "L'ADN a la forme de deux brins enroulés l'un autour de l'autre."
+    explanation: "Le repère D montre la molécule d'ADN. Elle est contenue dans le chromosome."
+  - id: q6
+    prompt: "Quelle molécule forme les chromosomes et contient l'information génétique ?"
+    choices:
+      - text: "L'ADN"
+        correct: true
+      - text: "L'eau"
+      - text: "Le glucose"
+      - text: "L'oxygène"
+    hint: "Ce nom s'écrit avec trois lettres."
+    explanation: "Les chromosomes contiennent une molécule d'ADN. L'ADN porte l'information génétique."
+  - id: q7
+    prompt: "Sur ce chromosome, quel repère montre le centromère ?"
+    image: media/chromosome_deux_chromatides.webp
+    choices:
+      - text: "Le repère A"
+        correct: true
+      - text: "Le repère B"
+      - text: "Le repère C"
+    hint: "Le centromère est la partie sombre qui relie les deux moitiés du chromosome."
+    explanation: "Le repère A montre le centromère. Il relie les deux chromatides."
+  - id: q8
+    prompt: "Sur le même schéma, quel repère montre une chromatide ?"
+    image: media/chromosome_deux_chromatides.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+        correct: true
+      - text: "Le repère C"
+    hint: "Une chromatide est une seule des deux moitiés allongées du chromosome."
+    explanation: "Le repère B montre une chromatide. Le chromosome en possède deux, reliées par le centromère."
+  - id: q9
+    prompt: "Sur le même schéma, quel repère montre le chromosome entier ?"
+    image: media/chromosome_deux_chromatides.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+      - text: "Le repère C"
+        correct: true
+    hint: "Le chromosome entier comprend toutes les parties du schéma."
+    explanation: "Le repère C entoure tout le chromosome : les deux chromatides et le centromère."
+  - id: q10
+    prompt: "Combien de chromosomes contient le noyau d'une cellule humaine du corps ?"
+    choices:
+      - text: "23"
+      - text: "92"
+      - text: "46"
+        correct: true
+      - text: "48"
+    hint: "Ils forment 23 paires."
+    explanation: "Le noyau d'une cellule humaine du corps contient 46 chromosomes, soit 23 paires."

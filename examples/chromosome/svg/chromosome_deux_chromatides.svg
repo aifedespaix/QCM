@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'DejaVu Sans', 'Segoe UI', Arial, sans-serif">
+<rect width="960" height="600" fill="#fbfcfe"/>
+
+  <g transform="translate(430,300) scale(3.2)"><path d="M -20,-55 Q 0,0 -20,55" fill="none" stroke="#6b21a8" stroke-width="31" stroke-linecap="round"/>
+  <path d="M -20,-55 Q 0,0 -20,55" fill="none" stroke="#c084fc" stroke-width="26" stroke-linecap="round"/><path d="M 20,-55 Q 0,0 20,55" fill="none" stroke="#6b21a8" stroke-width="31" stroke-linecap="round"/>
+  <path d="M 20,-55 Q 0,0 20,55" fill="none" stroke="#c084fc" stroke-width="26" stroke-linecap="round"/>
+  <ellipse cx="0" cy="0" rx="17" ry="9" fill="#5b1a8f"/></g>
+  <path d="M 590 80 H 625 V 520 H 590" fill="none" stroke="#111827" stroke-width="5" stroke-linejoin="round"/>
+  <line x1="130" y1="300" x2="430" y2="300" stroke="#111827" stroke-width="3"/>
+  <circle cx="430" cy="300" r="6" fill="#111827"/>
+  <circle cx="130" cy="300" r="24" fill="#ffffff" stroke="#111827" stroke-width="3.5"/>
+  <text x="130" y="310" font-size="28" font-weight="700" fill="#111827" text-anchor="middle">A</text>
+  <line x1="150" y1="120" x2="382" y2="175" stroke="#111827" stroke-width="3"/>
+  <circle cx="382" cy="175" r="6" fill="#111827"/>
+  <circle cx="150" cy="120" r="24" fill="#ffffff" stroke="#111827" stroke-width="3.5"/>
+  <text x="150" y="130" font-size="28" font-weight="700" fill="#111827" text-anchor="middle">B</text>
+  <line x1="780" y1="300" x2="625" y2="300" stroke="#111827" stroke-width="3"/>
+  <circle cx="625" cy="300" r="6" fill="#111827"/>
+  <circle cx="780" cy="300" r="24" fill="#ffffff" stroke="#111827" stroke-width="3.5"/>
+  <text x="780" y="310" font-size="28" font-weight="700" fill="#111827" text-anchor="middle">C</text>
+</svg>

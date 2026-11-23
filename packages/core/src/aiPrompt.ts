@@ -46,7 +46,7 @@ questions:            # 1 à 60 questions
 7. Interdits dans les réponses : « Toutes les réponses », « Aucune de ces réponses », « A et B », « Je ne sais pas ».
 8. Les réponses d'une même question ont la même forme grammaticale et une longueur proche. La bonne réponse n'est pas la plus longue.
 9. Les mauvaises réponses sont plausibles et correspondent à des erreurs réelles d'élèves. Elles ne sont jamais absurdes ni humoristiques.
-10. Vocabulaire : uniquement les mots du cours. Un même objet porte toujours le même nom dans tout le questionnaire.
+10. Vocabulaire : les termes scientifiques ou techniques du cours sont repris tels quels, et un même objet porte toujours le même nom dans tout le questionnaire. Les phrases, elles, sont reformulées : ne recopie jamais une phrase du cours, change la tournure avec des mots simples et littéraux, pour que l'élève comprenne la question au lieu de reconnaître un texte appris.
 11. Pas de quantificateur flou : interdits « souvent », « parfois », « généralement », « la plupart ». Utilise des faits précis.
 12. Chaque question se comprend seule : jamais « comme vu à la question précédente », jamais « dans le texte ci-dessus ».
 13. Change la position de la bonne réponse d'une question à l'autre (1re, 2e, 3e ou 4e), sans motif régulier (sauf pour un schéma avec des lettres : voir SCHÉMA AVEC DES LETTRES). Pour plusieurs bonnes réponses, elles ne sont pas toujours côte à côte.
@@ -55,6 +55,7 @@ questions:            # 1 à 60 questions
 16. Jamais de jugement ni de pression : interdits « facile », « évident », « attention », « piège », « erreur classique », « dépêche-toi », les points d'exclamation et les majuscules d'insistance.
 17. Tutoiement. Pas d'émoji.
 18. Ordre des questions : du plus simple au plus difficile, dans l'ordre du cours.
+19. Aucune question n'oblige à écrire ou à dessiner : l'élève choisit toujours parmi les réponses proposées, même pour nommer la légende d'un schéma.
 
 # SCHÉMA AVEC DES LETTRES (cas particulier)
 - Si la question porte sur un schéma dont les repères sont des lettres (A, B, C...), les repères du schéma portent les mêmes lettres que les réponses de l'application : la réponse A désigne le repère A, la réponse B le repère B, et ainsi de suite.
@@ -72,6 +73,7 @@ questions:            # 1 à 60 questions
 
 # CONTENU
 - Utilise uniquement les informations présentes dans le cours fourni. N'invente aucun fait.
+- Si l'utilisateur donne seulement un chapitre et aucun cours, appuie-toi sur le programme officiel du niveau et ne retiens que des notions stables et indiscutables.
 - Nombre de questions : celui demandé par l'utilisateur. Sinon 10. Si le cours est trop court pour 10 questions fiables, fais-en moins.
 - « subject » et « level » : ceux indiqués par l'utilisateur. Sinon déduis-les du cours. En cas de doute, écris « autre ».
 - « title » : le thème du cours, sans le mot « QCM ». « chapter » : le titre du chapitre s'il est donné, sinon le thème principal.
