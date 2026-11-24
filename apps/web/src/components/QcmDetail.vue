@@ -4,9 +4,16 @@ import { LEVEL_LABELS, SUBJECT_LABELS, suggestNext, type QcmArchive } from '@qcm
 import { QcmPlayer, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
 import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, listQcms, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
+import { qcmPath } from '../lib/qcmUrl.ts'
 import ConfirmDialog from './ConfirmDialog.vue'
 import QcmReviews from './QcmReviews.vue'
 import UiIcon, { type IconName } from './UiIcon.vue'
+
+/**
+ * Fiche d'un QCM. Un QCM publié arrive rendu par le serveur (`initial`) ; un QCM en attente ou masqué,
+ * visible seulement par son auteur et la modération, est chargé ici avec le compte du navigateur.
+ */
+const props = defineProps<{ id: string; initial?: QcmRecord | null }>()
 
 const STATUS: Record<QcmRecord['status'], { label: string; tone: string; icon: IconName }> = {
   pending: { label: 'En attente de validation', tone: 'bg-retry text-retry-ink', icon: 'clock' },
@@ -58,10 +65,11 @@ async function loadUnplayed(): Promise<void> {
 }
 
 function playSuggestion(id: string): void {
-  window.location.href = `/qcm?id=${id}&jouer=1`
+  const title = suggestions.value.find((item) => item.key === id)?.title
+  window.location.href = qcmPath({ id, title }, { play: true })
 }
-const state = ref<'loading' | 'ready' | 'missing'>('loading')
-const record = shallowRef<QcmRecord | null>(null)
+const state = ref<'loading' | 'ready' | 'missing'>(props.initial ? 'ready' : 'loading')
+const record = shallowRef<QcmRecord | null>(props.initial ?? null)
 const archive = shallowRef<QcmArchive | null>(null)
 const playing = ref(false)
 const starting = ref(false)
@@ -84,7 +92,8 @@ const ownerName = computed(() => record.value?.expand?.owner?.name || 'un membre
 const average = computed(() => (record.value?.rating_avg ?? 0).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }))
 
 function formatDate(value: string): string {
-  return new Date(value.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  // Fuseau fixé : le serveur et le navigateur écrivent la même date.
+  return new Date(value.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' })
 }
 
 /** Message bref de confirmation, effacé tout seul. */
@@ -126,8 +135,8 @@ function goLibrary(): void {
 }
 
 async function copyLink(): Promise<void> {
-  const url = new URL(window.location.href)
-  url.searchParams.delete('jouer')
+  if (!record.value) return
+  const url = new URL(qcmPath(record.value), window.location.origin)
   try {
     await navigator.clipboard.writeText(url.toString())
     showToast('Le lien est copié.')
@@ -164,20 +173,22 @@ async function removeQcm(): Promise<void> {
 }
 
 onMounted(async () => {
-  const id = new URLSearchParams(window.location.search).get('id')
-  if (!id) {
-    state.value = 'missing'
-    return
+  if (!record.value) {
+    if (!props.id) {
+      state.value = 'missing'
+      return
+    }
+    try {
+      record.value = await getQcm(props.id)
+      document.title = `${record.value.title} · QCM`
+      state.value = 'ready'
+    } catch {
+      state.value = 'missing'
+      return
+    }
   }
-  try {
-    record.value = await getQcm(id)
-    document.title = `${record.value.title} · QCM`
-    state.value = 'ready'
-    // `/qcm?id=…&jouer=1` (lien « Relancer » du suivi) démarre le lecteur tout de suite.
-    if (new URLSearchParams(window.location.search).has('jouer')) void play()
-  } catch {
-    state.value = 'missing'
-  }
+  // `…?jouer=1` (lien « Relancer » du suivi, propositions de fin) démarre le lecteur tout de suite.
+  if (new URLSearchParams(window.location.search).has('jouer')) void play()
 })
 
 onBeforeUnmount(() => {
@@ -272,7 +283,7 @@ onBeforeUnmount(() => {
 
         <!-- Actions : sous la présentation sur téléphone, colonne collante sur grand écran -->
         <aside class="qcm-panel overflow-hidden lg:sticky lg:top-[calc(var(--site-header)+1.25rem)] lg:col-start-2 lg:row-span-3 lg:row-start-1" aria-label="Lancer ce QCM">
-          <img v-if="qcmThumbnailUrl(record)" :src="qcmThumbnailUrl(record)" alt="" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
+          <img v-if="qcmThumbnailUrl(record)" :src="qcmThumbnailUrl(record)" alt="" width="480" height="270" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
           <div class="flex flex-col gap-3 p-5">
             <button type="button" class="qcm-block qcm-block-primary text-xl" :disabled="starting" @click="play">
               <UiIcon name="play" :size="24" filled />

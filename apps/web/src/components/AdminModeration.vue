@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { qcmPath } from '../lib/qcmUrl.ts'
 import { computed, onBeforeUnmount, reactive, ref, shallowRef, watch } from 'vue'
 import { LEVEL_LABELS, SUBJECT_LABELS, type QcmArchive } from '@qcm/core'
 import { QcmPlayer } from '@qcm/ui'
@@ -328,7 +329,7 @@ onBeforeUnmount(clearMedia)
                 {{ playing ? 'Revenir à la relecture' : 'Essayer comme un élève' }}
               </button>
               <a :href="qcmDownloadUrl(selected)" class="qcm-text-button underline">Télécharger le fichier</a>
-              <a :href="`/qcm?id=${selected.id}`" class="qcm-text-button underline">Ouvrir la fiche</a>
+              <a :href="qcmPath(selected)" class="qcm-text-button underline">Ouvrir la fiche</a>
             </div>
           </div>
 

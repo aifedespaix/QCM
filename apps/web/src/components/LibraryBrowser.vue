@@ -2,8 +2,21 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
 import { downloadQcm, listQcms, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
+import { defaultLibraryState, libraryHeading, libraryHref, type LibraryState } from '../lib/libraryQuery.ts'
+import { qcmPath } from '../lib/qcmUrl.ts'
 import UiIcon from './UiIcon.vue'
 import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
+
+/**
+ * Bibliothèque. La première page arrive rendue par le serveur (`initial`) : rien à attendre à
+ * l'ouverture. Les recherches suivantes passent par le navigateur et mettent l'adresse à jour.
+ */
+const props = defineProps<{
+  /** Filtres lus dans l'adresse par le serveur. */
+  query?: LibraryState
+  /** Résultats rendus par le serveur ; absents si PocketBase n'a pas répondu ou pour « Mes QCM ». */
+  initial?: { items: QcmRecord[]; page: number; totalPages: number; totalItems: number } | null
+}>()
 
 const STATUS_CHIPS: Record<QcmRecord['status'], { label: string; tone: string }> = {
   pending: { label: 'En attente de validation', tone: 'bg-retry text-retry-ink' },
@@ -11,22 +24,25 @@ const STATUS_CHIPS: Record<QcmRecord['status'], { label: string; tone: string }>
   hidden: { label: 'Masqué', tone: 'bg-sunken' },
 }
 
+const start = props.query ?? defaultLibraryState()
 const { user } = useAuth()
 const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; sort: QcmSort; mine: boolean }>({
-  search: '',
-  subject: '',
-  level: '',
-  sort: 'recent',
+  search: start.search,
+  subject: start.subject,
+  level: start.level,
+  sort: start.sort,
   // `/bibliotheque?mes=1` ouvre directement « Mes QCM ».
-  mine: new URLSearchParams(window.location.search).has('mes'),
+  mine: start.mine,
 })
 /** « Mes QCM » n'a de sens que connecté. */
 const mineActive = computed(() => filters.mine && !!user.value)
-const items = ref<QcmRecord[]>([])
-const page = ref(1)
-const totalPages = ref(1)
-const totalItems = ref(0)
-const state = ref<'loading' | 'ready' | 'error'>('loading')
+const items = ref<QcmRecord[]>(props.initial?.items ?? [])
+const page = ref(props.initial?.page ?? start.page)
+const totalPages = ref(props.initial?.totalPages ?? 1)
+const totalItems = ref(props.initial?.totalItems ?? 0)
+const state = ref<'loading' | 'ready' | 'error'>(props.initial && !start.mine ? 'ready' : 'loading')
+/** Une recherche est en cours alors que des résultats sont affichés (pas de squelette, la liste reste). */
+const refreshing = ref(false)
 const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level))
 let debounce: ReturnType<typeof setTimeout> | undefined
 
@@ -41,9 +57,16 @@ const activeFilters = computed(() =>
     filters.sort !== 'recent' ? SORT_LABELS[filters.sort] : '',
   ].filter(Boolean),
 )
+/** Titre de la page : suit la matière et le niveau choisis (même texte que celui rendu par le serveur). */
+const heading = computed(() => libraryHeading(filters.subject, filters.level))
 const resultLabel = computed(() =>
   state.value !== 'ready' ? 'Voir les résultats' : totalItems.value === 0 ? 'Aucun QCM' : totalItems.value === 1 ? 'Voir 1 QCM' : `Voir ${totalItems.value} QCM`,
 )
+
+/** Adresse d'une page de résultats (liens de pagination, lisibles sans JavaScript et par les moteurs). */
+function pageHref(target: number): string {
+  return libraryHref({ ...filters, mine: mineActive.value, page: target })
+}
 
 /** Lance la recherche tout de suite, replie le panneau et range le clavier. */
 function submit(): void {
@@ -58,31 +81,14 @@ function onEscape(event: KeyboardEvent): void {
   if (event.key === 'Escape' && sheetOpen.value) sheetOpen.value = false
 }
 
-/** Dernière première page vue sans filtre : affichée tout de suite, puis rafraîchie. */
-const CACHE_KEY = 'qcm:library:first-page'
-const AUTO_RETRY_DELAYS_MS = [3000, 6000, 12000]
+const AUTO_RETRY_DELAYS_MS = [2000, 5000, 10000]
 let autoRetryTimer: ReturnType<typeof setTimeout> | undefined
 let autoRetries = 0
 
-function isDefaultQuery(): boolean {
-  return page.value === 1 && !mineActive.value && !filtered.value && filters.sort === 'recent'
-}
-
-function readCache(): { items: QcmRecord[]; totalPages: number; totalItems: number } | null {
-  try {
-    const raw = window.localStorage.getItem(CACHE_KEY)
-    return raw ? (JSON.parse(raw) as { items: QcmRecord[]; totalPages: number; totalItems: number }) : null
-  } catch {
-    return null
-  }
-}
-
-function writeCache(value: { items: QcmRecord[]; totalPages: number; totalItems: number }): void {
-  try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify(value))
-  } catch {
-    // Stockage plein ou bloqué : la liste s'affiche quand même.
-  }
+/** L'adresse suit la recherche affichée (partage, favori, retour arrière, rechargement). */
+function syncUrl(): void {
+  const target = pageHref(page.value)
+  if (window.location.pathname + window.location.search !== target) window.history.replaceState(null, '', target)
 }
 
 let loadId = 0
@@ -90,17 +96,11 @@ async function load(): Promise<void> {
   // Une réponse tardive d'une ancienne requête ne doit pas écraser la plus récente.
   const id = ++loadId
   clearTimeout(autoRetryTimer)
-  // Liste déjà vue : on l'affiche sans attendre le réseau, et on la rafraîchit en arrière-plan.
-  const cached = isDefaultQuery() && items.value.length === 0 ? readCache() : null
-  if (cached) {
-    items.value = cached.items
-    totalPages.value = cached.totalPages
-    totalItems.value = cached.totalItems
-    state.value = 'ready'
-  } else {
-    state.value = 'loading'
-  }
-  const showingStale = cached !== null
+  syncUrl()
+  // Des résultats sont à l'écran : ils restent visibles pendant la recherche. Sinon, squelette.
+  // On n'affiche jamais « la bibliothèque est vide » avant une vraie réponse du serveur.
+  if (state.value === 'ready') refreshing.value = true
+  else state.value = 'loading'
   try {
     const { mine: _mine, ...query } = filters
     const result = await listQcms({ ...query, page: page.value, ...(mineActive.value && user.value ? { owner: user.value.id } : {}) })
@@ -109,12 +109,12 @@ async function load(): Promise<void> {
     totalPages.value = Math.max(1, result.totalPages)
     totalItems.value = result.totalItems
     state.value = 'ready'
+    refreshing.value = false
     autoRetries = 0
-    if (isDefaultQuery()) writeCache({ items: result.items, totalPages: totalPages.value, totalItems: totalItems.value })
   } catch {
     if (id !== loadId) return
-    // La copie en mémoire reste affichée : une panne passagère ne vide pas la page.
-    if (!showingStale) state.value = 'error'
+    refreshing.value = false
+    state.value = 'error'
     // On réessaie seul quelques fois avant de laisser la main au bouton « Réessayer ».
     const delay = AUTO_RETRY_DELAYS_MS[autoRetries++]
     if (delay !== undefined) autoRetryTimer = setTimeout(() => void load(), delay)
@@ -131,29 +131,28 @@ function resetFilters(): void {
   Object.assign(filters, { search: '', subject: '', level: '', sort: 'recent' })
 }
 
-watch(filters, () => {
-  clearTimeout(debounce)
-  debounce = setTimeout(() => {
-    page.value = 1
-    void load()
-  }, 300)
-})
-
-// Connexion ou déconnexion pendant que « Mes QCM » est coché : la liste change.
 watch(
-  () => user.value?.id,
+  () => [filters.search, filters.subject, filters.level, filters.sort],
   () => {
-    if (filters.mine) void load()
+    clearTimeout(debounce)
+    debounce = setTimeout(() => {
+      page.value = 1
+      void load()
+    }, 300)
   },
 )
 
+// Premier affichage (le compte est alors connu) puis connexion, déconnexion ou bascule « Mes QCM ».
+// Les résultats rendus par le serveur ne sont rechargés que s'ils ne conviennent pas.
+const mounted = ref(false)
 watch(
-  () => filters.mine,
-  (mine) => {
-    const url = new URL(window.location.href)
-    if (mine) url.searchParams.set('mes', '1')
-    else url.searchParams.delete('mes')
-    window.history.replaceState(null, '', url)
+  () => (mounted.value ? `${mineActive.value}:${user.value?.id ?? ''}` : null),
+  (key, previous) => {
+    if (key === null) return
+    // Premier passage : les résultats du serveur conviennent, sauf pour « Mes QCM ».
+    if (previous === null && state.value === 'ready' && !mineActive.value) return
+    if (previous !== null) page.value = 1
+    void load()
   },
 )
 
@@ -176,7 +175,7 @@ onMounted(() => {
   window.addEventListener('online', onOnline)
   window.addEventListener('pageshow', onWake)
   document.addEventListener('visibilitychange', onWake)
-  void load()
+  mounted.value = true
 })
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onEscape)
@@ -184,11 +183,19 @@ onBeforeUnmount(() => {
   window.removeEventListener('pageshow', onWake)
   document.removeEventListener('visibilitychange', onWake)
   clearTimeout(autoRetryTimer)
+  clearTimeout(debounce)
 })
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
+    <header class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-extrabold sm:text-4xl">{{ heading }}</h1>
+        <p class="mt-1 text-lg text-ink-soft">Des QCM relus avant publication, à essayer en ligne ou à télécharger.</p>
+      </div>
+      <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
+    </header>
     <form class="qcm-panel sticky top-[calc(var(--site-header)+0.5rem)] z-20 hidden grid-cols-1 gap-4 p-4 sm:grid sm:grid-cols-3 sm:p-5 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="submit">
       <div class="sm:col-span-3 lg:col-span-1">
         <label class="qcm-label" for="lib-search">Rechercher</label>
@@ -331,14 +338,14 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <p class="text-base font-bold text-ink-soft" role="status">{{ totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
-      <ul class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <p class="text-base font-bold text-ink-soft" role="status">{{ refreshing ? 'Recherche…' : totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
+      <ul class="grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3" :class="refreshing ? 'opacity-60' : ''" :aria-busy="refreshing">
         <li
           v-for="item in items"
           :key="item.id"
           class="qcm-panel group relative flex flex-col overflow-hidden transition-transform hover:-translate-y-0.5 focus-within:-translate-y-0.5"
         >
-          <img v-if="qcmThumbnailUrl(item)" :src="qcmThumbnailUrl(item)" alt="" loading="lazy" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
+          <img v-if="qcmThumbnailUrl(item)" :src="qcmThumbnailUrl(item)" alt="" width="480" height="270" loading="lazy" decoding="async" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
           <div v-else class="flex aspect-[3/1] w-full items-center justify-center border-b-[1.5px] border-line-soft" :class="SUBJECT_TONES[item.subject]" aria-hidden="true">
             <span class="px-4 text-center text-2xl font-extrabold opacity-80">{{ SUBJECT_LABELS[item.subject] }}</span>
           </div>
@@ -349,7 +356,7 @@ onBeforeUnmount(() => {
               <span v-if="mineActive" class="qcm-chip" :class="STATUS_CHIPS[item.status].tone">{{ STATUS_CHIPS[item.status].label }}</span>
             </p>
             <h2 class="text-xl leading-snug font-extrabold">
-              <a :href="`/qcm?id=${item.id}`" class="no-underline after:absolute after:inset-0 group-hover:underline">{{ item.title }}</a>
+              <a :href="qcmPath(item)" class="no-underline after:absolute after:inset-0 group-hover:underline">{{ item.title }}</a>
             </h2>
             <p class="text-base font-medium text-ink-soft">{{ item.chapter }}</p>
             <p class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm font-bold text-ink-soft">
@@ -358,7 +365,7 @@ onBeforeUnmount(() => {
               <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
             </p>
             <div class="relative z-10 flex items-center gap-2">
-              <a :href="`/qcm?id=${item.id}`" class="qcm-block qcm-block-primary qcm-block-sm flex-1 justify-center no-underline" :aria-label="`Voir ${item.title}`">Voir</a>
+              <a :href="qcmPath(item)" class="qcm-block qcm-block-primary qcm-block-sm flex-1 justify-center no-underline" :aria-label="`Voir ${item.title}`">Voir</a>
               <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-block qcm-block-quiet qcm-block-sm justify-center no-underline" :aria-label="`Modifier ${item.title}`">Modifier</a>
               <button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${item.title}`" title="Télécharger" @click="downloadQcm(item)">
                 <UiIcon name="download" />
@@ -369,9 +376,11 @@ onBeforeUnmount(() => {
       </ul>
 
       <nav v-if="totalPages > 1" aria-label="Pages de résultats" class="flex items-center justify-center gap-4">
-        <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="page <= 1" @click="goTo(page - 1)">← Précédente</button>
+        <a v-if="page > 1" :href="pageHref(page - 1)" rel="prev" class="qcm-block qcm-block-quiet qcm-block-sm no-underline" @click.prevent="goTo(page - 1)">← Précédente</a>
+        <span v-else class="qcm-block qcm-block-quiet qcm-block-sm opacity-50" aria-disabled="true">← Précédente</span>
         <span class="text-base font-bold">Page {{ page }} sur {{ totalPages }}</span>
-        <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="page >= totalPages" @click="goTo(page + 1)">Suivante →</button>
+        <a v-if="page < totalPages" :href="pageHref(page + 1)" rel="next" class="qcm-block qcm-block-quiet qcm-block-sm no-underline" @click.prevent="goTo(page + 1)">Suivante →</a>
+        <span v-else class="qcm-block qcm-block-quiet qcm-block-sm opacity-50" aria-disabled="true">Suivante →</span>
       </nav>
     </template>
     <!-- Place pour la barre de recherche fixée en bas (téléphone). -->

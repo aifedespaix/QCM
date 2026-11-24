@@ -1,6 +1,7 @@
 import PocketBase, { type RecordModel } from 'pocketbase'
 import { FILE_TIMEOUT_MS, withGetTimeout, withRetry } from './retry.ts'
-import { readonly, ref } from 'vue'
+import { computed, getCurrentInstance, onMounted, ref } from 'vue'
+import type { QcmSort } from './libraryQuery.ts'
 import {
   QCM_MIME,
   qcmFileName,
@@ -71,9 +72,17 @@ pb.authStore.onChange(() => {
   currentUser.value = (pb.authStore.record as UserRecord | null) ?? null
 })
 
+/**
+ * Compte connecté. Il est lu dans le stockage du navigateur, que le serveur ne voit pas : un composant
+ * rendu par le serveur affiche donc d'abord la version « non connecté » (identique au HTML reçu, pas
+ * d'écart à l'hydratation), puis le compte dès qu'il est monté, avant le premier affichage.
+ */
 export function useAuth() {
+  const mounted = ref(false)
+  if (getCurrentInstance()) onMounted(() => (mounted.value = true))
+  else mounted.value = !import.meta.env.SSR
   return {
-    user: readonly(currentUser),
+    user: computed(() => (mounted.value ? currentUser.value : null)),
     /** Ouvre la fenêtre Google. À appeler directement depuis un clic (sinon le navigateur bloque la fenêtre). */
     loginWithGoogle: async (): Promise<void> => {
       await pb.collection('users').authWithOAuth2({ provider: 'google' })
@@ -84,7 +93,7 @@ export function useAuth() {
 
 // ---------------------------------------------------------------- Bibliothèque
 
-export type QcmSort = 'recent' | 'rating' | 'title'
+export type { QcmSort }
 
 export interface QcmQuery {
   search?: string
@@ -188,6 +197,11 @@ export async function downloadQcm(record: QcmRecord): Promise<void> {
 
 export function qcmThumbnailUrl(record: QcmRecord): string | undefined {
   return record.thumbnail ? pb.files.getURL(record, record.thumbnail, { thumb: '480x270' }) : undefined
+}
+
+/** Image d'aperçu en taille d'origine (partage sur les réseaux sociaux). */
+export function qcmImageUrl(record: QcmRecord): string | undefined {
+  return record.thumbnail ? pb.files.getURL(record, record.thumbnail) : undefined
 }
 
 /** Télécharge et valide l'archive pour la jouer dans le navigateur. */

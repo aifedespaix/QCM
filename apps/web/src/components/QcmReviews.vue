@@ -254,15 +254,14 @@ async function loadMyRating(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  void loadComments()
-  void loadMyRating()
-})
-
-// Connexion ou déconnexion sur la fiche : la note du membre et ses commentaires masqués changent.
+// Premier chargement une fois monté (le compte est alors connu), puis à chaque connexion ou
+// déconnexion sur la fiche : la note du membre et ses commentaires masqués changent.
+const mounted = ref(false)
+onMounted(() => (mounted.value = true))
 watch(
-  () => user.value?.id,
-  () => {
+  () => mounted.value && (user.value?.id ?? ''),
+  (key) => {
+    if (key === false) return
     editingId.value = ''
     void loadMyRating()
     void loadComments()

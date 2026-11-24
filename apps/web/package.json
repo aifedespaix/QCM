@@ -13,6 +13,7 @@
     "publish-qcm": "bun scripts/publish.ts"
   },
   "dependencies": {
+    "@astrojs/node": "11.1.14",
     "@astrojs/vue": "7.1.6",
     "@qcm/core": "workspace:*",
     "@qcm/ui": "workspace:*",

@@ -1,0 +1,99 @@
+---
+import { LEVEL_LABELS, SUBJECT_LABELS } from '@qcm/core'
+import QcmDetail from '../../components/QcmDetail.vue'
+import Base from '../../layouts/Base.astro'
+import { libraryHref } from '../../lib/libraryQuery.ts'
+import { qcmImageUrl } from '../../lib/pb.ts'
+import { parseQcmSlug, qcmPath } from '../../lib/qcmUrl.ts'
+import { fetchPublishedQcm } from '../../lib/server/catalog.ts'
+import { questionCountLabel } from '../../lib/subjects.ts'
+
+// Fiche d'un QCM, rendue à chaque visite : titre, description et données structurées sont dans le HTML.
+export const prerender = false
+
+const id = parseQcmSlug(Astro.params.slug) ?? ''
+const found = id ? await fetchPublishedQcm(id) : ({ status: 'missing' } as const)
+const record = found.status === 'found' ? found.record : null
+
+// Titre modifié depuis le partage du lien (ou adresse sans titre) : on redirige vers l'adresse à jour.
+if (record) {
+  const canonicalPath = qcmPath(record)
+  if (Astro.url.pathname !== canonicalPath) return Astro.redirect(canonicalPath + Astro.url.search, 301)
+}
+
+// Non publié (en attente, masqué) ou inconnu : 404 pour les moteurs ; l'auteur et la modération le
+// voient quand même, la fiche le charge alors dans le navigateur avec leur compte.
+// PocketBase injoignable : 503, la fiche se charge dans le navigateur.
+if (found.status === 'missing') Astro.response.status = 404
+if (found.status === 'unavailable') {
+  Astro.response.status = 503
+  Astro.response.headers.set('Retry-After', '30')
+}
+Astro.response.headers.set('Cache-Control', 'no-cache')
+
+const site = Astro.site ?? Astro.url
+const subject = record ? SUBJECT_LABELS[record.subject] : ''
+const level = record ? LEVEL_LABELS[record.level] : ''
+const title = record ? `${record.title} · QCM ${subject} ${level}` : 'QCM'
+const summary = record
+  ? `QCM de ${subject} (${level}) sur « ${record.chapter} » : ${questionCountLabel(record.question_count)}, à faire en ligne gratuitement, sans publicité ni chronomètre, ou à télécharger.`
+  : ''
+const description = record ? (record.description ? `${record.description.trim().slice(0, 200)} ${summary}` : summary).slice(0, 300) : undefined
+const url = record ? new URL(qcmPath(record), site).href : ''
+const imageUrl = record ? qcmImageUrl(record) : undefined
+const image = record && imageUrl ? { url: new URL(imageUrl, site).href, alt: record.title } : undefined
+const isoDate = (value: string) => new Date(value.replace(' ', 'T')).toISOString()
+
+const jsonLd = record
+  ? [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Quiz',
+        '@id': `${url}#qcm`,
+        name: record.title,
+        description: record.description || summary,
+        url,
+        inLanguage: record.language || 'fr',
+        learningResourceType: 'Quiz',
+        educationalUse: 'Révision',
+        educationalLevel: level,
+        about: { '@type': 'Thing', name: subject },
+        teaches: record.chapter,
+        isAccessibleForFree: true,
+        dateCreated: isoDate(record.created),
+        dateModified: isoDate(record.updated || record.created),
+        ...(record.expand?.owner?.name ? { author: { '@type': 'Person', name: record.expand.owner.name } } : {}),
+        ...(image ? { image: image.url } : {}),
+        ...(record.rating_count > 0
+          ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(record.rating_avg.toFixed(1)), ratingCount: record.rating_count, bestRating: 5, worstRating: 1 } }
+          : {}),
+        isPartOf: { '@id': new URL('/#site', site).href },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: new URL('/', site).href },
+          { '@type': 'ListItem', position: 2, name: 'Bibliothèque', item: new URL('/bibliotheque/', site).href },
+          { '@type': 'ListItem', position: 3, name: subject, item: new URL(libraryHref({ subject: record.subject }), site).href },
+          { '@type': 'ListItem', position: 4, name: record.title, item: url },
+        ],
+      },
+    ]
+  : undefined
+---
+
+<Base
+  title={title}
+  rawTitle={!!record}
+  description={description ?? 'Fiche d\'un QCM de la bibliothèque : à essayer en ligne ou à télécharger.'}
+  noindex={!record}
+  canonical={record ? qcmPath(record) : undefined}
+  ogType={record ? 'article' : 'website'}
+  image={image}
+  jsonLd={jsonLd}
+>
+  {record && <meta slot="head" property="article:section" content={subject} />}
+  {record && <meta slot="head" property="article:modified_time" content={isoDate(record.updated || record.created)} />}
+  <QcmDetail client:load id={id} initial={record} />
+</Base>

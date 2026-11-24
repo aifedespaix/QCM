@@ -179,11 +179,11 @@ qcm/
 | Brique | Choix | Pourquoi |
 |---|---|---|
 | Interface | Vue 3, Tailwind CSS 4 | Un seul lecteur, partagé par le web et le desktop |
-| Site | Astro en mode statique | Rien à héberger côté serveur : nginx suffit, les îlots Vue parlent à PocketBase depuis le navigateur |
+| Site | Astro : pages fixes générées au build, bibliothèque et fiches rendues par le serveur (Node) | Les pages arrivent avec leur contenu : affichage immédiat et référencement |
 | Desktop | Tauri 2 | Petit installateur, démarrage rapide, association des fichiers `.qcm` |
 | Validation | Zod, côté webview | Un seul schéma pour le lecteur, le site et l'éditeur. Rust se contente de dézipper |
 | Backend | PocketBase | Comptes, collections, règles d'accès et fichiers dans un seul binaire |
-| Hébergement | Docker Compose sur Dokploy | `qcm-web` (nginx) et `qcm-pocketbase` sous le même domaine |
+| Hébergement | Docker Compose sur Dokploy | `qcm-web` (nginx + Node) et `qcm-pocketbase` sous le même domaine |
 
 Les décisions, les contrats d'API des composants et les règles d'interface sont dans [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
@@ -230,7 +230,8 @@ Pour un déploiement, le fichier [`backend/.env.example`](backend/.env.example) 
 | Variable | Rôle |
 |---|---|
 | `PUBLIC_PB_URL` | Adresse publique de PocketBase (vide : même domaine que le site) |
-| `PUBLIC_SITE_URL` | Adresse publique du site |
+| `PUBLIC_SITE_URL` | Adresse publique du site (adresses canoniques, sitemap, partage) |
+| `PB_INTERNAL_URL` | Adresse de PocketBase vue par le serveur de rendu (défaut : `http://qcm-pocketbase:8090`) |
 | `PUBLIC_RELEASES_URL` | Page des Releases GitHub, pour le bouton de téléchargement |
 | `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` | Compte administrateur PocketBase |
 | `PB_ENCRYPTION_KEY` | 32 caractères aléatoires, chiffre les réglages en base |
@@ -239,7 +240,7 @@ Pour un déploiement, le fichier [`backend/.env.example`](backend/.env.example) 
 
 ## Déploiement
 
-- **Site et PocketBase** : `docker-compose.yml` décrit deux services (`qcm-web`, `qcm-pocketbase`), prévus pour un déploiement Dokploy de type « Compose ». nginx sert le site statique et relaie `/api` vers PocketBase, ce qui évite tout souci de CORS. Les lectures de l'API sont rejouées automatiquement si une connexion traîne.
+- **Site et PocketBase** : `docker-compose.yml` décrit deux services (`qcm-web`, `qcm-pocketbase`), prévus pour un déploiement Dokploy de type « Compose ». nginx sert les pages générées, relaie `/api` vers PocketBase (pas de souci de CORS) et passe la bibliothèque et les fiches au serveur de rendu Node du même conteneur, avec un court cache qui prend le relais si PocketBase flanche. Les lectures de l'API sont rejouées automatiquement si une connexion traîne.
 - **Lecteur Windows** : chaque push sur `main` construit les installateurs `.exe` et `.msi` sur GitHub Actions et publie une Release, avec le manifeste de mise à jour. Le numéro de version est calculé automatiquement. Voir [`.github/workflows/release-desktop.yml`](.github/workflows/release-desktop.yml).
 
 ## Publier des QCM avec un agent IA

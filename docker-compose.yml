@@ -30,12 +30,16 @@ services:
         PUBLIC_SITE_URL: ${PUBLIC_SITE_URL}
         PUBLIC_RELEASES_URL: ${PUBLIC_RELEASES_URL}
     restart: unless-stopped
+    environment:
+      # Rendu des pages (bibliothèque, fiches) : PocketBase est lu par le réseau interne, sans détour par Internet.
+      PB_INTERNAL_URL: ${PB_INTERNAL_URL:-http://qcm-pocketbase:8090}
     depends_on:
       - qcm-pocketbase
     # Vérifie le trajet complet site -> nginx -> PocketBase (celui qui a lâché : connexion impossible
-    # alors que PocketBase tourne). Le test interne de PocketBase, lui, ne voit pas ce genre de panne.
+    # alors que PocketBase tourne), et le serveur de rendu des pages. Le test interne de PocketBase,
+    # lui, ne voit pas ce genre de panne.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider -T 4 http://127.0.0.1/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider -T 4 http://127.0.0.1/api/health && wget -q --spider -T 4 http://127.0.0.1:4321/healthz || exit 1"]
       interval: 30s
       timeout: 6s
       retries: 3
