@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, formatRelativeDay, type LibraryMatch, type Level, type QcmHistoryEntry, type Subject } from '@qcm/core'
-import { SUBJECT_TONES } from '@qcm/ui'
+import { QcmSubjectBand, SUBJECT_HUES } from '@qcm/ui'
 import { LibraryError, listLibrary, type LibraryRecord, type LibrarySort } from '../lib/library.ts'
 
 const props = defineProps<{
@@ -238,24 +238,25 @@ onBeforeUnmount(() => {
         <button v-else type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="resetFilters">Effacer les filtres</button>
       </div>
       <ul v-else class="qcm-library-grid">
-        <li v-for="entry in localItems" :key="entry.key" class="qcm-panel flex flex-col gap-1.5 p-3.5">
-          <p class="flex flex-wrap gap-1">
-            <span class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[entry.subject]">{{ SUBJECT_LABELS[entry.subject] }}</span>
-            <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[entry.level] }}</span>
-            <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
-            <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip qcm-chip-sm" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
-            <span v-else-if="remote.has(entry.key)" class="qcm-chip qcm-chip-sm">Dans la bibliothèque</span>
-          </p>
-          <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="entry.title">{{ entry.title }}</h2>
-          <p class="truncate text-sm font-medium text-ink-soft" :title="entry.chapter">{{ entry.chapter }}</p>
-          <p class="mt-auto pt-1 text-sm font-bold text-ink-soft">{{ countLabel(entry.questionCount) }} · ouvert {{ formatRelativeDay(entry.openedAt) }}</p>
-          <div class="mt-1 flex items-center gap-1.5">
-            <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
-            <button v-if="remote.get(entry.key)?.state === 'outdated'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm qcm-block-xs" :disabled="downloadingId !== ''" :aria-label="`Mettre à jour ${entry.title}`" @click="emit('updateLocal', entry)">Mettre à jour</button>
-            <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
-            </button>
-            <button type="button" class="qcm-text-button underline" :aria-label="`Retirer ${entry.title} de cet ordinateur`" @click="emit('removeLocal', entry)">Retirer</button>
+        <li v-for="entry in localItems" :key="entry.key" class="qcm-panel qcm-library-card flex flex-col overflow-hidden" :class="SUBJECT_HUES[entry.subject]">
+          <QcmSubjectBand :subject="entry.subject" :level="entry.level" />
+          <div class="flex flex-1 flex-col gap-1.5 p-3.5 pt-3">
+            <p v-if="remote.has(entry.key)" class="flex flex-wrap gap-1">
+              <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
+              <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip qcm-chip-sm" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
+              <span v-else class="qcm-chip qcm-chip-sm">Dans la bibliothèque</span>
+            </p>
+            <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="entry.title">{{ entry.title }}</h2>
+            <p class="truncate text-sm font-medium text-ink-soft" :title="entry.chapter">{{ entry.chapter }}</p>
+            <p class="mt-auto pt-1 text-sm font-bold text-ink-soft">{{ countLabel(entry.questionCount) }} · ouvert {{ formatRelativeDay(entry.openedAt) }}</p>
+            <div class="mt-1 flex items-center gap-1.5">
+              <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
+              <button v-if="remote.get(entry.key)?.state === 'outdated'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm qcm-block-xs" :disabled="downloadingId !== ''" :aria-label="`Mettre à jour ${entry.title}`" @click="emit('updateLocal', entry)">Mettre à jour</button>
+              <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+              </button>
+              <button type="button" class="qcm-text-button underline" :aria-label="`Retirer ${entry.title} de cet ordinateur`" @click="emit('removeLocal', entry)">Retirer</button>
+            </div>
           </div>
         </li>
       </ul>
@@ -279,41 +280,42 @@ onBeforeUnmount(() => {
     <template v-else>
       <p class="text-base font-bold text-ink-soft" role="status">{{ totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
       <ul class="qcm-library-grid">
-        <li v-for="item in items" :key="item.id" class="qcm-panel flex flex-col gap-1.5 p-3.5">
-          <p class="flex flex-wrap gap-1">
-            <span class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
-            <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[item.level] }}</span>
-            <span v-if="copyState(item) === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
-            <span v-else-if="copyState(item) !== 'none'" class="qcm-chip qcm-chip-sm bg-correct text-correct-ink">Sur cet ordinateur</span>
-          </p>
-          <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="item.title">{{ item.title }}</h2>
-          <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
-          <p v-if="item.description" class="line-clamp-2 text-sm text-ink-soft" :title="item.description">{{ item.description }}</p>
-          <p class="mt-auto flex flex-wrap gap-x-2.5 pt-1 text-sm font-bold text-ink-soft">
-            <span>{{ countLabel(item.question_count) }}</span>
-            <span v-if="publishedLabel(item)">{{ publishedLabel(item) }}</span>
-          </p>
-          <p class="flex flex-wrap gap-x-3 text-sm font-extrabold">
-            <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5, ${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'}`">
-              ★ {{ item.rating_avg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
-              <span class="font-semibold text-ink-soft">({{ item.rating_count }})</span>
-            </span>
-            <span v-else class="font-semibold text-ink-soft">☆ Pas encore noté</span>
-            <span v-if="item.comment_count" class="font-semibold text-ink-soft">{{ commentLabel(item.comment_count) }}</span>
-          </p>
-          <div class="mt-1 flex items-center gap-1.5">
-            <button
-              type="button"
-              class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1"
-              :disabled="downloadingId !== ''"
-              :aria-label="`Ouvrir ${item.title}`"
-              @click="emit('openRecord', item)"
-            >
-              {{ downloadingId === item.id ? 'Téléchargement…' : copyState(item) === 'outdated' ? 'Mettre à jour' : 'Ouvrir' }}
-            </button>
-            <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
-            </button>
+        <li v-for="item in items" :key="item.id" class="qcm-panel qcm-library-card flex flex-col overflow-hidden" :class="SUBJECT_HUES[item.subject]">
+          <QcmSubjectBand :subject="item.subject" :level="item.level" />
+          <div class="flex flex-1 flex-col gap-1.5 p-3.5 pt-3">
+            <p v-if="copyState(item) !== 'none'" class="flex flex-wrap gap-1">
+              <span v-if="copyState(item) === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
+              <span v-else class="qcm-chip qcm-chip-sm bg-correct text-correct-ink">Sur cet ordinateur</span>
+            </p>
+            <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="item.title">{{ item.title }}</h2>
+            <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
+            <p v-if="item.description" class="line-clamp-2 text-sm text-ink-soft" :title="item.description">{{ item.description }}</p>
+            <p class="mt-auto flex flex-wrap gap-x-2.5 pt-1 text-sm font-bold text-ink-soft">
+              <span>{{ countLabel(item.question_count) }}</span>
+              <span v-if="publishedLabel(item)">{{ publishedLabel(item) }}</span>
+            </p>
+            <p class="flex flex-wrap gap-x-3 text-sm font-extrabold">
+              <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5, ${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'}`">
+                ★ {{ item.rating_avg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
+                <span class="font-semibold text-ink-soft">({{ item.rating_count }})</span>
+              </span>
+              <span v-else class="font-semibold text-ink-soft">☆ Pas encore noté</span>
+              <span v-if="item.comment_count" class="font-semibold text-ink-soft">{{ commentLabel(item.comment_count) }}</span>
+            </p>
+            <div class="mt-1 flex items-center gap-1.5">
+              <button
+                type="button"
+                class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1"
+                :disabled="downloadingId !== ''"
+                :aria-label="`Ouvrir ${item.title}`"
+                @click="emit('openRecord', item)"
+              >
+                {{ downloadingId === item.id ? 'Téléchargement…' : copyState(item) === 'outdated' ? 'Mettre à jour' : 'Ouvrir' }}
+              </button>
+              <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+              </button>
+            </div>
           </div>
         </li>
       </ul>

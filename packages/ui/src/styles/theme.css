@@ -261,7 +261,6 @@
   /*
    * Grille des bibliothèques : cartes compactes, une par ligne sur téléphone puis autant de
    * colonnes d'environ 12 rem que la largeur le permet (3 sur tablette, 5 sur grand écran).
-   * La vignette passe du 16/9 au 2/1 en grille : la carte gagne en hauteur sans perdre l'image.
    */
   .qcm-library-grid {
     display: grid;
@@ -273,16 +272,6 @@
     .qcm-library-grid {
       grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
       gap: 1rem;
-    }
-  }
-
-  .qcm-library-thumb {
-    aspect-ratio: 16 / 9;
-  }
-
-  @media (min-width: 40rem) {
-    .qcm-library-thumb {
-      aspect-ratio: 2 / 1;
     }
   }
 
@@ -299,6 +288,102 @@
     border-radius: var(--radius-xl);
     font-size: 1rem;
     font-weight: 800;
+  }
+}
+
+/*
+ * Couleurs des matières. Chaque matière a sa teinte (angle OKLCH) ; trois nuances en sont
+ * dérivées avec la même clarté pour toutes, donc un contraste égal d'une matière à l'autre :
+ *   --subject-tint   fond léger (bandeau, pastille)    --subject-ink        texte sur ce fond
+ *   --subject-strong pastille du pictogramme, survol   --subject-on-strong  pictogramme dessus
+ * « Autre » reste neutre (chroma nul).
+ */
+.qcm-hue-francais { --subject-h: 28; }
+.qcm-hue-histoire-geo { --subject-h: 60; }
+.qcm-hue-emc { --subject-h: 88; }
+.qcm-hue-arts { --subject-h: 118; }
+.qcm-hue-svt { --subject-h: 148; }
+.qcm-hue-physique-chimie { --subject-h: 188; }
+.qcm-hue-technologie { --subject-h: 218; }
+.qcm-hue-maths { --subject-h: 252; }
+.qcm-hue-anglais { --subject-h: 282; }
+.qcm-hue-allemand { --subject-h: 308; }
+.qcm-hue-musique { --subject-h: 332; }
+.qcm-hue-espagnol { --subject-h: 358; }
+.qcm-hue-autre { --subject-h: 80; --subject-c: 0; }
+
+[class*="qcm-hue-"] {
+  --subject-tint: oklch(0.93 calc(0.045 * var(--subject-c, 1)) var(--subject-h));
+  --subject-strong: oklch(0.6 calc(0.13 * var(--subject-c, 1)) var(--subject-h));
+  --subject-ink: oklch(0.37 calc(0.09 * var(--subject-c, 1)) var(--subject-h));
+  --subject-on-strong: #fff;
+}
+
+[data-theme="dark"] [class*="qcm-hue-"] {
+  --subject-tint: oklch(0.35 calc(0.05 * var(--subject-c, 1)) var(--subject-h));
+  --subject-strong: oklch(0.77 calc(0.11 * var(--subject-c, 1)) var(--subject-h));
+  --subject-ink: oklch(0.92 calc(0.04 * var(--subject-c, 1)) var(--subject-h));
+  --subject-on-strong: #1c1f26;
+}
+
+/* Fond pastel de la matière (`SUBJECT_TONES`) : passe devant le fond par défaut des pastilles. */
+@layer utilities {
+  .qcm-subject-tint {
+    background-color: var(--subject-tint);
+  }
+}
+
+@layer components {
+  /* Bandeau de matière en tête de carte (`QcmSubjectBand`). */
+  .qcm-subject-band {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 2.6rem;
+    padding: 0.45rem 0.6rem 0.45rem 0.5rem;
+    background-color: var(--subject-tint);
+    color: var(--subject-ink);
+    border-bottom: 1.5px solid color-mix(in oklch, var(--subject-strong) 35%, transparent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .qcm-subject-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.55rem;
+    background-color: var(--subject-strong);
+    color: var(--subject-on-strong);
+    letter-spacing: 0.02em;
+  }
+
+  .qcm-subject-level {
+    flex: none;
+    padding: 0.1rem 0.55rem;
+    border: 1.5px solid color-mix(in oklch, var(--subject-strong) 45%, transparent);
+    border-radius: 9999px;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+    text-transform: none;
+  }
+
+  /* Carte de bibliothèque : au survol ou au focus, le contour prend la couleur de la matière. */
+  .qcm-library-card {
+    transition: transform 120ms ease-out, border-color 120ms ease-out;
+  }
+
+  .qcm-library-card:hover,
+  .qcm-library-card:focus-within {
+    border-color: var(--subject-strong);
   }
 }
 

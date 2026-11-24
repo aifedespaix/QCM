@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
-import { downloadQcm, listQcms, qcmThumbnailUrl, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
+import { downloadQcm, listQcms, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
 import { defaultLibraryState, libraryHeading, libraryHref, type LibraryState } from '../lib/libraryQuery.ts'
 import { qcmPath } from '../lib/qcmUrl.ts'
 import UiIcon from './UiIcon.vue'
-import { SUBJECT_TONES, isRecent, longDate, questionCountLabel, shortDate } from '../lib/subjects.ts'
+import { QcmSubjectBand, SUBJECT_HUES } from '@qcm/ui'
+import { isRecent, longDate, questionCountLabel, shortDate } from '../lib/subjects.ts'
 
 /**
  * Bibliothèque. La première page arrive rendue par le serveur (`initial`) : rien à attendre à
@@ -322,11 +323,12 @@ onBeforeUnmount(() => {
     </div>
 
     <ul v-if="state === 'loading'" class="qcm-library-grid" role="status" aria-label="Chargement de la bibliothèque">
-      <li v-for="n in 8" :key="n" class="qcm-panel flex gap-3 overflow-hidden p-2 sm:flex-col sm:p-0">
-        <div class="qcm-skeleton qcm-library-thumb w-28 flex-none rounded-xl sm:w-full sm:rounded-none" />
-        <div class="flex flex-1 flex-col gap-2 py-1 sm:px-3.5 sm:pb-3.5">
+      <li v-for="n in 10" :key="n" class="qcm-panel flex flex-col overflow-hidden">
+        <div class="qcm-skeleton h-10 rounded-none" />
+        <div class="flex flex-col gap-2 p-3.5">
           <div class="qcm-skeleton h-5 w-3/4" />
           <div class="qcm-skeleton h-4 w-1/2" />
+          <div class="qcm-skeleton mt-3 h-8 w-full" />
         </div>
       </li>
     </ul>
@@ -355,28 +357,24 @@ onBeforeUnmount(() => {
         <li
           v-for="item in items"
           :key="item.id"
-          class="qcm-panel group relative flex gap-3 overflow-hidden p-2 transition-transform hover:-translate-y-0.5 focus-within:-translate-y-0.5 sm:flex-col sm:gap-0 sm:p-0"
+          class="qcm-panel qcm-library-card group relative flex flex-col overflow-hidden hover:-translate-y-0.5 focus-within:-translate-y-0.5"
+          :class="SUBJECT_HUES[item.subject]"
         >
-          <div class="qcm-library-thumb relative w-28 flex-none self-start overflow-hidden rounded-xl sm:w-full sm:rounded-none">
-            <img v-if="qcmThumbnailUrl(item)" :src="qcmThumbnailUrl(item)" alt="" width="480" height="270" loading="lazy" decoding="async" class="h-full w-full bg-bg object-cover sm:border-b-[1.5px] sm:border-line-soft" />
-            <div v-else class="flex h-full w-full items-center justify-center sm:border-b-[1.5px] sm:border-line-soft" :class="SUBJECT_TONES[item.subject]" aria-hidden="true">
-              <span class="px-2 text-center text-sm font-extrabold opacity-80 sm:text-lg">{{ SUBJECT_LABELS[item.subject] }}</span>
-            </div>
-            <span v-if="!mineActive && isRecent(item.created)" class="qcm-chip qcm-chip-sm absolute top-1.5 left-1.5 border-[1.5px] border-line bg-surface sm:top-2 sm:left-2">Nouveau</span>
-          </div>
-          <div class="flex min-w-0 flex-1 flex-col gap-1 py-0.5 pr-1 sm:p-3.5 sm:pt-3">
-            <p class="flex flex-wrap gap-1">
-              <span v-if="qcmThumbnailUrl(item)" class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
-              <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[item.level] }}</span>
-              <span v-if="mineActive" class="qcm-chip qcm-chip-sm" :class="STATUS_CHIPS[item.status].tone">{{ STATUS_CHIPS[item.status].label }}</span>
+          <QcmSubjectBand :subject="item.subject" :level="item.level" />
+          <div class="flex min-w-0 flex-1 flex-col gap-1 p-3.5 pt-3">
+            <p v-if="mineActive" class="flex">
+              <span class="qcm-chip qcm-chip-sm" :class="STATUS_CHIPS[item.status].tone">{{ STATUS_CHIPS[item.status].label }}</span>
             </p>
             <h2 class="line-clamp-2 text-base leading-snug font-extrabold sm:text-lg" :title="item.title">
               <a :href="qcmPath(item)" class="no-underline after:absolute after:inset-0 group-hover:underline">{{ item.title }}</a>
             </h2>
             <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
-            <p class="truncate text-xs font-bold text-ink-soft">
-              {{ questionCountLabel(item.question_count) }} ·
-              <time :datetime="item.created.replace(' ', 'T')" :title="`Publié le ${longDate(item.created)}`">{{ shortDate(item.created) }}</time>
+            <p class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-bold whitespace-nowrap text-ink-soft">
+              <span>
+                {{ questionCountLabel(item.question_count) }} ·
+                <time :datetime="item.created.replace(' ', 'T')" :title="`Publié le ${longDate(item.created)}`">{{ shortDate(item.created) }}</time>
+              </span>
+              <span v-if="!mineActive && isRecent(item.created)" class="qcm-chip qcm-chip-sm flex-none bg-primary text-ink">Nouveau</span>
             </p>
             <!-- Note et commentaires : raccourcis vers les avis de la fiche, au-dessus du lien de la carte. -->
             <div class="mt-auto -ml-2 flex items-center gap-0.5 pt-1.5">
