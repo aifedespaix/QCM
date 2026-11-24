@@ -14,7 +14,7 @@ Règles :
 | Sujet | Brief initial | Décision retenue | Raison |
 |---|---|---|---|
 | Parsing YAML côté Rust | `serde_yaml` dans Tauri | **Rust ne lit pas le YAML.** Il dézippe, renvoie le texte brut de `data.yaml`, et sert les images. La validation est faite par `@qcm/core` (Zod) dans la webview. | `serde_yaml` est archivé. Surtout : un seul schéma (Zod) au lieu de deux (Zod + structs serde) qui divergeraient. |
-| Mode Astro | hybride / SSR | **100 % statique** (`output: 'static'`), îlots Vue `client:only` qui appellent PocketBase depuis le navigateur. | Le mode `hybrid` n'existe plus dans Astro. Aucun serveur Node à héberger : un simple nginx. |
+| Mode Astro | 100 % statique / SSR complet | **Statique + rendu serveur à la demande** (`output: 'static'` + `@astrojs/node`) : accueil, éditeur, suivi, admin générés au build ; bibliothèque, fiches de QCM et sitemap rendus par Node (`prerender = false`), qui lit PocketBase par le réseau interne. | Le 100 % statique (îlots `client:only`) laissait des pages vides le temps du chargement, sans contenu pour les moteurs. Voir `docs/audit-chargement-seo.md`. |
 | Format d'une réponse | (libre) | `correct: true` posé sur chaque bonne réponse (une ou plusieurs, jamais toutes), pas d'index `answer: 2`. | Robuste au réordonnancement, lisible, moins d'erreurs pour un LLM. |
 | Flux d'erreur | « réessayer ou passer » | Deux étapes : **choisir** puis **Valider**. Après une erreur : indice facultatif, la réponse essayée est grisée, boutons « Réessayer » et « Voir la réponse ». | La validation explicite limite les réponses impulsives (TDAH). « Voir la réponse » remplace « passer » : l'élève repart avec la bonne information. |
 | Écran de fin | (libre) | Aucun score, aucun pourcentage, aucune étoile. | Zéro culpabilité. |
@@ -119,7 +119,7 @@ qcm/
 │   │       ├── capabilities/default.json
 │   │       ├── icons/               (généré par `bun run tauri icon app-icon.svg`)
 │   │       └── src/{main.rs,lib.rs}
-│   └── web/                         @qcm/web (Astro statique)
+│   └── web/                         @qcm/web (Astro statique + rendu serveur Node)
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── astro.config.mjs
@@ -155,7 +155,7 @@ Principe : `@qcm/core` et `@qcm/ui` sont consommés **directement en source Type
 | `bun run typecheck` | Types des 4 workspaces |
 | `bun run pack <dossier>` | `data.yaml` + `media/` → fichier `.qcm` validé |
 | `bun run dev:desktop` / `build:desktop` | Lecteur Tauri en développement / installateur |
-| `bun run dev:web` / `build:web` | Site Astro en développement / build statique |
+| `bun run dev:web` / `build:web` | Site Astro en développement / build (`dist/client` pour nginx, `dist/server` pour Node) |
 
 Fichiers : `package.json`, `tsconfig.base.json`, `.gitignore`, `examples/fractions/data.yaml`
 
@@ -466,35 +466,39 @@ Sans ligne de commande : l'éditeur du site (étape « Départ », choix « Coll
 
 ---
 
-## 7. `apps/web` (Astro statique + îlots Vue)
+## 7. `apps/web` (Astro statique + rendu serveur + îlots Vue)
 
 ### 7.1 Pages
 
 | Route | Fichier | Contenu |
 |---|---|---|
 | `/` | `pages/index.astro` | Vitrine, bouton « Télécharger pour Windows » (vers `PUBLIC_RELEASES_URL`), étapes, QCM de démonstration jouable (`DemoPlayer.vue`, `client:visible`), engagements |
-| `/bibliotheque` | `pages/bibliotheque.astro` + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct. Connecté : bascule « Mes QCM » (`?mes=1`), avec le statut de chaque QCM et un bouton « Modifier » |
-| `/qcm?id=<id>` | `pages/qcm.astro` + `QcmDetail.vue` | Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`, résultat enregistré dans le suivi local ; `&jouer=1` démarre tout de suite), « Modifier une copie », lien à copier ; cadre « Gérer mon QCM » / « Modération » (modifier, valider, masquer, supprimer avec confirmation) ; section « Avis » (`QcmReviews.vue`) : moyenne, note 1 à 5 modifiable ou retirable, commentaires (publier, modifier, supprimer les siens) |
+| `/bibliotheque/` | `pages/bibliotheque.astro` (SSR) + `LibraryBrowser.vue` | Recherche, filtres matière et niveau, tri, pagination, téléchargement direct. Filtres dans l'adresse (`?q=`, `?matiere=`, `?niveau=`, `?tri=`, `?page=`), rendus par le serveur ; la pagination est faite de vrais liens. Connecté : bascule « Mes QCM » (`?mes=1`, chargée dans le navigateur), avec le statut de chaque QCM et un bouton « Modifier ». Recherche libre, tri et « Mes QCM » : `noindex` |
+| `/qcm/<titre>-<id>/` | `pages/qcm/[slug].astro` (SSR) + `QcmDetail.vue` | Adresse construite par `qcmPath()` (`lib/qcmUrl.ts`) ; titre modifié ou ancienne forme `/qcm?id=<id>` (`pages/qcm/index.astro`) : redirection 301. QCM non publié : réponse 404 `noindex`, la fiche est chargée dans le navigateur pour son auteur et la modération. Fiche, téléchargement, « Essayer en ligne » (`QcmPlayer`, résultat enregistré dans le suivi local ; `&jouer=1` démarre tout de suite), « Modifier une copie », lien à copier ; cadre « Gérer mon QCM » / « Modération » (modifier, valider, masquer, supprimer avec confirmation) ; section « Avis » (`QcmReviews.vue`) : moyenne, note 1 à 5 modifiable ou retirable, commentaires (publier, modifier, supprimer les siens) |
 | `/statistiques` | `pages/statistiques.astro` + `StatsPage.vue` | Suivi des révisions pour les parents (`QcmStatsDashboard`), à partir des QCM faits sur le site avec cet appareil |
 | `/editeur` | `pages/editeur.astro` + `QcmEditor.vue` | Éditeur guidé en 4 étapes (Départ, Informations, Questions, Finaliser) avec sommaire fixé à l'écran (à droite, ou en bas sur mobile). Départ : page vide, texte collé (sortie d'une IA, prompt fourni) ou fichier `.qcm`. Une question à la fois, images converties en WebP, aperçu, export local, copie au format texte, publication. `/editeur?id=<id>` charge un QCM de la bibliothèque : celui du membre connecté est **mis à jour** (puis revalidé), celui d'un autre membre est ouvert comme **copie**, publiée au nom de celui qui la modifie (l'original ne change pas). Un clic dans le sommaire ne fait pas défiler la page |
 | `/agent` | `pages/agent.astro` + `AgentTokens.vue` | Jetons d'agent : création (nom, durée), affichage unique du jeton, « Copier les instructions pour l'agent » (adresse du site + jeton + marche à suivre), liste avec dernier usage, révocation. Exclu du sitemap et du robots |
 | `/admin` | `pages/admin.astro` + `AdminModeration.vue` | Modération réservée aux administrateurs (voir §5.1) ; lien « Modération » et nombre de QCM en attente dans le bandeau |
 
-Tous les îlots sont montés avec `client:only="vue"` (ils utilisent `localStorage`, le SDK PocketBase et la Canvas API). L'export local fonctionne sans compte ; la publication demande une connexion Google.
+`LibraryBrowser` et `QcmDetail` sont rendus par le serveur puis hydratés (`client:load`) : ils reçoivent les données (`initial`) et ne refont pas la requête. Le compte n'est connu que du navigateur : `useAuth().user` vaut `null` jusqu'au montage du composant, pour que l'hydratation corresponde au HTML du serveur. Les autres îlots restent `client:only="vue"` (ils utilisent `localStorage`, le SDK PocketBase et la Canvas API). L'export local fonctionne sans compte ; la publication demande une connexion Google.
 
-Variables d'environnement lues au build : `PUBLIC_PB_URL`, `PUBLIC_SITE_URL`, `PUBLIC_RELEASES_URL`.
+Variables d'environnement lues au build : `PUBLIC_PB_URL`, `PUBLIC_SITE_URL`, `PUBLIC_RELEASES_URL`. Lue à l'exécution par le serveur Node : `PB_INTERNAL_URL` (défaut dans le compose : `http://qcm-pocketbase:8090`).
+
+SEO : `Base.astro` pose titre, description, `canonical` (avec la barre finale), `robots`, Open Graph et Twitter (image du QCM sur sa fiche), et du JSON-LD (`WebSite`, `Organization`, puis `CollectionPage` + `ItemList` sur la bibliothèque, `Quiz` + `BreadcrumbList` sur une fiche). `/sitemap.xml` liste chaque QCM publié avec sa date de mise à jour.
+
+Hébergement (`Dockerfile`, `nginx.conf`, `docker-entrypoint.sh`) : un conteneur avec nginx (fichiers générés, `/api` vers PocketBase) et le serveur Node (port 4321 local). nginx garde 20 s une copie des pages rendues et sert la dernière copie valide si le rendu échoue (503 quand PocketBase ne répond pas).
 
 ### 7.2 Configuration
 
-Fichiers : `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/astro.config.mjs`, `apps/web/Dockerfile`, `apps/web/nginx.conf`, `apps/web/src/env.d.ts`, `apps/web/src/styles/global.css`
+Fichiers : `apps/web/package.json`, `apps/web/tsconfig.json`, `apps/web/astro.config.mjs`, `apps/web/Dockerfile`, `apps/web/docker-entrypoint.sh`, `apps/web/nginx.conf`, `apps/web/src/env.d.ts`, `apps/web/src/styles/global.css`
 
 ### 7.3 Bibliothèques
 
-Fichiers : `apps/web/src/lib/pb.ts`, `apps/web/src/lib/editorDraft.ts`, `apps/web/src/lib/subjects.ts`, `apps/web/src/lib/demoQcm.ts`, `apps/web/scripts/seed.ts`
+Fichiers : `apps/web/src/lib/pb.ts`, `apps/web/src/lib/server/catalog.ts` (lectures côté serveur), `apps/web/src/lib/qcmUrl.ts`, `apps/web/src/lib/libraryQuery.ts`, `apps/web/src/lib/editorDraft.ts`, `apps/web/src/lib/subjects.ts`, `apps/web/src/lib/demoQcm.ts`, `apps/web/scripts/seed.ts`
 
 ### 7.4 Mise en page et pages
 
-Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm.astro`, `apps/web/src/pages/editeur.astro`, `apps/web/src/pages/admin.astro`, `apps/web/src/pages/statistiques.astro`
+Fichiers : `apps/web/src/layouts/Base.astro`, `apps/web/src/pages/index.astro`, `apps/web/src/pages/bibliotheque.astro`, `apps/web/src/pages/qcm/[slug].astro`, `apps/web/src/pages/qcm/index.astro`, `apps/web/src/pages/sitemap.xml.ts`, `apps/web/src/pages/editeur.astro`, `apps/web/src/pages/admin.astro`, `apps/web/src/pages/statistiques.astro`
 
 ### 7.5 Îlots Vue
 

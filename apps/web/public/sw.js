@@ -1,9 +1,10 @@
 /* Service worker de QCM : le site reste utilisable sans réseau pour les pages déjà visitées.
  * - Fichiers générés (/_astro/, icônes) : cache d'abord (noms avec empreinte, donc immuables).
  * - Pages : réseau d'abord, copie en cache si le réseau échoue, sinon page « hors connexion ».
+ *   Bibliothèque et fiches sont rendues par le serveur : la copie en cache contient la liste.
  * - Tout ce qui n'est pas du même domaine (PocketBase, etc.) ou pas en GET passe sans interception.
  * Incrémenter VERSION force le renouvellement des caches. */
-const VERSION = 'v3'
+const VERSION = 'v4'
 const PAGES = `qcm-pages-${VERSION}`
 const ASSETS = `qcm-assets-${VERSION}`
 const OFFLINE_URL = '/offline.html'
@@ -41,27 +42,7 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_/')) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const copy = response.clone()
-            caches.open(PAGES).then((cache) => cache.put(request, copy))
-          }
-          return response
-        })
-        .catch(async () => {
-          const cache = await caches.open(PAGES)
-          // Les paramètres (?source=pwa, ?id=…) ne changent pas le HTML : on retombe sur la page nue.
-          return (
-            (await cache.match(request)) ||
-            (await cache.match(url.pathname)) ||
-            (await cache.match(url.pathname.replace(/\/?$/, '/'))) ||
-            (await cache.match(OFFLINE_URL)) ||
-            Response.error()
-          )
-        }),
-    )
+    event.respondWith(navigate(request, url))
     return
   }
 
@@ -78,3 +59,33 @@ self.addEventListener('fetch', (event) => {
     )
   }
 })
+
+/** Au-delà, une page déjà visitée s'affiche depuis le cache plutôt que de laisser l'écran blanc. */
+const NAVIGATION_TIMEOUT_MS = 6000
+
+async function cachedPage(request, url) {
+  const cache = await caches.open(PAGES)
+  // Repli sur la page sans paramètres (?source=pwa, filtres de la bibliothèque…) : mieux que rien.
+  return (
+    (await cache.match(request)) ||
+    (await cache.match(url.pathname)) ||
+    (await cache.match(url.pathname.replace(/\/?$/, '/'))) ||
+    undefined
+  )
+}
+
+function navigate(request, url) {
+  const network = fetch(request).then((response) => {
+    if (response.ok) {
+      const copy = response.clone()
+      caches.open(PAGES).then((cache) => cache.put(request, copy))
+    }
+    return response
+  })
+  // Réseau qui traîne (connexion mobile endormie, Wi-Fi capricieux) : copie en cache si elle existe,
+  // sinon on continue d'attendre le réseau. La copie fraîche est rangée dès qu'elle arrive.
+  const slow = new Promise((resolve) => setTimeout(resolve, NAVIGATION_TIMEOUT_MS))
+    .then(() => cachedPage(request, url))
+    .then((cached) => cached || network)
+  return Promise.race([network, slow]).catch(async () => (await cachedPage(request, url)) || (await caches.match(OFFLINE_URL)) || Response.error())
+}

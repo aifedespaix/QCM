@@ -1,15 +1,74 @@
 ---
 import LibraryBrowser from '../components/LibraryBrowser.vue'
 import Base from '../layouts/Base.astro'
+import { libraryHeading, libraryHref, libraryScope, parseLibraryParams } from '../lib/libraryQuery.ts'
+import { PAGE_SIZE } from '../lib/pb.ts'
+import { qcmPath } from '../lib/qcmUrl.ts'
+import { fetchLibraryPage } from '../lib/server/catalog.ts'
+
+// Rendue à chaque visite : la liste arrive dans le HTML (affichage immédiat, lisible par les moteurs).
+export const prerender = false
+
+// Une seule adresse par page : `/bibliotheque` mène à `/bibliotheque/`.
+if (!Astro.url.pathname.endsWith('/')) return Astro.redirect(`${Astro.url.pathname}/${Astro.url.search}`, 301)
+
+const query = parseLibraryParams(Astro.url.searchParams)
+const initial = await fetchLibraryPage(query)
+
+// PocketBase injoignable : la page part quand même (la liste se charge dans le navigateur), avec un
+// code 503 pour que nginx serve plutôt sa dernière copie valide et que les moteurs repassent plus tard.
+if (!initial) {
+  Astro.response.status = 503
+  Astro.response.headers.set('Retry-After', '30')
+}
+Astro.response.headers.set('Cache-Control', 'no-cache')
+
+const scope = libraryScope(query.subject, query.level)
+const heading = libraryHeading(query.subject, query.level)
+const pageSuffix = query.page > 1 ? ` (page ${query.page})` : ''
+const title = scope ? `QCM ${scope}${pageSuffix} · Bibliothèque QCM` : `Bibliothèque de QCM gratuits pour réviser${pageSuffix} · QCM`
+const description = scope
+  ? `QCM ${scope} relus avant publication : à faire en ligne gratuitement, sans publicité ni chronomètre, ou à télécharger.`
+  : 'Des QCM gratuits pour réviser du primaire au lycée, relus avant publication : maths, français, histoire, SVT, physique… À faire en ligne ou à télécharger.'
+// Recherche libre, tri ou « Mes QCM » : pages utiles au visiteur, pas aux moteurs.
+const noindex = !!query.search || query.sort !== 'recent' || query.mine || (initial !== null && initial.totalItems === 0)
+const canonical = libraryHref({ subject: query.subject, level: query.level, page: query.page })
+const site = Astro.site ?? Astro.url
+
+const jsonLd = initial
+  ? [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: heading,
+        description,
+        url: new URL(canonical, site).href,
+        inLanguage: 'fr-FR',
+        isPartOf: { '@id': new URL('/#site', site).href },
+        mainEntity: {
+          '@type': 'ItemList',
+          numberOfItems: initial.totalItems,
+          itemListElement: initial.items.map((item, index) => ({
+            '@type': 'ListItem',
+            position: (initial.page - 1) * PAGE_SIZE + index + 1,
+            url: new URL(qcmPath(item), site).href,
+            name: item.title,
+          })),
+        },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Accueil', item: new URL('/', site).href },
+          { '@type': 'ListItem', position: 2, name: 'Bibliothèque', item: new URL('/bibliotheque/', site).href },
+          ...(scope ? [{ '@type': 'ListItem', position: 3, name: heading, item: new URL(canonical, site).href }] : []),
+        ],
+      },
+    ]
+  : undefined
 ---
 
-<Base title="Bibliothèque" description="Des QCM partagés par la communauté, à télécharger ou à essayer en ligne.">
-  <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <h1 class="text-3xl font-extrabold sm:text-4xl">Bibliothèque</h1>
-      <p class="mt-1 text-lg text-ink-soft">Des QCM relus avant publication, à essayer en ligne ou à télécharger.</p>
-    </div>
-    <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
-  </header>
-  <LibraryBrowser client:only="vue" />
+<Base rawTitle title={title} description={description} noindex={noindex} canonical={canonical} jsonLd={jsonLd}>
+  <LibraryBrowser client:load query={query} initial={initial} />
 </Base>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { qcmPath } from '../lib/qcmUrl.ts'
 import { computed, onMounted, ref } from 'vue'
 import { LEVEL_LABELS, SUBJECT_LABELS, computeStats, formatRelativeDay } from '@qcm/core'
 import { useQcmHistory } from '@qcm/ui'
@@ -33,8 +34,8 @@ const toReview = computed(() =>
 )
 const empty = computed(() => !draft.value && !last.value)
 
-function fiche(recordId?: string): string {
-  return `/qcm?id=${recordId}`
+function fiche(entry: { recordId?: string; title: string }, play = false): string {
+  return qcmPath({ id: entry.recordId ?? '', title: entry.title }, { play })
 }
 </script>
 
@@ -55,7 +56,7 @@ function fiche(recordId?: string): string {
         </a>
       </li>
       <li v-if="last">
-        <a :href="`${fiche(last.entry.recordId)}&jouer=1`" class="qcm-card flex items-center gap-3 p-4 no-underline">
+        <a :href="fiche(last.entry, true)" class="qcm-card flex items-center gap-3 p-4 no-underline">
           <span class="flex min-w-0 flex-1 flex-col">
             <span class="text-sm font-bold text-ink-soft">Dernier QCM · {{ formatRelativeDay(last.reference.at) }}</span>
             <span class="truncate text-lg font-extrabold">{{ last.entry.title }}</span>
@@ -72,7 +73,7 @@ function fiche(recordId?: string): string {
       <h3 class="mb-1 text-base font-extrabold">À revoir</h3>
       <ul class="flex flex-col">
         <li v-for="item in toReview" :key="item.entry.key" class="border-t-[1.5px] border-line-soft first:border-t-0">
-          <a :href="fiche(item.entry.recordId)" class="flex min-h-12 items-center justify-between gap-3 py-2 no-underline">
+          <a :href="fiche(item.entry)" class="flex min-h-12 items-center justify-between gap-3 py-2 no-underline">
             <span class="min-w-0 truncate font-bold">{{ item.entry.title }}</span>
             <span class="text-sm font-semibold whitespace-nowrap text-ink-soft">{{ item.counts.first }}/{{ item.counts.seen }} du 1<sup>er</sup> coup</span>
           </a>

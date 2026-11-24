@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { qcmPath } from '../lib/qcmUrl.ts'
 import type { QcmHistoryEntry } from '@qcm/core'
 import { QcmStatsDashboard, useQcmHistory } from '@qcm/ui'
 
@@ -11,12 +12,12 @@ function canOpen(entry: QcmHistoryEntry): boolean {
 
 /** Fiche du QCM dans la bibliothèque (seulement s'il en vient). */
 function ficheUrl(entry: QcmHistoryEntry): string | null {
-  return entry.recordId ? `/qcm?id=${entry.recordId}` : null
+  return entry.recordId ? qcmPath({ id: entry.recordId, title: entry.title }) : null
 }
 
 function open(key: string): void {
   const entry = history.value.entries.find((item) => item.key === key)
-  if (entry?.recordId) window.location.href = `/qcm?id=${entry.recordId}&jouer=1`
+  if (entry?.recordId) window.location.href = qcmPath({ id: entry.recordId, title: entry.title }, { play: true })
 }
 
 function clear(): void {

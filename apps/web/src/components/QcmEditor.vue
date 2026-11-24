@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { qcmPath } from '../lib/qcmUrl.ts'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import {
   LEVELS,
@@ -879,7 +880,7 @@ onBeforeUnmount(() => {
             <p class="text-lg font-extrabold">{{ notice }}</p>
             <div class="flex flex-wrap items-center gap-3">
               <button type="button" class="qcm-block qcm-block-primary" @click="startNew">+ Créer un nouveau QCM</button>
-              <a v-if="publishedId" :href="`/qcm?id=${publishedId}`" class="qcm-block qcm-block-quiet qcm-block-sm">Voir la fiche</a>
+              <a v-if="publishedId" :href="qcmPath({ id: publishedId, title: draft.title })" class="qcm-block qcm-block-quiet qcm-block-sm">Voir la fiche</a>
               <a href="/bibliotheque" class="qcm-text-button underline">Aller à la bibliothèque</a>
             </div>
           </div>

@@ -1,0 +1,22 @@
+---
+import QcmDetail from '../../components/QcmDetail.vue'
+import Base from '../../layouts/Base.astro'
+import { isRecordId, qcmPath } from '../../lib/qcmUrl.ts'
+import { fetchPublishedQcm } from '../../lib/server/catalog.ts'
+
+// Ancienne adresse `/qcm?id=…` (liens partagés, favoris) : redirection définitive vers `/qcm/<titre>-<id>/`.
+export const prerender = false
+
+const id = Astro.url.searchParams.get('id')
+if (isRecordId(id)) {
+  const found = await fetchPublishedQcm(id)
+  const target = new URL(qcmPath(found.status === 'found' ? found.record : { id }), Astro.url)
+  if (Astro.url.searchParams.has('jouer')) target.searchParams.set('jouer', '1')
+  return Astro.redirect(target.pathname + target.search, 301)
+}
+Astro.response.status = 404
+---
+
+<Base noindex title="QCM introuvable" description="Ce QCM est introuvable.">
+  <QcmDetail client:load id="" initial={null} />
+</Base>

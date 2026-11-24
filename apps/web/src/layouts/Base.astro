@@ -9,35 +9,73 @@ interface Props {
   description?: string
   /** Classe ajoutée à <body> (fond décoratif de l'accueil). */
   bodyClass?: string
-  /** Page à ne pas indexer (modération, fiche chargée dynamiquement). */
+  /** Page à ne pas indexer (modération, recherche libre, fiche introuvable). */
   noindex?: boolean
+  /** Adresse canonique (chemin ou URL). Par défaut : le chemin de la page, avec la barre finale. */
+  canonical?: string
+  /** Type Open Graph : `website` (défaut) ou `article` (fiche d'un QCM). */
+  ogType?: 'website' | 'article'
+  /** Image de partage (URL absolue) ; par défaut, l'image générale du site. */
+  image?: { url: string; alt: string; width?: number; height?: number }
   /** Données structurées schema.org (JSON-LD) propres à la page. */
-  jsonLd?: Record<string, unknown>
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[]
+  /** Titre complet, sans le suffixe « · QCM ». */
+  rawTitle?: boolean
 }
 
+const SITE_DESCRIPTION = 'QCM : des questionnaires calmes pour réviser, sans publicité, sans chronomètre.'
 const {
   title,
-  description = 'QCM : des questionnaires calmes, sans publicité, sans chronomètre.',
+  description = SITE_DESCRIPTION,
   bodyClass = '',
   noindex = false,
+  canonical: canonicalProp,
+  ogType = 'website',
+  image,
   jsonLd,
+  rawTitle = false,
 } = Astro.props
 const path = Astro.url.pathname
 const site = Astro.site ?? new URL('http://localhost:4321')
-const canonical = new URL(path, site).href
-const ogImage = new URL('/og-image.png', site).href
-const fullTitle = path === '/' ? 'QCM : réviser au calme, une question à la fois' : `${title} · QCM`
+/** Forme canonique : barre finale sur les pages (celle que sert nginx), jamais sur un fichier. */
+const withSlash = (value: string) => (/\/$|\.[a-z0-9]+$/i.test(value) ? value : `${value}/`)
+const canonical = new URL(canonicalProp ?? withSlash(path), site).href
+const ogImage = image ?? { url: new URL('/og-image.png', site).href, alt: 'QCM : réviser au calme, une question à la fois', width: 1200, height: 630 }
+const fullTitle = path === '/' ? 'QCM : réviser au calme, une question à la fois' : rawTitle ? title : `${title} · QCM`
+const robots = noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1'
+const siteUrl = new URL('/', site).href
 const structured = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': `${siteUrl}#site`,
     name: 'QCM',
-    url: new URL('/', site).href,
-    inLanguage: 'fr',
-    description: 'QCM : des questionnaires calmes, sans publicité, sans chronomètre.',
+    alternateName: 'QCM, réviser au calme',
+    url: siteUrl,
+    inLanguage: 'fr-FR',
+    description: SITE_DESCRIPTION,
+    publisher: { '@id': `${siteUrl}#organisation` },
   },
-  ...(jsonLd ? [jsonLd] : []),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${siteUrl}#organisation`,
+    name: 'QCM',
+    url: siteUrl,
+    logo: new URL('/icon-512.png', site).href,
+    sameAs: ['https://github.com/aifedespaix/qcm'],
+  },
+  ...(Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []),
 ]
+/** PocketBase sur un autre domaine : la connexion est ouverte d'avance (images, API). */
+const pbOrigin = (() => {
+  try {
+    const origin = new URL(import.meta.env.PUBLIC_PB_URL || '').origin
+    return origin !== site.origin ? origin : null
+  } catch {
+    return null
+  }
+})()
 const links = [
   { href: '/bibliotheque', label: 'Bibliothèque' },
   { href: '/editeur', label: 'Créer un QCM' },
@@ -53,26 +91,31 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content={description} />
-    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'} />
-    <link rel="canonical" href={canonical} />
     <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonical} />
+    <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+    {pbOrigin && <link rel="preconnect" href={pbOrigin} crossorigin />}
+    {pbOrigin && <link rel="dns-prefetch" href={pbOrigin} />}
 
     <!-- Partage (réseaux sociaux, messageries) -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content="QCM" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:image" content={ogImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="QCM : réviser au calme, une question à la fois" />
+    <meta property="og:image" content={ogImage.url} />
+    {ogImage.width && <meta property="og:image:width" content={String(ogImage.width)} />}
+    {ogImage.height && <meta property="og:image:height" content={String(ogImage.height)} />}
+    <meta property="og:image:alt" content={ogImage.alt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image" content={ogImage.url} />
+    <meta name="twitter:image:alt" content={ogImage.alt} />
+    <slot name="head" />
 
     <!-- Application installable (PWA) -->
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -88,7 +131,7 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script type="application/ld+json" set:html={JSON.stringify(structured)} />
+    <script type="application/ld+json" set:html={JSON.stringify(structured).replace(/</g, '\\u003c')} />
     <script is:inline>
       // Applique le thème enregistré avant le premier affichage (pas de flash).
       try {
@@ -121,6 +164,12 @@ const inLibrary = path.startsWith('/bibliotheque') || path.startsWith('/qcm')
         }
         window.addEventListener('vite:preloadError', function (event) {
           if (reloadOnce()) event.preventDefault()
+        })
+        // Code d'un îlot introuvable (page gardée en cache d'un ancien déploiement, coupure réseau) :
+        // l'import échoue sans « vite:preloadError ». On recharge une fois pour récupérer la version en ligne.
+        window.addEventListener('unhandledrejection', function (event) {
+          var message = String((event.reason && event.reason.message) || event.reason || '')
+          if (/dynamically imported module|module script failed|error loading dynamically|Importing a module/i.test(message)) reloadOnce()
         })
         function showBanner() {
           if (document.getElementById('qcm-load-failed')) return
