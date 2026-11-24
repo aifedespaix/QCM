@@ -1,32 +1,79 @@
 <script setup lang="ts">
-import { ref, useId, watch } from 'vue'
+import { onBeforeUnmount, ref, useId, watch } from 'vue'
 import UiIcon from './UiIcon.vue'
+import { useBackdropClose } from '../lib/backdrop.ts'
 
 /**
  * Fenêtre par-dessus la page : panneau qui monte du bas sur téléphone (à portée de pouce),
- * fenêtre centrée sur grand écran. `<dialog>` natif : focus piégé, Échap et retour du focus
- * au bouton d'ouverture fournis par le navigateur. En-tête fixe, contenu qui défile, pied fixe
- * (`#footer`, par exemple le champ de commentaire).
+ * fenêtre centrée sur grand écran. En-tête fixe, contenu qui défile, pied fixe (`#footer`).
+ *
+ * Règles d'usage :
+ * - `<dialog>` natif : focus piégé dedans, page derrière inerte, Échap ferme, et le focus revient
+ *   au bouton qui l'a ouverte ;
+ * - fermeture par le fond seulement si l'appui ET le relâchement y ont lieu (sélectionner du
+ *   texte ou glisser depuis l'intérieur ne ferme rien) ;
+ * - téléphone : tirer la poignée ou l'en-tête vers le bas ferme le panneau ;
+ * - le bouton Retour du téléphone ferme aussi le panneau (géré par la page qui l'ouvre).
  */
 const props = withDefaults(defineProps<{ open: boolean; title: string; size?: 'sm' | 'md' }>(), { size: 'md' })
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const titleId = useId()
+const backdrop = useBackdropClose(dialog, () => emit('close'))
 
 watch(
   () => [props.open, dialog.value] as const,
   ([open, element]) => {
     if (!element) return
-    if (open && !element.open) element.showModal()
-    else if (!open && element.open) element.close()
+    if (open && !element.open) {
+      element.style.transform = ''
+      element.showModal()
+    } else if (!open && element.open) element.close()
   },
   { immediate: true },
 )
 
-/** Un clic sur le fond (hors du cadre) ferme la fenêtre. */
-function onBackdrop(event: MouseEvent): void {
-  if (event.target === dialog.value) emit('close')
+// ---------------------------------------------------------------- Tirer vers le bas (téléphone)
+
+/** Au-delà de cette distance (ou d'un geste rapide), le panneau se ferme au relâchement. */
+const CLOSE_DISTANCE = 90
+const CLOSE_SPEED = 0.6 // px/ms
+let drag: { id: number; startY: number; startTime: number; dy: number } | null = null
+
+function onDragStart(event: PointerEvent): void {
+  const element = dialog.value
+  if (!element || event.pointerType === 'mouse' || !window.matchMedia('(max-width: 39.99rem)').matches) return
+  if ((event.target as HTMLElement).closest('button')) return
+  drag = { id: event.pointerId, startY: event.clientY, startTime: event.timeStamp, dy: 0 }
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+  element.style.transition = 'none'
 }
+
+function onDragMove(event: PointerEvent): void {
+  const element = dialog.value
+  if (!drag || !element || event.pointerId !== drag.id) return
+  // Vers le haut, une résistance : le panneau ne se décolle pas du bas.
+  const raw = event.clientY - drag.startY
+  drag.dy = raw > 0 ? raw : raw / 6
+  element.style.transform = `translateY(${drag.dy}px)`
+}
+
+function onDragEnd(event: PointerEvent): void {
+  const element = dialog.value
+  if (!drag || !element || event.pointerId !== drag.id) return
+  const speed = drag.dy / Math.max(1, event.timeStamp - drag.startTime)
+  const shouldClose = event.type === 'pointerup' && (drag.dy > CLOSE_DISTANCE || (drag.dy > 24 && speed > CLOSE_SPEED))
+  drag = null
+  element.style.transition = 'transform 180ms ease-out'
+  if (shouldClose) {
+    element.style.transform = 'translateY(100%)'
+    setTimeout(() => emit('close'), 160)
+  } else element.style.transform = ''
+}
+
+onBeforeUnmount(() => {
+  if (dialog.value?.open) dialog.value.close()
+})
 </script>
 
 <template>
@@ -37,10 +84,17 @@ function onBackdrop(event: MouseEvent): void {
     :aria-labelledby="titleId"
     @cancel.prevent="emit('close')"
     @close="open && emit('close')"
-    @click="onBackdrop"
+    @pointerdown="backdrop.onPointerDown"
+    @click="backdrop.onClick"
   >
     <div class="flex max-h-[inherit] flex-col">
-      <header class="flex flex-none items-center gap-3 border-b-[1.5px] border-line-soft py-2 pr-2 pl-5">
+      <header
+        class="site-sheet-header flex flex-none items-center gap-3 border-b-[1.5px] border-line-soft py-2 pr-2 pl-5"
+        @pointerdown="onDragStart"
+        @pointermove="onDragMove"
+        @pointerup="onDragEnd"
+        @pointercancel="onDragEnd"
+      >
         <span class="site-sheet-grip" aria-hidden="true" />
         <h2 :id="titleId" class="min-w-0 flex-1 truncate text-lg font-extrabold">
           <slot name="title">{{ title }}</slot>

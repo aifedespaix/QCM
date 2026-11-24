@@ -248,15 +248,16 @@ html:not([data-standalone]) .app-only {
 
 /* Fiche d'un QCM : étoiles, pastilles de membre, actions en icône, zone de commentaire. */
 @layer components {
-  /* Étoile vide : simple contour. Pleine : forme pleine, ambre foncé en clair et ambre pâle en sombre. */
+  /* Étoile vide : simple contour. Pleine : or chaud, contour plus soutenu pour rester visible sur le crème. */
   .site-star {
     fill: none;
     stroke: var(--qcm-ink-soft);
+    transition: fill 120ms ease-out, stroke 120ms ease-out;
   }
 
   .site-star-on {
-    fill: var(--qcm-retry-ink);
-    stroke: var(--qcm-retry-ink);
+    fill: var(--qcm-star);
+    stroke: var(--qcm-star-edge);
   }
 
   .site-star-button {
@@ -467,8 +468,11 @@ html:not([data-standalone]) .app-only {
       transform: translateX(-50%);
     }
 
-    .site-sheet header {
+    /* En-tête : zone de prise pour tirer le panneau vers le bas. */
+    .site-sheet-header {
       padding-top: 0.9rem;
+      touch-action: none;
+      cursor: grab;
     }
 
     /* Barre d'accueil des téléphones sans bouton : le bas du panneau reste dégagé. */

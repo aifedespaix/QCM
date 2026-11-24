@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import UiIcon, { type IconName } from './UiIcon.vue'
+import { useBackdropClose } from '../lib/backdrop.ts'
 
 /** Fenêtre de confirmation pour une action qui ne s'annule pas (suppression). */
 const props = withDefaults(
@@ -27,10 +28,8 @@ watch(
   { immediate: true },
 )
 
-/** Un clic sur le fond (hors du cadre) ferme la fenêtre. */
-function onBackdrop(event: MouseEvent): void {
-  if (event.target === dialog.value && !props.busy) emit('cancel')
-}
+/** Un clic sur le fond (appui et relâchement hors du cadre) ferme la fenêtre. */
+const backdrop = useBackdropClose(dialog, () => emit('cancel'), () => !props.busy)
 </script>
 
 <template>
@@ -39,7 +38,8 @@ function onBackdrop(event: MouseEvent): void {
     class="qcm-card m-auto w-[min(30rem,calc(100vw-2rem))] p-0 text-ink backdrop:bg-ink/45"
     aria-labelledby="confirm-title"
     @cancel.prevent="busy || emit('cancel')"
-    @click="onBackdrop"
+    @pointerdown="backdrop.onPointerDown"
+    @click="backdrop.onClick"
   >
     <div class="flex flex-col gap-4 p-5 sm:p-7">
       <div class="flex items-start gap-4">

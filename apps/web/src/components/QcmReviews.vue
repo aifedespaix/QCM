@@ -78,6 +78,17 @@ function rate(value: number): void {
   void applyRating(() => rateQcm(props.record.id, value), value, myRating.value ? 'Ta note est modifiée.' : 'Ta note est enregistrée.')
 }
 
+/** Flèches, Début, Fin : déplacent le focus d'étoile en étoile (l'aperçu suit), sans enregistrer. */
+function onStarKey(event: KeyboardEvent): void {
+  const stars = [...(event.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>('[role="radio"]')]
+  const current = stars.indexOf(document.activeElement as HTMLButtonElement)
+  const moves: Record<string, number> = { ArrowRight: current + 1, ArrowUp: current + 1, ArrowLeft: current - 1, ArrowDown: current - 1, Home: 0, End: stars.length - 1 }
+  const next = moves[event.key]
+  if (next === undefined) return
+  event.preventDefault()
+  stars[Math.min(stars.length - 1, Math.max(0, next))]?.focus()
+}
+
 function clearRating(): void {
   void applyRating(() => removeRating(props.record.id), 0, 'Ta note est retirée.')
 }
@@ -320,13 +331,16 @@ watch(
 
       <template v-else>
         <div class="flex flex-col items-center">
-        <div class="flex justify-center" role="group" aria-label="Ta note, de 1 à 5" @mouseleave="hoverRating = 0">
+        <!-- Groupe radio : Tab entre sur la note choisie, les flèches parcourent, Entrée ou Espace valide. -->
+        <div class="flex justify-center" role="radiogroup" aria-label="Ta note, de 1 à 5" @mouseleave="hoverRating = 0" @keydown="onStarKey">
           <button
             v-for="value in 5"
             :key="value"
             type="button"
+            role="radio"
             class="site-star-button size-14"
-            :aria-pressed="myRating === value"
+            :tabindex="value === (myRating || 1) ? 0 : -1"
+            :aria-checked="myRating === value"
             :aria-label="`${value} sur 5 : ${RATING_LABELS[value]}`"
             :disabled="ratingBusy"
             @mouseenter="hoverRating = value"

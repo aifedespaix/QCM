@@ -103,20 +103,39 @@ const commentTotal = computed(() => commentCount.value ?? record.value?.comment_
 
 /**
  * Panneau d'avis ouvert : « Noter » ou « Commentaires ». L'adresse suit (`#noter`, `#commentaires`) :
- * les liens des cartes de la bibliothèque ouvrent directement le bon panneau.
+ * les liens des cartes de la bibliothèque ouvrent directement le bon panneau. Ouvrir un panneau
+ * ajoute une entrée d'historique : le bouton Retour (téléphone, navigateur) le ferme au lieu de
+ * quitter la fiche.
  */
 type ReviewsView = 'rating' | 'comments'
 const reviewsView = ref<ReviewsView | null>(null)
 const HASHES: Record<ReviewsView, string> = { rating: '#noter', comments: '#commentaires' }
+/** L'entrée d'historique du panneau ouvert existe (à retirer en le fermant). */
+let sheetEntry = false
 
 function openReviews(view: ReviewsView): void {
   reviewsView.value = view
-  window.history.replaceState(window.history.state, '', HASHES[view])
+  if (sheetEntry) window.history.replaceState({ qcmSheet: view }, '', HASHES[view])
+  else {
+    window.history.pushState({ qcmSheet: view }, '', HASHES[view])
+    sheetEntry = true
+  }
 }
 
 function closeReviews(): void {
+  if (!reviewsView.value) return
   reviewsView.value = null
-  if (window.location.hash) window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+  if (sheetEntry) {
+    sheetEntry = false
+    window.history.back()
+  } else if (window.location.hash) window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+}
+
+/** Retour ou Suivant : le panneau suit l'adresse. */
+function onPopState(): void {
+  const view = viewFromHash()
+  reviewsView.value = view
+  sheetEntry = view !== null && !!window.history.state?.qcmSheet
 }
 
 function viewFromHash(): ReviewsView | null {
@@ -220,10 +239,24 @@ onMounted(async () => {
   }
   // `…?jouer=1` (lien « Relancer » du suivi, propositions de fin) démarre le lecteur tout de suite.
   if (new URLSearchParams(window.location.search).has('jouer')) void play()
-  else reviewsView.value = viewFromHash()
+  else {
+    // Arrivée par `#noter` / `#commentaires` : l'adresse sans ancre devient l'entrée précédente,
+    // pour que Retour ferme le panneau puis reste sur la fiche.
+    const view = viewFromHash()
+    if (view && window.history.state?.qcmSheet) {
+      // Page rechargée panneau ouvert : son entrée d'historique existe déjà.
+      reviewsView.value = view
+      sheetEntry = true
+    } else if (view) {
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+      openReviews(view)
+    }
+  }
+  window.addEventListener('popstate', onPopState)
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('popstate', onPopState)
   clearTimeout(toastTimer)
   for (const url of mediaUrls.values()) URL.revokeObjectURL(url)
 })

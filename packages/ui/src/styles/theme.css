@@ -21,6 +21,8 @@
   --qcm-correct-ink: #1f4d2e;
   --qcm-retry: #f5e3b5;       /* « pas encore », ambre doux */
   --qcm-retry-ink: #5c4208;
+  --qcm-star: #f7b50f;        /* étoile de note : or chaud */
+  --qcm-star-edge: #b47b05;   /* contour de l'étoile (contraste 3:1 sur le fond crème) */
   --qcm-focus: #3d5a80;       /* anneau de focus clavier */
   --qcm-badge-a: #bfd7ea;
   --qcm-badge-b: #f7d6bf;
@@ -45,6 +47,8 @@
   --qcm-correct-ink: #d3ecd6;
   --qcm-retry: #5a4720;
   --qcm-retry-ink: #f5e3b5;
+  --qcm-star: #ffc942;
+  --qcm-star-edge: #ffc942;
   --qcm-focus: #a9c7e8;
   --qcm-badge-a: #3a5874;
   --qcm-badge-b: #6b4a36;
