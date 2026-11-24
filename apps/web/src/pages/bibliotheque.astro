@@ -31,7 +31,7 @@ const description = scope
   ? `QCM ${scope} relus avant publication : à faire en ligne gratuitement, sans publicité ni chronomètre, ou à télécharger.`
   : 'Des QCM gratuits pour réviser du primaire au lycée, relus avant publication : maths, français, histoire, SVT, physique… À faire en ligne ou à télécharger.'
 // Recherche libre, tri ou « Mes QCM » : pages utiles au visiteur, pas aux moteurs.
-const noindex = !!query.search || query.sort !== 'recent' || query.mine || (initial !== null && initial.totalItems === 0)
+const noindex = !!query.search || !!query.chapter || query.sort !== 'recent' || query.mine || (initial !== null && initial.totalItems === 0)
 const canonical = libraryHref({ subject: query.subject, level: query.level, page: query.page })
 const site = Astro.site ?? Astro.url
 

@@ -1,7 +1,7 @@
 import PocketBase, { type RecordModel } from 'pocketbase'
 import { FILE_TIMEOUT_MS, withGetTimeout, withRetry } from './retry.ts'
 import { computed, getCurrentInstance, onMounted, ref } from 'vue'
-import type { QcmSort } from './libraryQuery.ts'
+import { SORT_EXPRESSIONS, type FacetRow, type QcmSort } from './libraryQuery.ts'
 import {
   QCM_MIME,
   qcmFileName,
@@ -101,17 +101,11 @@ export interface QcmQuery {
   search?: string
   subject?: Subject | ''
   level?: Level | ''
+  chapter?: string
   sort?: QcmSort
   page?: number
   /** Identifiant d'un membre : uniquement ses QCM, quel que soit leur statut (« Mes QCM »). */
   owner?: string
-}
-
-const SORTS: Record<QcmSort, string> = {
-  recent: '-created',
-  rating: '-rating_avg,-rating_count,-created',
-  comments: '-comment_count,-created',
-  title: 'title',
 }
 
 export const PAGE_SIZE = 24
@@ -122,12 +116,20 @@ export function listQcms(query: QcmQuery = {}) {
   if (search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: search }))
   if (query.subject) parts.push(pb.filter('subject = {:subject}', { subject: query.subject }))
   if (query.level) parts.push(pb.filter('level = {:level}', { level: query.level }))
+  if (query.chapter) parts.push(pb.filter('chapter = {:chapter}', { chapter: query.chapter }))
   return withRetry(() =>
     pb.collection('qcms').getList<QcmRecord>(query.page ?? 1, PAGE_SIZE, {
       filter: parts.join(' && '),
-      sort: SORTS[query.sort ?? 'recent'],
+      sort: SORT_EXPRESSIONS[query.sort ?? 'recent'],
       expand: 'owner',
     }),
+  )
+}
+
+/** Matière, niveau et chapitre de tous les QCM publiés : de quoi compter pour l'assistant de recherche. */
+export function listFacetRows(): Promise<FacetRow[]> {
+  return withRetry(() =>
+    pb.collection('qcms').getFullList<FacetRow & RecordModel>({ filter: 'status = "published"', fields: 'subject,level,chapter', batch: 500 }),
   )
 }
 

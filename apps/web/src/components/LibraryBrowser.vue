@@ -2,9 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subject } from '@qcm/core'
 import { downloadQcm, listQcms, useAuth, type QcmRecord, type QcmSort } from '../lib/pb.ts'
-import { defaultLibraryState, libraryHeading, libraryHref, type LibraryState } from '../lib/libraryQuery.ts'
+import { defaultLibraryState, libraryHeading, libraryHref, SORT_LABELS, type LibraryState } from '../lib/libraryQuery.ts'
 import { qcmPath } from '../lib/qcmUrl.ts'
 import UiIcon from './UiIcon.vue'
+import LibraryFinder from './LibraryFinder.vue'
 import { QcmSubjectBand, SUBJECT_HUES } from '@qcm/ui'
 import { isRecent, longDate, questionCountLabel, shortDate } from '../lib/subjects.ts'
 
@@ -27,10 +28,11 @@ const STATUS_CHIPS: Record<QcmRecord['status'], { label: string; tone: string }>
 
 const start = props.query ?? defaultLibraryState()
 const { user } = useAuth()
-const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; sort: QcmSort; mine: boolean }>({
+const filters = reactive<{ search: string; subject: Subject | ''; level: Level | ''; chapter: string; sort: QcmSort; mine: boolean }>({
   search: start.search,
   subject: start.subject,
   level: start.level,
+  chapter: start.chapter,
   sort: start.sort,
   // `/bibliotheque?mes=1` ouvre directement « Mes QCM ».
   mine: start.mine,
@@ -44,16 +46,29 @@ const totalItems = ref(props.initial?.totalItems ?? 0)
 const state = ref<'loading' | 'ready' | 'error'>(props.initial && !start.mine ? 'ready' : 'loading')
 /** Une recherche est en cours alors que des résultats sont affichés (pas de squelette, la liste reste). */
 const refreshing = ref(false)
-const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level))
+const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level || filters.chapter))
 let debounce: ReturnType<typeof setTimeout> | undefined
 
-const SORT_LABELS: Record<QcmSort, string> = { recent: 'Les plus récents', rating: 'Les mieux notés', comments: 'Les plus commentés', title: 'Titre (A à Z)' }
+/** Assistant de recherche (matière puis chapitre). */
+const finderOpen = ref(false)
+
+function applyFinder(choice: { subject: Subject | ''; chapter: string; level: Level | '' }): void {
+  Object.assign(filters, choice)
+  finderOpen.value = false
+  window.scrollTo({ top: 0 })
+}
+
+/** Changer de matière à la main efface le chapitre, qui n'existe plus dans la nouvelle. */
+function onSubjectChange(): void {
+  filters.chapter = ''
+}
 /** Téléphone : le panneau de filtres (matière, niveau, tri) est replié dans la barre du bas. */
 const sheetOpen = ref(false)
 /** Filtres choisis dans le panneau (la recherche est toujours visible, elle ne compte pas). */
 const activeFilters = computed(() =>
   [
     filters.subject ? SUBJECT_LABELS[filters.subject] : '',
+    filters.chapter,
     filters.level ? LEVEL_LABELS[filters.level] : '',
     filters.sort !== 'recent' ? SORT_LABELS[filters.sort] : '',
   ].filter(Boolean),
@@ -129,11 +144,11 @@ function goTo(target: number): void {
 }
 
 function resetFilters(): void {
-  Object.assign(filters, { search: '', subject: '', level: '', sort: 'recent' })
+  Object.assign(filters, { search: '', subject: '', level: '', chapter: '', sort: 'recent' })
 }
 
 watch(
-  () => [filters.search, filters.subject, filters.level, filters.sort],
+  () => [filters.search, filters.subject, filters.level, filters.chapter, filters.sort],
   () => {
     clearTimeout(debounce)
     debounce = setTimeout(() => {
@@ -195,8 +210,14 @@ onBeforeUnmount(() => {
         <h1 class="text-3xl font-extrabold sm:text-4xl">{{ heading }}</h1>
         <p class="mt-1 text-lg text-ink-soft">Des QCM relus avant publication, à essayer en ligne ou à télécharger.</p>
       </div>
-      <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="qcm-block qcm-block-primary qcm-block-sm" aria-haspopup="dialog" @click="finderOpen = true">
+          <UiIcon name="search" :size="18" /> Trouver un QCM
+        </button>
+        <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
+      </div>
     </header>
+    <LibraryFinder :open="finderOpen" :level="filters.level" :subject="filters.subject" :chapter="filters.chapter" @close="finderOpen = false" @apply="applyFinder" />
     <form class="qcm-panel sticky top-[calc(var(--site-header)+0.5rem)] z-20 hidden gap-3 p-3 sm:grid sm:grid-cols-3 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="submit">
       <div class="sm:col-span-3 lg:col-span-1">
         <!-- Libellés lus par les lecteurs d'écran : chaque liste affiche déjà son choix (« Toutes les matières »…). -->
@@ -208,7 +229,7 @@ onBeforeUnmount(() => {
       </div>
       <div>
         <label class="sr-only" for="lib-subject">Matière</label>
-        <select id="lib-subject" v-model="filters.subject" class="qcm-field">
+        <select id="lib-subject" v-model="filters.subject" class="qcm-field" @change="onSubjectChange">
           <option value="">Toutes les matières</option>
           <option v-for="subject in SUBJECTS" :key="subject" :value="subject">{{ SUBJECT_LABELS[subject] }}</option>
         </select>
@@ -223,10 +244,7 @@ onBeforeUnmount(() => {
       <div>
         <label class="sr-only" for="lib-sort">Trier par</label>
         <select id="lib-sort" v-model="filters.sort" class="qcm-field">
-          <option value="recent">Trier : les plus récents</option>
-          <option value="rating">Trier : les mieux notés</option>
-          <option value="comments">Trier : les plus commentés</option>
-          <option value="title">Trier : titre (A à Z)</option>
+          <option v-for="(label, value) in SORT_LABELS" :key="value" :value="value">Trier : {{ label.charAt(0).toLocaleLowerCase('fr') + label.slice(1) }}</option>
         </select>
       </div>
     </form>
@@ -249,12 +267,12 @@ onBeforeUnmount(() => {
         <div id="lib-sheet" v-show="sheetOpen" class="flex flex-col gap-3">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-extrabold">Filtres</h2>
-            <button type="button" class="qcm-text-button" :disabled="activeFilters.length === 0" @click="Object.assign(filters, { subject: '', level: '', sort: 'recent' })">Effacer</button>
+            <button type="button" class="qcm-text-button" :disabled="activeFilters.length === 0" @click="Object.assign(filters, { subject: '', level: '', chapter: '', sort: 'recent' })">Effacer</button>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="qcm-label" for="lib-m-subject">Matière</label>
-              <select id="lib-m-subject" v-model="filters.subject" class="qcm-field">
+              <select id="lib-m-subject" v-model="filters.subject" class="qcm-field" @change="onSubjectChange">
                 <option value="">Toutes</option>
                 <option v-for="subject in SUBJECTS" :key="subject" :value="subject">{{ SUBJECT_LABELS[subject] }}</option>
               </select>
@@ -279,7 +297,7 @@ onBeforeUnmount(() => {
         <!-- Filtres actifs, lisibles sans ouvrir le panneau. -->
         <p v-if="!sheetOpen && activeFilters.length > 0" class="flex items-center gap-2 text-sm font-bold text-ink-soft">
           <span class="min-w-0 flex-1 truncate">{{ activeFilters.join(' · ') }}</span>
-          <button type="button" class="qcm-text-button min-h-9" @click="Object.assign(filters, { subject: '', level: '', sort: 'recent' })">Effacer</button>
+          <button type="button" class="qcm-text-button min-h-9" @click="Object.assign(filters, { subject: '', level: '', chapter: '', sort: 'recent' })">Effacer</button>
         </p>
 
         <div class="flex items-center gap-2">
@@ -347,7 +365,12 @@ onBeforeUnmount(() => {
     </div>
 
     <template v-else>
-      <p class="text-base font-bold text-ink-soft" role="status">{{ refreshing ? 'Recherche…' : totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
+      <div class="flex flex-wrap items-center gap-2">
+        <p class="text-base font-bold text-ink-soft" role="status">{{ refreshing ? 'Recherche…' : totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
+        <button v-if="filters.chapter" type="button" class="qcm-chip max-w-full cursor-pointer" :title="`Retirer le chapitre « ${filters.chapter} »`" @click="filters.chapter = ''">
+          <span class="truncate">Chapitre : {{ filters.chapter }}</span> <span aria-hidden="true">×</span><span class="sr-only">Retirer ce filtre</span>
+        </button>
+      </div>
       <!--
         Cartes compactes : toute la carte mène à la fiche (lien étiré sur le titre), seule l'icône
         de téléchargement (et « Modifier » pour ses propres QCM) reste au-dessus.

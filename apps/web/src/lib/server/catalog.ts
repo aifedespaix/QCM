@@ -8,9 +8,7 @@
  */
 import PocketBase, { ClientResponseError } from 'pocketbase'
 import { PAGE_SIZE, type QcmRecord } from '../pb.ts'
-import type { LibraryState } from '../libraryQuery.ts'
-
-const SORTS = { recent: '-created', rating: '-rating_avg,-rating_count,-created', comments: '-comment_count,-created', title: 'title' } as const
+import { SORT_EXPRESSIONS, type LibraryState } from '../libraryQuery.ts'
 
 /** Une réponse interne prend quelques millisecondes : au-delà, on rend la page sans attendre. */
 const TIMEOUT_MS = 2500
@@ -57,11 +55,12 @@ export async function fetchLibraryPage(state: LibraryState): Promise<LibraryPage
   if (state.search) parts.push(pb.filter('(title ~ {:q} || chapter ~ {:q} || description ~ {:q})', { q: state.search }))
   if (state.subject) parts.push(pb.filter('subject = {:subject}', { subject: state.subject }))
   if (state.level) parts.push(pb.filter('level = {:level}', { level: state.level }))
+  if (state.chapter) parts.push(pb.filter('chapter = {:chapter}', { chapter: state.chapter }))
   try {
     const result = await attempt((signal) =>
       pb.collection('qcms').getList<QcmRecord>(state.page, PAGE_SIZE, {
         filter: parts.join(' && '),
-        sort: SORTS[state.sort],
+        sort: SORT_EXPRESSIONS[state.sort],
         expand: 'owner',
         signal,
       }),
