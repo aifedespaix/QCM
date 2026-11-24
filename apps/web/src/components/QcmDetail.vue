@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
 import { SUBJECT_LABELS, suggestNext, type QcmArchive } from '@qcm/core'
 import { QcmPlayer, QcmSubjectBand, SUBJECT_HUES, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
 import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, listQcms, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
@@ -102,18 +102,30 @@ const updatedLater = computed(() => !!record.value?.updated && formatDate(record
 const commentTotal = computed(() => commentCount.value ?? record.value?.comment_count ?? 0)
 
 /**
- * Téléphone : quand les boutons de la fiche sortent de l'écran (lecture des avis), une barre
- * « Essayer en ligne » reste à portée de pouce au-dessus des onglets du site.
+ * Panneau d'avis ouvert : « Noter » ou « Commentaires ». L'adresse suit (`#noter`, `#commentaires`) :
+ * les liens des cartes de la bibliothèque ouvrent directement le bon panneau.
  */
-const actionsEl = ref<HTMLElement | null>(null)
-const actionsVisible = ref(true)
-let actionsObserver: IntersectionObserver | undefined
-watch(actionsEl, (el) => {
-  actionsObserver?.disconnect()
-  if (!el || typeof IntersectionObserver === 'undefined') return
-  actionsObserver = new IntersectionObserver(([entry]) => (actionsVisible.value = !!entry?.isIntersecting))
-  actionsObserver.observe(el)
-})
+type ReviewsView = 'rating' | 'comments'
+const reviewsView = ref<ReviewsView | null>(null)
+const HASHES: Record<ReviewsView, string> = { rating: '#noter', comments: '#commentaires' }
+
+function openReviews(view: ReviewsView): void {
+  reviewsView.value = view
+  window.history.replaceState(window.history.state, '', HASHES[view])
+}
+
+function closeReviews(): void {
+  reviewsView.value = null
+  if (window.location.hash) window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+}
+
+function viewFromHash(): ReviewsView | null {
+  const hash = window.location.hash
+  if (hash === HASHES.rating) return 'rating'
+  // `#avis` : ancienne ancre de la section, gardée pour les liens déjà partagés.
+  if (hash === HASHES.comments || hash === '#avis') return 'comments'
+  return null
+}
 
 /** Message bref de confirmation, effacé tout seul. */
 function showToast(text: string): void {
@@ -208,10 +220,10 @@ onMounted(async () => {
   }
   // `…?jouer=1` (lien « Relancer » du suivi, propositions de fin) démarre le lecteur tout de suite.
   if (new URLSearchParams(window.location.search).has('jouer')) void play()
+  else reviewsView.value = viewFromHash()
 })
 
 onBeforeUnmount(() => {
-  actionsObserver?.disconnect()
   clearTimeout(toastTimer)
   for (const url of mediaUrls.values()) URL.revokeObjectURL(url)
 })
@@ -313,27 +325,40 @@ onBeforeUnmount(() => {
                 <UiIcon name="image" :size="16" :stroke="2" class="text-ink-soft" />
                 Avec images
               </li>
-              <li>
-                <a href="#avis" class="qcm-stat" :aria-label="record.rating_count > 0 ? `Note ${average} sur 5, ${record.rating_count} notes : voir les avis` : 'Pas encore de note : voir les avis'">
-                  <UiIcon name="star" :size="16" :stroke="2" class="site-star" :class="record.rating_count > 0 ? 'site-star-on' : ''" />
-                  <template v-if="record.rating_count > 0">
-                    {{ average }}
-                    <span class="font-semibold text-ink-soft">({{ record.rating_count }})</span>
-                  </template>
-                  <span v-else class="font-semibold text-ink-soft">Pas de note</span>
-                </a>
-              </li>
-              <li>
-                <a href="#avis" class="qcm-stat" :aria-label="`${commentTotal} commentaire${commentTotal > 1 ? 's' : ''} : voir les avis`">
-                  <UiIcon name="comment" :size="16" :stroke="2" />
-                  {{ commentTotal }}
-                </a>
-              </li>
             </ul>
+
+            <!-- Avis : la note et les commentaires s'ouvrent dans un panneau, sans quitter la fiche -->
+            <div class="flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="qcm-pill-button"
+                aria-haspopup="dialog"
+                :aria-label="record.rating_count > 0 ? `Note ${average} sur 5, ${record.rating_count} ${record.rating_count > 1 ? 'notes' : 'note'} : noter ce QCM` : 'Pas encore de note : noter ce QCM'"
+                @click="openReviews('rating')"
+              >
+                <UiIcon name="star" :size="18" :stroke="2" class="site-star" :class="record.rating_count > 0 ? 'site-star-on' : ''" />
+                <template v-if="record.rating_count > 0">
+                  {{ average }}
+                  <span class="font-semibold text-ink-soft">({{ record.rating_count }})</span>
+                </template>
+                <span class="qcm-pill-button-action">Noter</span>
+              </button>
+              <button
+                type="button"
+                class="qcm-pill-button"
+                aria-haspopup="dialog"
+                :aria-label="`${commentTotal} commentaire${commentTotal > 1 ? 's' : ''} : les lire ou en écrire un`"
+                @click="openReviews('comments')"
+              >
+                <UiIcon name="comment" :size="18" :stroke="2" />
+                {{ commentTotal }}
+                <span class="hidden font-semibold text-ink-soft min-[26rem]:inline">{{ commentTotal > 1 ? 'commentaires' : 'commentaire' }}</span>
+              </button>
+            </div>
 
             <p v-if="record.description" class="max-w-prose text-base leading-relaxed whitespace-pre-line sm:text-lg">{{ record.description }}</p>
 
-            <div ref="actionsEl" class="mt-1 flex flex-wrap items-center gap-2.5">
+            <div class="mt-1 flex flex-wrap items-center gap-2.5">
               <button type="button" class="qcm-block qcm-block-primary min-h-14 flex-1 px-6 text-lg sm:flex-none" :disabled="starting" @click="play">
                 <UiIcon name="play" :size="22" filled />
                 {{ starting ? 'Préparation…' : 'Essayer en ligne' }}
@@ -372,24 +397,10 @@ onBeforeUnmount(() => {
         </div>
       </article>
 
-      <QcmReviews :record="record" @rated="record = $event" @notice="showToast" @count="commentCount = $event" />
-      <!-- Place pour la barre « Essayer » fixée en bas (téléphone). -->
-      <div class="h-14 sm:hidden" aria-hidden="true" />
     </div>
 
-    <!-- Téléphone : « Essayer » reste à portée quand les boutons de la fiche ont défilé. -->
-    <Transition name="site-dock">
-      <div v-if="!playing && !actionsVisible" class="fixed inset-x-0 z-30 flex items-center gap-2 border-t-2 border-line bg-surface px-4 py-2.5 shadow-soft sm:hidden" style="bottom: var(--site-tabbar)">
-        <p class="min-w-0 flex-1 truncate text-sm font-extrabold">{{ record.title }}</p>
-        <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" aria-label="Télécharger" @click="downloadQcm(record)">
-          <UiIcon name="download" :size="18" />
-        </button>
-        <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-none px-4" :disabled="starting" @click="play">
-          <UiIcon name="play" :size="18" filled />
-          Essayer
-        </button>
-      </div>
-    </Transition>
+    <QcmReviews :record="record" :view="reviewsView" @close="closeReviews" @rated="record = $event" @notice="showToast" @count="commentCount = $event" />
+
 
     <ConfirmDialog
       :open="confirmingDelete"

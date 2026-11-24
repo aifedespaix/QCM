@@ -385,22 +385,133 @@ html:not([data-standalone]) .app-only {
     transform: translate(-50%, 6px);
   }
 
-  /* Barre d'action fixée en bas (fiche d'un QCM sur téléphone) : glisse depuis le bas. */
-  .site-dock-enter-active,
-  .site-dock-leave-active {
-    transition: opacity 160ms ease-out, transform 160ms ease-out;
+  /* Bouton-pastille (note, commentaires d'une fiche) : ouvre un panneau, grande cible tactile. */
+  .qcm-pill-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.25rem 0.85rem;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 1.5px solid var(--qcm-line-soft);
+    border-radius: 9999px;
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: border-color 120ms ease-out, background-color 120ms ease-out;
   }
 
-  .site-dock-enter-from,
-  .site-dock-leave-to {
-    opacity: 0;
-    transform: translateY(100%);
+  .qcm-pill-button:hover {
+    border-color: var(--qcm-line);
+    background-color: var(--qcm-sunken);
+  }
+
+  /* Invitation à agir dans la pastille (« Noter »). */
+  .qcm-pill-button-action {
+    margin: 0 -0.4rem 0 0.15rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 9999px;
+    background-color: var(--qcm-primary);
+    font-size: 0.8rem;
+  }
+
+  /*
+   * Panneau (`SheetDialog`) : monte du bas sur téléphone, fenêtre centrée sur grand écran.
+   * La hauteur maximale passe au contenu (`max-height: inherit`) pour que seul le milieu défile.
+   */
+  .site-sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 88dvh;
+    margin: auto auto 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--qcm-surface);
+    color: var(--qcm-ink);
+    border: 2px solid var(--qcm-line);
+    border-bottom: 0;
+    border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+    box-shadow: var(--qcm-soft-shadow);
+  }
+
+  /* Panneau ouvert : la page derrière ne défile plus. */
+  html:has(.site-sheet[open]) {
+    overflow: hidden;
+  }
+
+  .site-sheet::backdrop {
+    background-color: rgb(20 22 27 / 0.45);
+  }
+
+  .site-sheet[open] {
+    animation: site-sheet-up 200ms ease-out;
+  }
+
+  .site-sheet-grip {
+    display: none;
+  }
+
+  @media (max-width: 39.99rem) {
+    /* Poignée visuelle : signale un panneau, comme sur les applications du téléphone. */
+    .site-sheet-grip {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      display: block;
+      width: 40px;
+      height: 4px;
+      border-radius: 9999px;
+      background-color: var(--qcm-line-soft);
+      transform: translateX(-50%);
+    }
+
+    .site-sheet header {
+      padding-top: 0.9rem;
+    }
+
+    /* Barre d'accueil des téléphones sans bouton : le bas du panneau reste dégagé. */
+    .site-sheet > div > :last-child {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (min-width: 40rem) {
+    .site-sheet {
+      width: min(36rem, calc(100vw - 2rem));
+      max-height: min(44rem, 85dvh);
+      margin: auto;
+      border-bottom: 2px solid var(--qcm-line);
+      border-radius: var(--radius-3xl);
+    }
+
+    .site-sheet-sm {
+      width: min(28rem, calc(100vw - 2rem));
+    }
+
+    .site-sheet[open] {
+      animation-name: site-sheet-in;
+    }
+  }
+
+  @keyframes site-sheet-up {
+    from {
+      transform: translateY(40%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes site-sheet-in {
+    from {
+      transform: translateY(12px) scale(0.98);
+      opacity: 0;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .site-dock-enter-active,
-    .site-dock-leave-active {
-      transition: none;
+    .site-sheet[open] {
+      animation: none;
     }
   }
 }

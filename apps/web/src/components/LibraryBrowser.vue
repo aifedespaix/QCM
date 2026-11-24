@@ -376,10 +376,10 @@ onBeforeUnmount(() => {
               </span>
               <span v-if="!mineActive && isRecent(item.created)" class="qcm-chip qcm-chip-sm flex-none bg-primary text-ink">Nouveau</span>
             </p>
-            <!-- Note et commentaires : raccourcis vers les avis de la fiche, au-dessus du lien de la carte. -->
+            <!-- Note et commentaires : ouvrent directement le panneau « Noter » ou « Commentaires » de la fiche. -->
             <div class="mt-auto -ml-2 flex items-center gap-0.5 pt-1.5">
               <a
-                :href="`${qcmPath(item)}#avis`"
+                :href="`${qcmPath(item)}#noter`"
                 class="qcm-stat relative z-10"
                 :aria-label="item.rating_count > 0 ? `Note ${item.rating_avg.toFixed(1)} sur 5, ${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'} : voir les avis` : `Pas encore noté : donner une note à ${item.title}`"
                 :title="item.rating_count > 0 ? `${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'}` : 'Pas encore noté'"
@@ -392,7 +392,7 @@ onBeforeUnmount(() => {
                 <span v-else class="font-semibold text-ink-soft">Noter</span>
               </a>
               <a
-                :href="`${qcmPath(item)}#avis`"
+                :href="`${qcmPath(item)}#commentaires`"
                 class="qcm-stat relative z-10"
                 :aria-label="(item.comment_count ?? 0) === 0 ? `Aucun commentaire : commenter ${item.title}` : `${item.comment_count} commentaire${(item.comment_count ?? 0) > 1 ? 's' : ''} : les lire`"
                 :title="(item.comment_count ?? 0) === 0 ? 'Aucun commentaire' : `${item.comment_count} commentaire${(item.comment_count ?? 0) > 1 ? 's' : ''}`"
