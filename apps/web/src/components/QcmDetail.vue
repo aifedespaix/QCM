@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
-import { LEVEL_LABELS, SUBJECT_LABELS, suggestNext, type QcmArchive } from '@qcm/core'
-import { QcmPlayer, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { SUBJECT_LABELS, suggestNext, type QcmArchive } from '@qcm/core'
+import { QcmPlayer, QcmSubjectBand, SUBJECT_HUES, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
 import { deleteQcm, downloadQcm, fetchQcmArchive, getQcm, listQcms, qcmThumbnailUrl, setQcmStatus, useAuth, type QcmRecord } from '../lib/pb.ts'
-import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
+import { questionCountLabel } from '../lib/subjects.ts'
+import { libraryHref } from '../lib/libraryQuery.ts'
 import { qcmPath } from '../lib/qcmUrl.ts'
 import ConfirmDialog from './ConfirmDialog.vue'
 import QcmReviews from './QcmReviews.vue'
@@ -95,6 +96,24 @@ function formatDate(value: string): string {
   // Fuseau fixé : le serveur et le navigateur écrivent la même date.
   return new Date(value.replace(' ', 'T')).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Paris' })
 }
+
+/** Mis à jour un autre jour que la publication : la date de mise à jour mérite d'être affichée. */
+const updatedLater = computed(() => !!record.value?.updated && formatDate(record.value.updated) !== formatDate(record.value.created))
+const commentTotal = computed(() => commentCount.value ?? record.value?.comment_count ?? 0)
+
+/**
+ * Téléphone : quand les boutons de la fiche sortent de l'écran (lecture des avis), une barre
+ * « Essayer en ligne » reste à portée de pouce au-dessus des onglets du site.
+ */
+const actionsEl = ref<HTMLElement | null>(null)
+const actionsVisible = ref(true)
+let actionsObserver: IntersectionObserver | undefined
+watch(actionsEl, (el) => {
+  actionsObserver?.disconnect()
+  if (!el || typeof IntersectionObserver === 'undefined') return
+  actionsObserver = new IntersectionObserver(([entry]) => (actionsVisible.value = !!entry?.isIntersecting))
+  actionsObserver.observe(el)
+})
 
 /** Message bref de confirmation, effacé tout seul. */
 function showToast(text: string): void {
@@ -192,6 +211,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  actionsObserver?.disconnect()
   clearTimeout(toastTimer)
   for (const url of mediaUrls.values()) URL.revokeObjectURL(url)
 })
@@ -225,164 +245,151 @@ onBeforeUnmount(() => {
     <!-- Plein écran : le site s'efface, il ne reste que la question. La fiche garde son état derrière. -->
     <QcmPlayer v-if="playing && archive" :qcm="archive.data" :resolve-media="resolveMedia" closable immersive :suggestions="suggestions" @close="playing = false" @suggest="playSuggestion" @library="goLibrary" @result="recordResult(historyKey, $event)" />
 
-    <div v-show="!playing" class="mx-auto flex max-w-6xl flex-col gap-4">
-      <a href="/bibliotheque" class="qcm-text-button -ml-2 self-start">
-        <UiIcon name="back" :size="20" />
-        Bibliothèque
-      </a>
+    <div v-show="!playing" class="mx-auto flex max-w-4xl flex-col gap-4">
+      <nav aria-label="Fil d'Ariane" class="-ml-2 flex min-w-0 items-center gap-0.5 text-sm font-bold text-ink-soft">
+        <a href="/bibliotheque" class="qcm-text-button min-h-10 px-2">
+          <UiIcon name="back" :size="18" />
+          Bibliothèque
+        </a>
+        <span aria-hidden="true">/</span>
+        <a :href="libraryHref({ subject: record.subject })" class="qcm-text-button min-h-10 truncate px-2">{{ SUBJECT_LABELS[record.subject] }}</a>
+      </nav>
 
-      <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_21rem] lg:items-start lg:gap-6">
-        <!-- Présentation -->
-        <div class="flex min-w-0 flex-col gap-4 lg:col-start-1">
-          <p v-if="record.status !== 'published'" role="status" class="qcm-note qcm-note-retry flex items-start gap-3">
-            <UiIcon :name="STATUS[record.status].icon" class="mt-0.5" />
-            <span v-if="record.status === 'pending'">En attente de validation : ce QCM n'est pas encore visible dans la bibliothèque.</span>
-            <span v-else>Ce QCM est masqué de la bibliothèque.</span>
-          </p>
+      <!-- Gestion : une barre compacte, visible uniquement par l'auteur et la modération -->
+      <section
+        v-if="isOwner || isAdmin"
+        class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border-2 border-dashed border-ink-soft bg-surface p-3 sm:pl-4"
+        aria-labelledby="manage-title"
+      >
+        <h2 id="manage-title" class="sr-only">{{ isOwner ? 'Gérer mon QCM' : 'Modération' }}</h2>
+        <span class="qcm-chip" :class="STATUS[record.status].tone">
+          <UiIcon :name="STATUS[record.status].icon" :size="16" :stroke="2.6" />
+          {{ STATUS[record.status].label }}
+        </span>
+        <p class="min-w-0 flex-1 basis-48 text-sm text-ink-soft">
+          <template v-if="record.status === 'pending'">Pas encore visible dans la bibliothèque.</template>
+          <template v-else-if="record.status === 'hidden'">Masqué de la bibliothèque.</template>
+          <template v-else-if="isOwner && !isAdmin">Après une modification, il est relu avant de redevenir public.</template>
+          <a v-else-if="isAdmin" href="/admin" class="font-bold text-ink underline">File de modération</a>
+        </p>
+        <div class="flex flex-wrap items-center gap-2">
+          <a v-if="isOwner" :href="`/editeur?id=${record.id}`" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs no-underline">
+            <UiIcon name="pencil" :size="18" />
+            Modifier
+          </a>
+          <template v-if="isAdmin">
+            <button v-if="record.status !== 'published'" type="button" class="qcm-block qcm-block-sm qcm-block-xs bg-correct text-correct-ink" :disabled="manageBusy" @click="moderate('published')">
+              <UiIcon name="check" :size="18" :stroke="3" />
+              Publier
+            </button>
+            <button v-if="record.status !== 'hidden'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm qcm-block-xs" :disabled="manageBusy" @click="moderate('hidden')">
+              <UiIcon name="eye-off" :size="18" />
+              Masquer
+            </button>
+          </template>
+          <button type="button" class="qcm-icon-button qcm-icon-button-sm bg-retry text-retry-ink" :disabled="manageBusy" aria-label="Supprimer ce QCM" title="Supprimer" @click="((deleteError = ''), (confirmingDelete = true))">
+            <UiIcon name="trash" :size="18" />
+          </button>
+        </div>
+        <p v-if="manageError" role="alert" class="qcm-note qcm-note-retry basis-full">{{ manageError }}</p>
+      </section>
 
-          <section class="qcm-panel overflow-hidden" aria-labelledby="qcm-title">
-            <div class="h-3" :class="SUBJECT_TONES[record.subject]" aria-hidden="true" />
-            <div class="flex flex-col gap-4 p-5 sm:p-8">
-              <p class="flex flex-wrap gap-1.5">
-                <span class="qcm-chip px-3 py-1 text-base" :class="SUBJECT_TONES[record.subject]">{{ SUBJECT_LABELS[record.subject] }}</span>
-                <span class="qcm-chip px-3 py-1 text-base">{{ LEVEL_LABELS[record.level] }}</span>
-              </p>
-              <div>
-                <h1 id="qcm-title" class="text-3xl leading-tight font-extrabold sm:text-4xl">{{ record.title }}</h1>
-                <p class="mt-2 text-xl font-semibold text-ink-soft">{{ record.chapter }}</p>
-              </div>
-              <p v-if="record.description" class="max-w-prose text-lg whitespace-pre-line">{{ record.description }}</p>
+      <!-- Présentation et actions : tout l'essentiel tient dans le premier écran -->
+      <article class="qcm-panel overflow-hidden" :class="SUBJECT_HUES[record.subject]" aria-labelledby="qcm-title">
+        <QcmSubjectBand :subject="record.subject" :level="record.level" class="sm:px-4" />
+        <div class="flex gap-6 p-5 sm:p-7">
+          <div class="flex min-w-0 flex-1 flex-col gap-3">
+            <div>
+              <h1 id="qcm-title" class="text-2xl leading-tight font-extrabold sm:text-4xl">{{ record.title }}</h1>
+              <p class="mt-1 text-base font-semibold text-ink-soft sm:text-lg">{{ record.chapter }}</p>
+            </div>
 
-              <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t-[1.5px] border-line-soft pt-4">
-                <p class="flex min-w-0 items-center gap-3">
-                  <span class="site-avatar bg-selected" aria-hidden="true">{{ (ownerName.trim()[0] ?? '?').toLocaleUpperCase('fr') }}</span>
-                  <span class="min-w-0 leading-snug">
-                    <span class="block truncate font-bold">Proposé par {{ ownerName }}</span>
-                    <span class="block text-sm text-ink-soft">le {{ formatDate(record.created) }}</span>
-                  </span>
-                </p>
-                <a href="#avis" class="qcm-text-button -mr-2 gap-x-3" :aria-label="record.rating_count > 0 ? `Note ${average} sur 5, voir les avis` : 'Voir les avis'">
-                  <span v-if="record.rating_count > 0" class="inline-flex items-center gap-1.5">
-                    <UiIcon name="star" :size="20" class="site-star site-star-on" />
+            <ul class="-ml-2 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-sm font-bold" aria-label="En bref">
+              <li class="qcm-stat">
+                <UiIcon name="list" :size="16" :stroke="2" class="text-ink-soft" />
+                {{ questionCountLabel(record.question_count) }}
+              </li>
+              <li v-if="record.has_images" class="qcm-stat">
+                <UiIcon name="image" :size="16" :stroke="2" class="text-ink-soft" />
+                Avec images
+              </li>
+              <li>
+                <a href="#avis" class="qcm-stat" :aria-label="record.rating_count > 0 ? `Note ${average} sur 5, ${record.rating_count} notes : voir les avis` : 'Pas encore de note : voir les avis'">
+                  <UiIcon name="star" :size="16" :stroke="2" class="site-star" :class="record.rating_count > 0 ? 'site-star-on' : ''" />
+                  <template v-if="record.rating_count > 0">
                     {{ average }}
                     <span class="font-semibold text-ink-soft">({{ record.rating_count }})</span>
-                  </span>
-                  <span v-else class="inline-flex items-center gap-1.5">
-                    <UiIcon name="star" :size="20" class="site-star" />
-                    Pas encore de note
-                  </span>
-                  <span v-if="commentCount !== null" class="inline-flex items-center gap-1.5">
-                    <UiIcon name="comment" :size="20" />
-                    {{ commentCount }}
-                  </span>
+                  </template>
+                  <span v-else class="font-semibold text-ink-soft">Pas de note</span>
+                </a>
+              </li>
+              <li>
+                <a href="#avis" class="qcm-stat" :aria-label="`${commentTotal} commentaire${commentTotal > 1 ? 's' : ''} : voir les avis`">
+                  <UiIcon name="comment" :size="16" :stroke="2" />
+                  {{ commentTotal }}
+                </a>
+              </li>
+            </ul>
+
+            <p v-if="record.description" class="max-w-prose text-base leading-relaxed whitespace-pre-line sm:text-lg">{{ record.description }}</p>
+
+            <div ref="actionsEl" class="mt-1 flex flex-wrap items-center gap-2.5">
+              <button type="button" class="qcm-block qcm-block-primary min-h-14 flex-1 px-6 text-lg sm:flex-none" :disabled="starting" @click="play">
+                <UiIcon name="play" :size="22" filled />
+                {{ starting ? 'Préparation…' : 'Essayer en ligne' }}
+              </button>
+              <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm min-h-14 px-5" title="Le fichier .qcm s'ouvre dans le lecteur QCM, même sans connexion." @click="downloadQcm(record)">
+                <UiIcon name="download" :size="20" />
+                <span>Télécharger</span>
+              </button>
+              <div class="flex items-center">
+                <button v-if="record.status === 'published'" type="button" class="site-icon-action" aria-label="Copier le lien du QCM" title="Copier le lien" @click="copyLink">
+                  <UiIcon name="link" :size="20" />
+                </button>
+                <a v-if="!isOwner" :href="`/editeur?id=${record.id}`" class="site-icon-action" aria-label="Modifier une copie de ce QCM" title="Modifier une copie (l'original ne change pas, ta version est publiée à ton nom)">
+                  <UiIcon name="copy" :size="20" />
                 </a>
               </div>
             </div>
-          </section>
-        </div>
-
-        <!-- Actions : sous la présentation sur téléphone, colonne collante sur grand écran -->
-        <aside class="qcm-panel overflow-hidden lg:sticky lg:top-[calc(var(--site-header)+1.25rem)] lg:col-start-2 lg:row-span-3 lg:row-start-1" aria-label="Lancer ce QCM">
-          <img v-if="qcmThumbnailUrl(record)" :src="qcmThumbnailUrl(record)" alt="" width="480" height="270" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
-          <div class="flex flex-col gap-3 p-5">
-            <button type="button" class="qcm-block qcm-block-primary text-xl" :disabled="starting" @click="play">
-              <UiIcon name="play" :size="24" filled />
-              {{ starting ? 'Préparation…' : 'Essayer en ligne' }}
-            </button>
-            <button type="button" class="qcm-block qcm-block-quiet" @click="downloadQcm(record)">
-              <UiIcon name="download" />
-              Télécharger
-            </button>
-            <p class="text-sm text-ink-soft">Le fichier .qcm s'ouvre dans le lecteur QCM, même sans connexion.</p>
             <p v-if="playError" role="alert" class="qcm-note qcm-note-retry">{{ playError }}</p>
 
-            <dl class="flex flex-col gap-2.5 border-t-[1.5px] border-line-soft pt-4 text-base">
-              <div class="flex items-center gap-3">
-                <UiIcon name="list" class="text-ink-soft" />
-                <dt class="sr-only">Longueur</dt>
-                <dd class="font-bold">{{ questionCountLabel(record.question_count) }}</dd>
-              </div>
-              <div class="flex items-center gap-3">
-                <UiIcon name="image" class="text-ink-soft" />
-                <dt class="sr-only">Images</dt>
-                <dd class="font-bold">{{ record.has_images ? 'Avec images' : 'Sans image' }}</dd>
-              </div>
-              <div class="flex items-center gap-3">
-                <UiIcon name="calendar" class="text-ink-soft" />
-                <dt class="sr-only">Dernière mise à jour</dt>
-                <dd class="font-bold">Mis à jour le {{ formatDate(record.updated || record.created) }}</dd>
-              </div>
-            </dl>
-
-            <div v-if="!isOwner || record.status === 'published'" class="-mx-2 flex flex-col border-t-[1.5px] border-line-soft pt-2">
-              <a v-if="!isOwner" :href="`/editeur?id=${record.id}`" class="qcm-text-button" title="L'original ne change pas : ta version est publiée à ton nom.">
-                <UiIcon name="copy" :size="20" />
-                Modifier une copie
-              </a>
-              <button v-if="record.status === 'published'" type="button" class="qcm-text-button" @click="copyLink">
-                <UiIcon name="link" :size="20" />
-                Copier le lien
-              </button>
-            </div>
-          </div>
-        </aside>
-
-        <!-- Gestion : visible uniquement par la personne qui a créé le QCM et par la modération -->
-        <section v-if="isOwner || isAdmin" class="flex flex-col gap-4 rounded-3xl border-2 border-dashed border-ink-soft bg-surface p-5 sm:p-6 lg:col-start-1" aria-labelledby="manage-title">
-          <header class="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span class="qcm-tile bg-selected"><UiIcon :name="isOwner ? 'pencil' : 'shield'" :size="26" /></span>
-            <div class="min-w-0 flex-1 basis-44">
-              <h2 id="manage-title" class="text-xl leading-tight font-extrabold">{{ isOwner ? 'Gérer mon QCM' : 'Modération' }}</h2>
-              <p class="text-sm text-ink-soft">{{ isOwner ? 'Les autres membres ne voient pas ce cadre.' : 'Cadre réservé à la modération.' }}</p>
-            </div>
-            <span class="qcm-chip px-3 py-1" :class="STATUS[record.status].tone">
-              <UiIcon :name="STATUS[record.status].icon" :size="16" :stroke="2.6" />
-              {{ STATUS[record.status].label }}
-            </span>
-          </header>
-
-          <div class="flex flex-wrap items-center gap-3">
-            <a v-if="isOwner" :href="`/editeur?id=${record.id}`" class="qcm-block qcm-block-primary qcm-block-sm flex-1 px-5 no-underline sm:flex-none">
-              <UiIcon name="pencil" :size="20" />
-              Modifier
-            </a>
-            <template v-if="isAdmin">
-              <button
-                v-if="record.status !== 'published'"
-                type="button"
-                class="qcm-block qcm-block-primary qcm-block-sm flex-1 bg-correct px-5 text-correct-ink sm:flex-none"
-                :disabled="manageBusy"
-                @click="moderate('published')"
-              >
-                <UiIcon name="check" :size="20" :stroke="3" />
-                Valider et publier
-              </button>
-              <button v-if="record.status !== 'hidden'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm flex-1 px-5 sm:flex-none" :disabled="manageBusy" @click="moderate('hidden')">
-                <UiIcon name="eye-off" :size="20" />
-                Masquer
-              </button>
-            </template>
-            <button
-              type="button"
-              class="qcm-block qcm-block-quiet qcm-block-sm flex-1 bg-retry px-5 text-retry-ink sm:ml-auto sm:flex-none"
-              :disabled="manageBusy"
-              @click="((deleteError = ''), (confirmingDelete = true))"
-            >
-              <UiIcon name="trash" :size="20" />
-              Supprimer
-            </button>
+            <p class="flex min-w-0 items-center gap-2 border-t-[1.5px] border-line-soft pt-3 text-sm text-ink-soft">
+              <span class="site-avatar size-7 border-[1.5px] bg-selected text-xs" aria-hidden="true">{{ (ownerName.trim()[0] ?? '?').toLocaleUpperCase('fr') }}</span>
+              <span class="min-w-0">
+                Proposé par <strong class="font-bold text-ink">{{ ownerName }}</strong> le {{ formatDate(record.created) }}<template v-if="updatedLater"> · mis à jour le {{ formatDate(record.updated) }}</template>
+              </span>
+            </p>
           </div>
 
-          <p v-if="manageError" role="alert" class="qcm-note qcm-note-retry">{{ manageError }}</p>
-          <p class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-soft">
-            <span v-if="isOwner && !isAdmin">Après une modification, ton QCM est relu avant de redevenir public.</span>
-            <a v-if="isAdmin" href="/admin" class="font-bold text-ink underline">Ouvrir la file de modération</a>
-          </p>
-        </section>
+          <img
+            v-if="qcmThumbnailUrl(record)"
+            :src="qcmThumbnailUrl(record)"
+            alt=""
+            width="480"
+            height="270"
+            class="hidden aspect-[4/3] w-56 flex-none self-start rounded-2xl border-[1.5px] border-line-soft bg-bg object-cover md:block"
+          />
+        </div>
+      </article>
 
-        <QcmReviews class="lg:col-start-1" :record="record" @rated="record = $event" @notice="showToast" @count="commentCount = $event" />
-      </div>
+      <QcmReviews :record="record" @rated="record = $event" @notice="showToast" @count="commentCount = $event" />
+      <!-- Place pour la barre « Essayer » fixée en bas (téléphone). -->
+      <div class="h-14 sm:hidden" aria-hidden="true" />
     </div>
+
+    <!-- Téléphone : « Essayer » reste à portée quand les boutons de la fiche ont défilé. -->
+    <Transition name="site-dock">
+      <div v-if="!playing && !actionsVisible" class="fixed inset-x-0 z-30 flex items-center gap-2 border-t-2 border-line bg-surface px-4 py-2.5 shadow-soft sm:hidden" style="bottom: var(--site-tabbar)">
+        <p class="min-w-0 flex-1 truncate text-sm font-extrabold">{{ record.title }}</p>
+        <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" aria-label="Télécharger" @click="downloadQcm(record)">
+          <UiIcon name="download" :size="18" />
+        </button>
+        <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-none px-4" :disabled="starting" @click="play">
+          <UiIcon name="play" :size="18" filled />
+          Essayer
+        </button>
+      </div>
+    </Transition>
 
     <ConfirmDialog
       :open="confirmingDelete"

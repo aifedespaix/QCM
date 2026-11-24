@@ -384,6 +384,25 @@ html:not([data-standalone]) .app-only {
     opacity: 0;
     transform: translate(-50%, 6px);
   }
+
+  /* Barre d'action fixée en bas (fiche d'un QCM sur téléphone) : glisse depuis le bas. */
+  .site-dock-enter-active,
+  .site-dock-leave-active {
+    transition: opacity 160ms ease-out, transform 160ms ease-out;
+  }
+
+  .site-dock-enter-from,
+  .site-dock-leave-to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-dock-enter-active,
+    .site-dock-leave-active {
+      transition: none;
+    }
+  }
 }
 
 /* Fond décoratif de la page d'accueil : grandes taches pastel, immobiles. */

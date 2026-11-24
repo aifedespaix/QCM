@@ -248,8 +248,10 @@
     transition: background-color 120ms ease-out;
   }
 
-  .qcm-stat:hover,
-  .qcm-stat:focus-visible {
+  a.qcm-stat:hover,
+  a.qcm-stat:focus-visible,
+  button.qcm-stat:hover,
+  button.qcm-stat:focus-visible {
     background-color: var(--qcm-sunken);
   }
 

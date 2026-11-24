@@ -99,6 +99,23 @@ const saving = ref(false)
 const editError = ref('')
 const editField = ref<HTMLTextAreaElement[]>([])
 
+/** Les premiers commentaires seulement, le reste sur demande : la fiche reste courte. */
+const PREVIEW = 3
+const expanded = ref(false)
+const shownComments = computed(() => (expanded.value ? comments.value : comments.value.slice(0, PREVIEW)))
+const hiddenCount = computed(() => (expanded.value ? total.value - comments.value.length : total.value - shownComments.value.length))
+/** Le champ de commentaire reste sur une ligne tant qu'on n'écrit pas. */
+const composing = ref(false)
+const composerOpen = computed(() => composing.value || commentText.value.length > 0)
+
+function showMore(): void {
+  if (!expanded.value) {
+    expanded.value = true
+    if (comments.value.length >= total.value) return
+  }
+  void loadMore()
+}
+
 const pendingDelete = ref<CommentRecord | null>(null)
 const deleting = ref(false)
 const deleteError = ref('')
@@ -270,61 +287,57 @@ watch(
 </script>
 
 <template>
-  <section id="avis" class="qcm-panel flex scroll-mt-24 flex-col gap-6 p-5 sm:p-8" aria-labelledby="reviews-title">
-    <header class="flex items-center gap-4">
-      <span class="qcm-tile bg-retry text-retry-ink"><UiIcon name="star" :size="26" filled /></span>
-      <div>
-        <h2 id="reviews-title" class="text-2xl leading-tight font-extrabold">Avis</h2>
-        <p class="text-base text-ink-soft">Ta note et tes remarques aident les autres à choisir.</p>
-      </div>
-    </header>
+  <section id="avis" class="qcm-panel flex scroll-mt-24 flex-col gap-5 p-5 sm:p-7" aria-labelledby="reviews-title">
+    <h2 id="reviews-title" class="text-xl leading-tight font-extrabold sm:text-2xl">Avis</h2>
 
     <p v-if="!open" class="qcm-note qcm-note-info flex items-start gap-3">
       <UiIcon name="info" class="mt-0.5" />
       Les notes et les commentaires s'ouvrent quand le QCM est publié dans la bibliothèque.
     </p>
 
-    <!-- Note : la moyenne à gauche, la note du membre à droite -->
-    <div class="grid gap-4 sm:grid-cols-[13rem_minmax(0,1fr)]">
-      <div class="flex flex-col items-center justify-center gap-1.5 rounded-2xl bg-sunken px-4 py-5 text-center">
+    <!-- Note : la moyenne et la note du membre sur une seule bande -->
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl bg-sunken px-4 py-3 sm:px-5">
+      <div class="flex items-center gap-3">
         <template v-if="record.rating_count > 0">
-          <p class="leading-none font-extrabold" :aria-label="`Note moyenne : ${average} sur 5`">
-            <span class="text-5xl">{{ average }}</span>
-            <span class="text-xl text-ink-soft"> / 5</span>
-          </p>
-          <span class="relative inline-flex" aria-hidden="true">
-            <span class="inline-flex gap-0.5"><UiIcon v-for="n in 5" :key="n" name="star" :size="22" class="site-star" /></span>
-            <span class="absolute inset-y-0 left-0 overflow-hidden" :style="{ width: `${(record.rating_avg / 5) * 100}%` }">
-              <span class="inline-flex gap-0.5"><UiIcon v-for="n in 5" :key="n" name="star" :size="22" class="site-star site-star-on" /></span>
+          <p class="text-4xl leading-none font-extrabold" :aria-label="`Note moyenne : ${average} sur 5`">{{ average }}</p>
+          <div class="flex flex-col gap-0.5">
+            <span class="relative inline-flex" aria-hidden="true">
+              <span class="inline-flex gap-0.5"><UiIcon v-for="n in 5" :key="n" name="star" :size="18" class="site-star" /></span>
+              <span class="absolute inset-y-0 left-0 overflow-hidden" :style="{ width: `${(record.rating_avg / 5) * 100}%` }">
+                <span class="inline-flex gap-0.5"><UiIcon v-for="n in 5" :key="n" name="star" :size="18" class="site-star site-star-on" /></span>
+              </span>
             </span>
-          </span>
-          <p class="text-sm font-bold text-ink-soft">{{ ratingCountLabel }}</p>
+            <span class="text-sm font-bold text-ink-soft">{{ ratingCountLabel }}</span>
+          </div>
         </template>
         <template v-else>
-          <span class="inline-flex gap-0.5" aria-hidden="true"><UiIcon v-for="n in 5" :key="n" name="star" :size="22" class="site-star" /></span>
-          <p class="font-extrabold">Pas encore de note</p>
-          <p class="text-sm text-ink-soft">La première peut être la tienne.</p>
+          <span class="inline-flex gap-0.5" aria-hidden="true"><UiIcon v-for="n in 5" :key="n" name="star" :size="18" class="site-star" /></span>
+          <span class="font-bold text-ink-soft">Pas encore de note</span>
         </template>
       </div>
 
-      <div class="flex flex-col justify-center gap-2 rounded-2xl border-[1.5px] border-line-soft px-4 py-4 sm:px-5">
-        <h3 class="text-lg font-extrabold">{{ myRating ? 'Ta note' : 'Donner une note' }}</h3>
+      <span class="hidden h-10 w-[1.5px] bg-line-soft sm:block" aria-hidden="true" />
+
+      <div class="flex min-w-0 flex-1 basis-56 flex-col gap-0.5">
         <template v-if="!user">
-          <p class="text-base text-ink-soft">Connecte-toi pour noter ce QCM et écrire un commentaire.</p>
-          <button type="button" class="qcm-block qcm-block-primary qcm-block-sm self-start px-6" @click="login">
-            <UiIcon name="user" :size="20" />
-            Se connecter
-          </button>
+          <p class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span class="text-base text-ink-soft">Connecte-toi pour noter et commenter.</span>
+            <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs px-4" @click="login">
+              <UiIcon name="user" :size="18" />
+              Se connecter
+            </button>
+          </p>
           <p v-if="loginError" role="alert" class="text-sm font-semibold text-retry-ink">{{ loginError }}</p>
         </template>
         <template v-else>
-          <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-            <div class="-ml-1.5 flex" role="group" aria-label="Ta note, de 1 à 5" @mouseleave="hoverRating = 0">
+          <div class="flex flex-wrap items-center gap-x-3">
+            <span class="text-sm font-extrabold">{{ myRating ? 'Ta note' : 'Noter' }}</span>
+            <div class="-ml-1 flex" role="group" aria-label="Ta note, de 1 à 5" @mouseleave="hoverRating = 0">
               <button
                 v-for="value in 5"
                 :key="value"
                 type="button"
-                class="site-star-button"
+                class="site-star-button size-11"
                 :aria-pressed="myRating === value"
                 :aria-label="`${value} sur 5 : ${RATING_LABELS[value]}`"
                 :disabled="!open || ratingBusy"
@@ -333,47 +346,45 @@ watch(
                 @blur="hoverRating = 0"
                 @click="rate(value)"
               >
-                <UiIcon name="star" :size="34" :stroke="1.8" class="site-star" :class="value <= shownRating ? 'site-star-on' : ''" />
+                <UiIcon name="star" :size="28" :stroke="1.8" class="site-star" :class="value <= shownRating ? 'site-star-on' : ''" />
               </button>
             </div>
-            <p class="min-h-6 text-base font-bold" aria-hidden="true">
-              <template v-if="shownRating">{{ shownRating }} / 5 · {{ RATING_LABELS[shownRating] }}</template>
-              <span v-else-if="open" class="font-medium text-ink-soft">Choisis de 1 à 5 étoiles.</span>
-            </p>
+            <span class="min-h-6 text-sm font-bold" aria-hidden="true">
+              <template v-if="shownRating">{{ RATING_LABELS[shownRating] }}</template>
+            </span>
+            <button v-if="myRating && open" type="button" class="qcm-text-button min-h-9 text-sm underline" :disabled="ratingBusy" @click="clearRating">Retirer</button>
           </div>
-          <button v-if="myRating && open" type="button" class="qcm-text-button -ml-2 self-start text-sm underline" :disabled="ratingBusy" @click="clearRating">
-            <UiIcon name="close" :size="16" />
-            Retirer ma note
-          </button>
           <p v-if="ratingError" role="alert" class="text-sm font-semibold text-retry-ink">{{ ratingError }}</p>
         </template>
       </div>
     </div>
 
     <!-- Commentaires -->
-    <div class="flex flex-col gap-4 border-t-[1.5px] border-line-soft pt-6">
-      <h3 class="flex items-center gap-2.5 text-xl font-extrabold">
-        <UiIcon name="comment" :size="24" />
+    <div class="flex flex-col gap-3">
+      <h3 class="flex items-center gap-2 text-lg font-extrabold">
         Commentaires
-        <span v-if="listState === 'ready'" class="qcm-chip" :aria-label="`${total} au total`">{{ total }}</span>
+        <span v-if="listState === 'ready'" class="qcm-chip qcm-chip-sm" :aria-label="`${total} au total`">{{ total }}</span>
       </h3>
 
       <form v-if="user && open" class="flex items-start gap-3" @submit.prevent="sendComment">
-        <span class="site-avatar mt-1 hidden sm:flex" :class="toneOf(user.id)" aria-hidden="true">{{ initialOf(user.name) }}</span>
+        <span class="site-avatar mt-1 hidden size-9 text-sm sm:flex" :class="toneOf(user.id)" aria-hidden="true">{{ initialOf(user.name) }}</span>
         <div class="site-composer min-w-0 flex-1">
           <label class="sr-only" for="comment-text">Ton commentaire</label>
           <textarea
             id="comment-text"
             v-model="commentText"
-            rows="3"
+            :rows="composerOpen ? 3 : 1"
             :maxlength="MAX_LENGTH"
-            placeholder="Qu'as-tu pensé de ce QCM ? Une question à corriger, un point à ajouter…"
+            placeholder="Ajouter un commentaire…"
+            @focus="composing = true"
+            @blur="composing = false"
             @keydown.ctrl.enter.prevent="sendComment"
             @keydown.meta.enter.prevent="sendComment"
           />
-          <div class="flex items-center justify-between gap-3 border-t-[1.5px] border-line-soft py-2 pr-2 pl-3.5">
+          <div v-if="composerOpen" class="flex items-center justify-between gap-3 border-t-[1.5px] border-line-soft py-2 pr-2 pl-3.5">
             <span class="text-sm font-semibold" :class="commentText.length >= MAX_LENGTH - 50 ? 'text-retry-ink' : 'text-ink-soft'">{{ commentText.length }} / {{ MAX_LENGTH }}</span>
-            <button type="submit" class="qcm-block qcm-block-primary qcm-block-sm min-h-11 px-5" :disabled="!commentText.trim() || sending">
+            <!-- mousedown.prevent : le clic n'ôte pas le focus du champ avant l'envoi (la barre resterait ouverte). -->
+            <button type="submit" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs px-4" :disabled="!commentText.trim() || sending" @mousedown.prevent>
               <UiIcon name="send" :size="18" />
               {{ sending ? 'Envoi…' : 'Publier' }}
             </button>
@@ -383,49 +394,42 @@ watch(
       <p v-if="commentError" role="alert" class="qcm-note qcm-note-retry">{{ commentError }}</p>
 
       <ul v-if="listState === 'loading'" class="flex flex-col gap-3" role="status" aria-label="Chargement des commentaires">
-        <li v-for="n in 2" :key="n" class="qcm-skeleton h-20" />
+        <li v-for="n in 2" :key="n" class="qcm-skeleton h-14" />
       </ul>
       <div v-else-if="listState === 'error'" role="alert" class="qcm-note qcm-note-retry flex flex-wrap items-center justify-between gap-3">
         Les commentaires ne se chargent pas pour le moment.
         <button type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="loadComments">Réessayer</button>
       </div>
-      <div v-else-if="comments.length === 0" class="flex flex-col items-center gap-2 rounded-2xl border-[1.5px] border-dashed border-line-soft px-4 py-8 text-center text-ink-soft">
-        <UiIcon name="comment" :size="30" />
-        <p class="text-lg font-bold">Aucun commentaire pour le moment.</p>
-        <p v-if="user && open" class="text-base">Le premier peut être le tien.</p>
-      </div>
+      <p v-else-if="comments.length === 0" class="py-2 text-base text-ink-soft">
+        Aucun commentaire pour le moment.<template v-if="user && open"> Le premier peut être le tien.</template>
+      </p>
       <template v-else>
-        <ul class="flex flex-col gap-3">
-          <li
-            v-for="comment in comments"
-            :key="comment.id"
-            class="flex gap-3 rounded-2xl border-[1.5px] bg-bg p-3.5 sm:p-4"
-            :class="user && comment.user === user.id ? 'border-ink-soft' : 'border-line-soft'"
-          >
-            <span class="site-avatar" :class="toneOf(comment.user)" aria-hidden="true">{{ initialOf(authorName(comment)) }}</span>
+        <ul class="flex flex-col divide-y-[1.5px] divide-line-soft">
+          <li v-for="comment in shownComments" :key="comment.id" class="flex gap-3 py-3 first:pt-1">
+            <span class="site-avatar size-9 text-sm" :class="toneOf(comment.user)" aria-hidden="true">{{ initialOf(authorName(comment)) }}</span>
             <div class="min-w-0 flex-1">
               <div class="flex items-start gap-2">
-                <p class="flex min-h-10 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+                <p class="flex min-h-9 min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5">
                   <span class="truncate font-extrabold">{{ authorName(comment) }}</span>
-                  <span v-if="user && comment.user === user.id" class="qcm-chip bg-selected">Toi</span>
-                  <span v-if="comment.user === record.owner" class="qcm-chip bg-primary">A créé ce QCM</span>
+                  <span v-if="user && comment.user === user.id" class="qcm-chip qcm-chip-sm bg-selected">Toi</span>
+                  <span v-if="comment.user === record.owner" class="qcm-chip qcm-chip-sm bg-primary">Auteur</span>
                   <span class="text-sm font-semibold text-ink-soft">
                     <time :datetime="toDate(comment.created).toISOString()" :title="fullDate(comment.created)">{{ timeAgo(comment.created) }}</time>
                     <template v-if="wasEdited(comment)"> · modifié</template>
                   </span>
                 </p>
                 <div v-if="user && comment.user === user.id && editingId !== comment.id" class="-mr-1.5 flex flex-none">
-                  <button type="button" class="site-icon-action" aria-label="Modifier mon commentaire" title="Modifier" @click="startEdit(comment)">
-                    <UiIcon name="pencil" :size="19" />
+                  <button type="button" class="site-icon-action size-9" aria-label="Modifier mon commentaire" title="Modifier" @click="startEdit(comment)">
+                    <UiIcon name="pencil" :size="18" />
                   </button>
                   <button
                     type="button"
-                    class="site-icon-action site-icon-action-warn"
+                    class="site-icon-action site-icon-action-warn size-9"
                     aria-label="Supprimer mon commentaire"
                     title="Supprimer"
                     @click="((deleteError = ''), (pendingDelete = comment))"
                   >
-                    <UiIcon name="trash" :size="19" />
+                    <UiIcon name="trash" :size="18" />
                   </button>
                 </div>
               </div>
@@ -444,7 +448,7 @@ watch(
                 />
                 <p v-if="editError" role="alert" class="text-sm font-semibold text-retry-ink">{{ editError }}</p>
                 <div class="flex flex-wrap items-center gap-2">
-                  <button type="submit" class="qcm-block qcm-block-primary qcm-block-sm min-h-11 px-5" :disabled="!editText.trim() || saving">
+                  <button type="submit" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs px-4" :disabled="!editText.trim() || saving">
                     <UiIcon name="check" :size="18" :stroke="3" />
                     {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
                   </button>
@@ -453,17 +457,17 @@ watch(
                 </div>
               </form>
               <template v-else>
-                <p class="text-lg leading-snug break-words whitespace-pre-line">{{ comment.text }}</p>
-                <p v-if="comment.hidden" class="mt-2 flex items-center gap-2 text-sm font-bold text-retry-ink">
-                  <UiIcon name="eye-off" :size="18" />
+                <p class="text-base leading-snug break-words whitespace-pre-line">{{ comment.text }}</p>
+                <p v-if="comment.hidden" class="mt-1.5 flex items-center gap-2 text-sm font-bold text-retry-ink">
+                  <UiIcon name="eye-off" :size="16" />
                   Masqué par la modération : tu es la seule personne à le voir.
                 </p>
               </template>
             </div>
           </li>
         </ul>
-        <button v-if="comments.length < total" type="button" class="qcm-block qcm-block-quiet qcm-block-sm self-center px-6" :disabled="loadingMore" @click="loadMore">
-          {{ loadingMore ? 'Chargement…' : 'Afficher plus de commentaires' }}
+        <button v-if="hiddenCount > 0" type="button" class="qcm-text-button self-start text-base underline" :disabled="loadingMore" @click="showMore">
+          {{ loadingMore ? 'Chargement…' : hiddenCount === 1 ? 'Voir 1 autre commentaire' : `Voir les ${hiddenCount} autres commentaires` }}
         </button>
       </template>
     </div>
