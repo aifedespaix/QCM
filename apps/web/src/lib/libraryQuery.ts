@@ -6,7 +6,7 @@ import { LEVELS, LEVEL_LABELS, SUBJECTS, SUBJECT_LABELS, type Level, type Subjec
  * se partage, se met en favori et se recharge à l'identique.
  */
 
-export type QcmSort = 'recent' | 'rating' | 'title'
+export type QcmSort = 'recent' | 'rating' | 'comments' | 'title'
 
 export interface LibraryState {
   search: string
@@ -18,7 +18,7 @@ export interface LibraryState {
   mine: boolean
 }
 
-const SORT_VALUES: readonly QcmSort[] = ['recent', 'rating', 'title']
+const SORT_VALUES: readonly QcmSort[] = ['recent', 'rating', 'comments', 'title']
 
 export function defaultLibraryState(): LibraryState {
   return { search: '', subject: '', level: '', sort: 'recent', page: 1, mine: false }

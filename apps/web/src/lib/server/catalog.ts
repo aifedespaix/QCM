@@ -10,7 +10,7 @@ import PocketBase, { ClientResponseError } from 'pocketbase'
 import { PAGE_SIZE, type QcmRecord } from '../pb.ts'
 import type { LibraryState } from '../libraryQuery.ts'
 
-const SORTS = { recent: '-created', rating: '-rating_avg,-rating_count,-created', title: 'title' } as const
+const SORTS = { recent: '-created', rating: '-rating_avg,-rating_count,-created', comments: '-comment_count,-created', title: 'title' } as const
 
 /** Une réponse interne prend quelques millisecondes : au-delà, on rend la page sans attendre. */
 const TIMEOUT_MS = 2500

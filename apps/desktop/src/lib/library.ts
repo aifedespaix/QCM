@@ -19,6 +19,10 @@ export interface LibraryRecord {
   fingerprint?: string
   rating_avg: number
   rating_count: number
+  /** Commentaires visibles (absent tant que le serveur n'a pas la migration 1760000004). */
+  comment_count?: number
+  /** Date de publication PocketBase (« 2026-03-12 08:15:00.000Z »). */
+  created?: string
 }
 
 export interface LibraryPage {
@@ -28,7 +32,7 @@ export interface LibraryPage {
   items: LibraryRecord[]
 }
 
-export type LibrarySort = 'recent' | 'rating' | 'title'
+export type LibrarySort = 'recent' | 'rating' | 'comments' | 'title'
 
 export interface LibraryQuery {
   search: string
@@ -48,10 +52,11 @@ export class LibraryError extends Error {
 }
 
 const RECORDS = '/api/collections/qcms/records'
-const FIELDS = 'id,title,description,subject,level,chapter,question_count,has_images,file,fingerprint,rating_avg,rating_count'
+const FIELDS = 'id,title,description,subject,level,chapter,question_count,has_images,file,fingerprint,rating_avg,rating_count,comment_count,created'
 const SORTS: Record<LibrarySort, string> = {
   recent: '-created',
   rating: '-rating_avg,-rating_count,-created',
+  comments: '-comment_count,-created',
   title: 'title',
 }
 

@@ -5,7 +5,7 @@ import { downloadQcm, listQcms, qcmThumbnailUrl, useAuth, type QcmRecord, type Q
 import { defaultLibraryState, libraryHeading, libraryHref, type LibraryState } from '../lib/libraryQuery.ts'
 import { qcmPath } from '../lib/qcmUrl.ts'
 import UiIcon from './UiIcon.vue'
-import { SUBJECT_TONES, questionCountLabel } from '../lib/subjects.ts'
+import { SUBJECT_TONES, isRecent, longDate, questionCountLabel, shortDate } from '../lib/subjects.ts'
 
 /**
  * Bibliothèque. La première page arrive rendue par le serveur (`initial`) : rien à attendre à
@@ -46,7 +46,7 @@ const refreshing = ref(false)
 const filtered = computed(() => !!(filters.search.trim() || filters.subject || filters.level))
 let debounce: ReturnType<typeof setTimeout> | undefined
 
-const SORT_LABELS: Record<QcmSort, string> = { recent: 'Les plus récents', rating: 'Les mieux notés', title: 'Titre (A à Z)' }
+const SORT_LABELS: Record<QcmSort, string> = { recent: 'Les plus récents', rating: 'Les mieux notés', comments: 'Les plus commentés', title: 'Titre (A à Z)' }
 /** Téléphone : le panneau de filtres (matière, niveau, tri) est replié dans la barre du bas. */
 const sheetOpen = ref(false)
 /** Filtres choisis dans le panneau (la recherche est toujours visible, elle ne compte pas). */
@@ -224,6 +224,7 @@ onBeforeUnmount(() => {
         <select id="lib-sort" v-model="filters.sort" class="qcm-field">
           <option value="recent">Trier : les plus récents</option>
           <option value="rating">Trier : les mieux notés</option>
+          <option value="comments">Trier : les plus commentés</option>
           <option value="title">Trier : titre (A à Z)</option>
         </select>
       </div>
@@ -361,6 +362,7 @@ onBeforeUnmount(() => {
             <div v-else class="flex h-full w-full items-center justify-center sm:border-b-[1.5px] sm:border-line-soft" :class="SUBJECT_TONES[item.subject]" aria-hidden="true">
               <span class="px-2 text-center text-sm font-extrabold opacity-80 sm:text-lg">{{ SUBJECT_LABELS[item.subject] }}</span>
             </div>
+            <span v-if="!mineActive && isRecent(item.created)" class="qcm-chip qcm-chip-sm absolute top-1.5 left-1.5 border-[1.5px] border-line bg-surface sm:top-2 sm:left-2">Nouveau</span>
           </div>
           <div class="flex min-w-0 flex-1 flex-col gap-1 py-0.5 pr-1 sm:p-3.5 sm:pt-3">
             <p class="flex flex-wrap gap-1">
@@ -372,11 +374,35 @@ onBeforeUnmount(() => {
               <a :href="qcmPath(item)" class="no-underline after:absolute after:inset-0 group-hover:underline">{{ item.title }}</a>
             </h2>
             <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
-            <div class="mt-auto flex items-center gap-2 pt-1">
-              <p class="flex min-w-0 flex-1 items-center gap-x-2 overflow-hidden text-sm font-bold whitespace-nowrap text-ink-soft">
-                <span>{{ questionCountLabel(item.question_count) }}</span>
-                <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
-              </p>
+            <p class="truncate text-xs font-bold text-ink-soft">
+              {{ questionCountLabel(item.question_count) }} ·
+              <time :datetime="item.created.replace(' ', 'T')" :title="`Publié le ${longDate(item.created)}`">{{ shortDate(item.created) }}</time>
+            </p>
+            <!-- Note et commentaires : raccourcis vers les avis de la fiche, au-dessus du lien de la carte. -->
+            <div class="mt-auto -ml-2 flex items-center gap-0.5 pt-1.5">
+              <a
+                :href="`${qcmPath(item)}#avis`"
+                class="qcm-stat relative z-10"
+                :aria-label="item.rating_count > 0 ? `Note ${item.rating_avg.toFixed(1)} sur 5, ${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'} : voir les avis` : `Pas encore noté : donner une note à ${item.title}`"
+                :title="item.rating_count > 0 ? `${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'}` : 'Pas encore noté'"
+              >
+                <UiIcon name="star" :size="16" :stroke="2" class="site-star" :class="item.rating_count > 0 ? 'site-star-on' : ''" />
+                <template v-if="item.rating_count > 0">
+                  {{ item.rating_avg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
+                  <span class="font-semibold text-ink-soft">({{ item.rating_count }})</span>
+                </template>
+                <span v-else class="font-semibold text-ink-soft">Noter</span>
+              </a>
+              <a
+                :href="`${qcmPath(item)}#avis`"
+                class="qcm-stat relative z-10"
+                :aria-label="(item.comment_count ?? 0) === 0 ? `Aucun commentaire : commenter ${item.title}` : `${item.comment_count} commentaire${(item.comment_count ?? 0) > 1 ? 's' : ''} : les lire`"
+                :title="(item.comment_count ?? 0) === 0 ? 'Aucun commentaire' : `${item.comment_count} commentaire${(item.comment_count ?? 0) > 1 ? 's' : ''}`"
+              >
+                <UiIcon name="comment" :size="16" :stroke="2" />
+                <span :class="(item.comment_count ?? 0) === 0 ? 'font-semibold text-ink-soft' : ''">{{ item.comment_count ?? 0 }}</span>
+              </a>
+              <span class="flex-1" />
               <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-icon-button qcm-icon-button-sm relative z-10 flex-none no-underline" :aria-label="`Modifier ${item.title}`" title="Modifier">
                 <UiIcon name="pencil" :size="18" />
               </a>

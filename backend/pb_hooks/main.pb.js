@@ -31,6 +31,7 @@ onRecordCreateRequest((e) => {
   e.record.set("status", isAdmin ? "published" : "pending")
   e.record.set("rating_avg", 0)
   e.record.set("rating_count", 0)
+  e.record.set("comment_count", 0)
   e.next()
 }, "qcms")
 
@@ -97,6 +98,32 @@ onRecordAfterDeleteSuccess((e) => {
   e.next()
 }, "ratings")
 
+// 4. Après chaque commentaire créé, modifié (masqué / réaffiché par la modération) ou supprimé :
+//    recompte les commentaires visibles du QCM (affichés sur les cartes de la bibliothèque).
+onRecordAfterCreateSuccess((e) => {
+  e.app.db()
+    .newQuery("UPDATE qcms SET comment_count = (SELECT COUNT(*) FROM comments WHERE qcm = {:qcm} AND hidden = FALSE) WHERE id = {:qcm}")
+    .bind({ qcm: e.record.get("qcm") })
+    .execute()
+  e.next()
+}, "comments")
+
+onRecordAfterUpdateSuccess((e) => {
+  e.app.db()
+    .newQuery("UPDATE qcms SET comment_count = (SELECT COUNT(*) FROM comments WHERE qcm = {:qcm} AND hidden = FALSE) WHERE id = {:qcm}")
+    .bind({ qcm: e.record.get("qcm") })
+    .execute()
+  e.next()
+}, "comments")
+
+onRecordAfterDeleteSuccess((e) => {
+  e.app.db()
+    .newQuery("UPDATE qcms SET comment_count = (SELECT COUNT(*) FROM comments WHERE qcm = {:qcm} AND hidden = FALSE) WHERE id = {:qcm}")
+    .bind({ qcm: e.record.get("qcm") })
+    .execute()
+  e.next()
+}, "comments")
+
 // 5. Jetons d'agent. Un membre connecté crée un jeton (affiché une seule fois) ; seul son hachage est stocké.
 //    Les jetons se listent et se révoquent par l'API de collection `agent_tokens` (règle : `owner = @request.auth.id`).
 routerAdd("POST", "/api/qcm/agent-tokens", (e) => {
@@ -162,6 +189,7 @@ routerAdd("POST", "/api/qcm/agent-publish", (e) => {
     record.set("owner", owner.id)
     record.set("rating_avg", 0)
     record.set("rating_count", 0)
+    record.set("comment_count", 0)
     if (files.length === 0) throw new BadRequestError("Le fichier .qcm est obligatoire.")
   }
   const fields = ["title", "description", "subject", "level", "chapter", "language", "question_count", "has_images", "fingerprint"]

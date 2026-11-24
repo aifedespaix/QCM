@@ -44,6 +44,8 @@ export interface QcmRecord extends RecordModel {
   status: 'pending' | 'published' | 'hidden'
   rating_avg: number
   rating_count: number
+  /** Commentaires visibles, tenu à jour par le serveur (absent avant la migration 1760000004). */
+  comment_count?: number
   created: string
   updated: string
   expand?: { owner?: UserRecord }
@@ -108,6 +110,7 @@ export interface QcmQuery {
 const SORTS: Record<QcmSort, string> = {
   recent: '-created',
   rating: '-rating_avg,-rating_count,-created',
+  comments: '-comment_count,-created',
   title: 'title',
 }
 

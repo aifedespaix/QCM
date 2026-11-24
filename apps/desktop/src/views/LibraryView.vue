@@ -115,6 +115,16 @@ function resetFilters(): void {
   Object.assign(filters, { search: '', subject: '', level: '', sort: 'recent' })
 }
 
+/** « publié hier », « publié le 12 mars »… (vide si la date manque). */
+function publishedLabel(item: LibraryRecord): string {
+  const time = item.created ? Date.parse(item.created.replace(' ', 'T')) : NaN
+  return Number.isNaN(time) ? '' : `publié ${formatRelativeDay(time)}`
+}
+
+function commentLabel(count: number): string {
+  return count === 1 ? '1 commentaire' : `${count} commentaires`
+}
+
 function countLabel(count: number): string {
   return count === 1 ? '1 question' : `${count} questions`
 }
@@ -197,6 +207,7 @@ onBeforeUnmount(() => {
         <select id="lib-sort" v-model="filters.sort" class="qcm-field">
           <option value="recent">{{ showLocal ? 'Ouverts récemment' : 'Les plus récents' }}</option>
           <option v-if="!showLocal" value="rating">Les mieux notés</option>
+          <option v-if="!showLocal" value="comments">Les plus commentés</option>
           <option value="title">Titre (A à Z)</option>
         </select>
       </div>
@@ -280,8 +291,15 @@ onBeforeUnmount(() => {
           <p v-if="item.description" class="line-clamp-2 text-sm text-ink-soft" :title="item.description">{{ item.description }}</p>
           <p class="mt-auto flex flex-wrap gap-x-2.5 pt-1 text-sm font-bold text-ink-soft">
             <span>{{ countLabel(item.question_count) }}</span>
-            <span v-if="item.has_images">Images</span>
-            <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
+            <span v-if="publishedLabel(item)">{{ publishedLabel(item) }}</span>
+          </p>
+          <p class="flex flex-wrap gap-x-3 text-sm font-extrabold">
+            <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5, ${item.rating_count} ${item.rating_count > 1 ? 'notes' : 'note'}`">
+              ★ {{ item.rating_avg.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
+              <span class="font-semibold text-ink-soft">({{ item.rating_count }})</span>
+            </span>
+            <span v-else class="font-semibold text-ink-soft">☆ Pas encore noté</span>
+            <span v-if="item.comment_count" class="font-semibold text-ink-soft">{{ commentLabel(item.comment_count) }}</span>
           </p>
           <div class="mt-1 flex items-center gap-1.5">
             <button
