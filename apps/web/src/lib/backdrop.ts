@@ -6,14 +6,26 @@ import type { Ref } from 'vue'
  * de texte, glissement) arrive donc sur le `<dialog>` lui-même. On ne ferme que si l'appui
  * avait déjà eu lieu sur le fond.
  */
-export function useBackdropClose(dialog: Ref<HTMLDialogElement | null>, close: () => void, enabled: () => boolean = () => true) {
+export function useBackdropClose(
+  dialog: Ref<HTMLDialogElement | null>,
+  close: () => void,
+  enabled: () => boolean = () => true,
+  /** Cadre visible, quand le `<dialog>` déborde de son contenu (panneau prolongé sous l'écran). */
+  panel?: Ref<HTMLElement | null>,
+) {
   let pressedOnBackdrop = false
+  function isBackdrop(event: MouseEvent): boolean {
+    if (event.target !== dialog.value) return false
+    const box = panel?.value?.getBoundingClientRect()
+    if (!box) return true
+    return event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom
+  }
   return {
     onPointerDown(event: PointerEvent): void {
-      pressedOnBackdrop = event.target === dialog.value
+      pressedOnBackdrop = isBackdrop(event)
     },
     onClick(event: MouseEvent): void {
-      const onBackdrop = pressedOnBackdrop && event.target === dialog.value
+      const onBackdrop = pressedOnBackdrop && isBackdrop(event)
       pressedOnBackdrop = false
       if (onBackdrop && enabled()) close()
     },

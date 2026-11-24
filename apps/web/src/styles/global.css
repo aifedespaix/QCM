@@ -420,12 +420,16 @@ html:not([data-standalone]) .app-only {
 
   /*
    * Panneau (`SheetDialog`) : monte du bas sur téléphone, fenêtre centrée sur grand écran.
-   * La hauteur maximale passe au contenu (`max-height: inherit`) pour que seul le milieu défile.
+   * `--sheet-max` : hauteur maximale du contenu visible, dont seul le milieu défile.
+   * `--sheet-overhang` (téléphone) : le panneau se prolonge sous le bas de l'écran, caché. Tiré vers
+   * le haut, il découvre encore du panneau, jamais le fond de la page.
    */
   .site-sheet {
+    --sheet-max: 88dvh;
+    --sheet-overhang: 0px;
     width: 100%;
     max-width: 100%;
-    max-height: 88dvh;
+    max-height: calc(var(--sheet-max) + var(--sheet-overhang));
     margin: auto auto 0;
     padding: 0;
     overflow: hidden;
@@ -450,11 +454,21 @@ html:not([data-standalone]) .app-only {
     animation: site-sheet-up 200ms ease-out;
   }
 
+  .site-sheet-inner {
+    max-height: var(--sheet-max);
+  }
+
   .site-sheet-grip {
     display: none;
   }
 
   @media (max-width: 39.99rem) {
+    .site-sheet {
+      --sheet-overhang: 50vh;
+      margin-bottom: calc(-1 * var(--sheet-overhang));
+      padding-bottom: var(--sheet-overhang);
+    }
+
     /* Poignée visuelle : signale un panneau, comme sur les applications du téléphone. */
     .site-sheet-grip {
       position: absolute;
@@ -476,15 +490,15 @@ html:not([data-standalone]) .app-only {
     }
 
     /* Barre d'accueil des téléphones sans bouton : le bas du panneau reste dégagé. */
-    .site-sheet > div > :last-child {
+    .site-sheet-inner > :last-child {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
   }
 
   @media (min-width: 40rem) {
     .site-sheet {
+      --sheet-max: min(44rem, 85dvh);
       width: min(36rem, calc(100vw - 2rem));
-      max-height: min(44rem, 85dvh);
       margin: auto;
       border-bottom: 2px solid var(--qcm-line);
       border-radius: var(--radius-3xl);

@@ -19,7 +19,8 @@ const props = withDefaults(defineProps<{ open: boolean; title: string; size?: 's
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
 const titleId = useId()
-const backdrop = useBackdropClose(dialog, () => emit('close'))
+const panel = ref<HTMLElement | null>(null)
+const backdrop = useBackdropClose(dialog, () => emit('close'), undefined, panel)
 
 watch(
   () => [props.open, dialog.value] as const,
@@ -52,9 +53,9 @@ function onDragStart(event: PointerEvent): void {
 function onDragMove(event: PointerEvent): void {
   const element = dialog.value
   if (!drag || !element || event.pointerId !== drag.id) return
-  // Vers le haut, une résistance : le panneau ne se décolle pas du bas.
+  // Vers le haut, une résistance (le panneau se prolonge sous l'écran : aucun vide n'apparaît).
   const raw = event.clientY - drag.startY
-  drag.dy = raw > 0 ? raw : raw / 6
+  drag.dy = raw > 0 ? raw : raw / 4
   element.style.transform = `translateY(${drag.dy}px)`
 }
 
@@ -87,7 +88,7 @@ onBeforeUnmount(() => {
     @pointerdown="backdrop.onPointerDown"
     @click="backdrop.onClick"
   >
-    <div class="flex max-h-[inherit] flex-col">
+    <div ref="panel" class="site-sheet-inner flex flex-col">
       <header
         class="site-sheet-header flex flex-none items-center gap-3 border-b-[1.5px] border-line-soft py-2 pr-2 pl-5"
         @pointerdown="onDragStart"
