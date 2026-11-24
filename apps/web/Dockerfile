@@ -18,9 +18,9 @@ FROM nginx:1.29-alpine
 RUN apk add --no-cache nodejs
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY apps/web/docker-entrypoint.sh /docker-entrypoint-qcm.sh
-COPY --from=build /repo/apps/web/dist/client /usr/share/nginx/html
-# Le serveur est autonome (dépendances incluses par Vite) : pas de node_modules.
-COPY --from=build /repo/apps/web/dist/server /srv/ssr
+# L'adaptateur Node exige la disposition du build : `…/server/entry.mjs` avec `…/client` à côté.
+# nginx sert ce même dossier `client`. Le serveur est autonome (dépendances incluses) : pas de node_modules.
+COPY --from=build /repo/apps/web/dist /srv/qcm
 RUN chmod +x /docker-entrypoint-qcm.sh && mkdir -p /var/cache/nginx/ssr && chown nginx:nginx /var/cache/nginx/ssr
 ENV HOST=127.0.0.1 PORT=4321 NODE_ENV=production
 EXPOSE 80
