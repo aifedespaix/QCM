@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div class="flex flex-col gap-5">
     <header class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="text-3xl font-extrabold sm:text-4xl">{{ heading }}</h1>
@@ -196,31 +196,35 @@ onBeforeUnmount(() => {
       </div>
       <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
     </header>
-    <form class="qcm-panel sticky top-[calc(var(--site-header)+0.5rem)] z-20 hidden grid-cols-1 gap-4 p-4 sm:grid sm:grid-cols-3 sm:p-5 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="submit">
+    <form class="qcm-panel sticky top-[calc(var(--site-header)+0.5rem)] z-20 hidden gap-3 p-3 sm:grid sm:grid-cols-3 lg:grid-cols-[2fr_1fr_1fr_1fr]" role="search" @submit.prevent="submit">
       <div class="sm:col-span-3 lg:col-span-1">
-        <label class="qcm-label" for="lib-search">Rechercher</label>
-        <input id="lib-search" v-model="filters.search" class="qcm-field" type="search" placeholder="Un titre, un chapitre, un mot…" />
+        <!-- Libellés lus par les lecteurs d'écran : chaque liste affiche déjà son choix (« Toutes les matières »…). -->
+        <label class="sr-only" for="lib-search">Rechercher</label>
+        <div class="relative">
+          <UiIcon name="search" class="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-ink-soft" />
+          <input id="lib-search" v-model="filters.search" class="qcm-field pl-11" type="search" placeholder="Rechercher un titre, un chapitre, un mot…" />
+        </div>
       </div>
       <div>
-        <label class="qcm-label" for="lib-subject">Matière</label>
+        <label class="sr-only" for="lib-subject">Matière</label>
         <select id="lib-subject" v-model="filters.subject" class="qcm-field">
           <option value="">Toutes les matières</option>
           <option v-for="subject in SUBJECTS" :key="subject" :value="subject">{{ SUBJECT_LABELS[subject] }}</option>
         </select>
       </div>
       <div>
-        <label class="qcm-label" for="lib-level">Niveau</label>
+        <label class="sr-only" for="lib-level">Niveau</label>
         <select id="lib-level" v-model="filters.level" class="qcm-field">
           <option value="">Tous les niveaux</option>
           <option v-for="level in LEVELS" :key="level" :value="level">{{ LEVEL_LABELS[level] }}</option>
         </select>
       </div>
       <div>
-        <label class="qcm-label" for="lib-sort">Trier par</label>
+        <label class="sr-only" for="lib-sort">Trier par</label>
         <select id="lib-sort" v-model="filters.sort" class="qcm-field">
-          <option value="recent">Les plus récents</option>
-          <option value="rating">Les mieux notés</option>
-          <option value="title">Titre (A à Z)</option>
+          <option value="recent">Trier : les plus récents</option>
+          <option value="rating">Trier : les mieux notés</option>
+          <option value="title">Trier : titre (A à Z)</option>
         </select>
       </div>
     </form>
@@ -316,11 +320,13 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <ul v-if="state === 'loading'" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Chargement de la bibliothèque">
-      <li v-for="n in 6" :key="n" class="qcm-panel flex flex-col gap-3 p-4">
-        <div class="qcm-skeleton aspect-video w-full" />
-        <div class="qcm-skeleton h-6 w-3/4" />
-        <div class="qcm-skeleton h-4 w-1/2" />
+    <ul v-if="state === 'loading'" class="qcm-library-grid" role="status" aria-label="Chargement de la bibliothèque">
+      <li v-for="n in 8" :key="n" class="qcm-panel flex gap-3 overflow-hidden p-2 sm:flex-col sm:p-0">
+        <div class="qcm-skeleton qcm-library-thumb w-28 flex-none rounded-xl sm:w-full sm:rounded-none" />
+        <div class="flex flex-1 flex-col gap-2 py-1 sm:px-3.5 sm:pb-3.5">
+          <div class="qcm-skeleton h-5 w-3/4" />
+          <div class="qcm-skeleton h-4 w-1/2" />
+        </div>
       </li>
     </ul>
 
@@ -339,36 +345,43 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <p class="text-base font-bold text-ink-soft" role="status">{{ refreshing ? 'Recherche…' : totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
-      <ul class="grid grid-cols-1 gap-5 transition-opacity sm:grid-cols-2 lg:grid-cols-3" :class="refreshing ? 'opacity-60' : ''" :aria-busy="refreshing">
+      <!--
+        Cartes compactes : toute la carte mène à la fiche (lien étiré sur le titre), seule l'icône
+        de téléchargement (et « Modifier » pour ses propres QCM) reste au-dessus.
+        Téléphone : une ligne par QCM, vignette à gauche. À partir de sm : grille de 2 à 4 colonnes.
+      -->
+      <ul class="qcm-library-grid transition-opacity" :class="refreshing ? 'opacity-60' : ''" :aria-busy="refreshing">
         <li
           v-for="item in items"
           :key="item.id"
-          class="qcm-panel group relative flex flex-col overflow-hidden transition-transform hover:-translate-y-0.5 focus-within:-translate-y-0.5"
+          class="qcm-panel group relative flex gap-3 overflow-hidden p-2 transition-transform hover:-translate-y-0.5 focus-within:-translate-y-0.5 sm:flex-col sm:gap-0 sm:p-0"
         >
-          <img v-if="qcmThumbnailUrl(item)" :src="qcmThumbnailUrl(item)" alt="" width="480" height="270" loading="lazy" decoding="async" class="aspect-video w-full border-b-[1.5px] border-line-soft bg-bg object-cover" />
-          <div v-else class="flex aspect-[3/1] w-full items-center justify-center border-b-[1.5px] border-line-soft" :class="SUBJECT_TONES[item.subject]" aria-hidden="true">
-            <span class="px-4 text-center text-2xl font-extrabold opacity-80">{{ SUBJECT_LABELS[item.subject] }}</span>
+          <div class="qcm-library-thumb relative w-28 flex-none self-start overflow-hidden rounded-xl sm:w-full sm:rounded-none">
+            <img v-if="qcmThumbnailUrl(item)" :src="qcmThumbnailUrl(item)" alt="" width="480" height="270" loading="lazy" decoding="async" class="h-full w-full bg-bg object-cover sm:border-b-[1.5px] sm:border-line-soft" />
+            <div v-else class="flex h-full w-full items-center justify-center sm:border-b-[1.5px] sm:border-line-soft" :class="SUBJECT_TONES[item.subject]" aria-hidden="true">
+              <span class="px-2 text-center text-sm font-extrabold opacity-80 sm:text-lg">{{ SUBJECT_LABELS[item.subject] }}</span>
+            </div>
           </div>
-          <div class="flex flex-1 flex-col gap-3 p-5">
-            <p class="flex flex-wrap gap-1.5">
-              <span class="qcm-chip" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
-              <span class="qcm-chip">{{ LEVEL_LABELS[item.level] }}</span>
-              <span v-if="mineActive" class="qcm-chip" :class="STATUS_CHIPS[item.status].tone">{{ STATUS_CHIPS[item.status].label }}</span>
+          <div class="flex min-w-0 flex-1 flex-col gap-1 py-0.5 pr-1 sm:p-3.5 sm:pt-3">
+            <p class="flex flex-wrap gap-1">
+              <span v-if="qcmThumbnailUrl(item)" class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
+              <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[item.level] }}</span>
+              <span v-if="mineActive" class="qcm-chip qcm-chip-sm" :class="STATUS_CHIPS[item.status].tone">{{ STATUS_CHIPS[item.status].label }}</span>
             </p>
-            <h2 class="text-xl leading-snug font-extrabold">
+            <h2 class="line-clamp-2 text-base leading-snug font-extrabold sm:text-lg" :title="item.title">
               <a :href="qcmPath(item)" class="no-underline after:absolute after:inset-0 group-hover:underline">{{ item.title }}</a>
             </h2>
-            <p class="text-base font-medium text-ink-soft">{{ item.chapter }}</p>
-            <p class="mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm font-bold text-ink-soft">
-              <span>{{ questionCountLabel(item.question_count) }}</span>
-              <span v-if="item.has_images">Avec images</span>
-              <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
-            </p>
-            <div class="relative z-10 flex items-center gap-2">
-              <a :href="qcmPath(item)" class="qcm-block qcm-block-primary qcm-block-sm flex-1 justify-center no-underline" :aria-label="`Voir ${item.title}`">Voir</a>
-              <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-block qcm-block-quiet qcm-block-sm justify-center no-underline" :aria-label="`Modifier ${item.title}`">Modifier</a>
-              <button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${item.title}`" title="Télécharger" @click="downloadQcm(item)">
-                <UiIcon name="download" />
+            <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
+            <div class="mt-auto flex items-center gap-2 pt-1">
+              <p class="flex min-w-0 flex-1 items-center gap-x-2 overflow-hidden text-sm font-bold whitespace-nowrap text-ink-soft">
+                <span>{{ questionCountLabel(item.question_count) }}</span>
+                <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
+              </p>
+              <a v-if="mineActive" :href="`/editeur?id=${item.id}`" class="qcm-icon-button qcm-icon-button-sm relative z-10 flex-none no-underline" :aria-label="`Modifier ${item.title}`" title="Modifier">
+                <UiIcon name="pencil" :size="18" />
+              </a>
+              <button type="button" class="qcm-icon-button qcm-icon-button-sm relative z-10 flex-none" :aria-label="`Télécharger ${item.title}`" title="Télécharger" @click="downloadQcm(item)">
+                <UiIcon name="download" :size="18" />
               </button>
             </div>
           </div>

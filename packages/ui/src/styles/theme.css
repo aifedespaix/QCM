@@ -220,6 +220,51 @@
     cursor: pointer;
   }
 
+  /* Bloc encore plus compact : actions dans les cartes de bibliothèque. */
+  .qcm-block-xs {
+    min-height: 40px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.95rem;
+  }
+
+  .qcm-icon-button-sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  .qcm-chip-sm {
+    padding: 0.1rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  /*
+   * Grille des bibliothèques : cartes compactes, une par ligne sur téléphone puis autant de
+   * colonnes d'environ 12 rem que la largeur le permet (3 sur tablette, 5 sur grand écran).
+   * La vignette passe du 16/9 au 2/1 en grille : la carte gagne en hauteur sans perdre l'image.
+   */
+  .qcm-library-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 40rem) {
+    .qcm-library-grid {
+      grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  .qcm-library-thumb {
+    aspect-ratio: 16 / 9;
+  }
+
+  @media (min-width: 40rem) {
+    .qcm-library-thumb {
+      aspect-ratio: 2 / 1;
+    }
+  }
+
   /* Touche clavier affichée dans un bloc (A, B, C, D, Entrée). */
   .qcm-key {
     display: inline-flex;

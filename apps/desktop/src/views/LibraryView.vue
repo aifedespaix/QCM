@@ -226,23 +226,23 @@ onBeforeUnmount(() => {
         <button v-if="local.length === 0" type="button" class="qcm-block qcm-block-primary qcm-block-sm" @click="emit('chooseFile')">Ouvrir un fichier .qcm</button>
         <button v-else type="button" class="qcm-block qcm-block-quiet qcm-block-sm" @click="resetFilters">Effacer les filtres</button>
       </div>
-      <ul v-else class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <li v-for="entry in localItems" :key="entry.key" class="qcm-panel flex flex-col gap-3 p-5">
-          <p class="flex flex-wrap gap-1.5">
-            <span class="qcm-chip" :class="SUBJECT_TONES[entry.subject]">{{ SUBJECT_LABELS[entry.subject] }}</span>
-            <span class="qcm-chip">{{ LEVEL_LABELS[entry.level] }}</span>
-            <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip bg-selected">Mise à jour disponible</span>
-            <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
-            <span v-else-if="remote.has(entry.key)" class="qcm-chip">Dans la bibliothèque</span>
+      <ul v-else class="qcm-library-grid">
+        <li v-for="entry in localItems" :key="entry.key" class="qcm-panel flex flex-col gap-1.5 p-3.5">
+          <p class="flex flex-wrap gap-1">
+            <span class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[entry.subject]">{{ SUBJECT_LABELS[entry.subject] }}</span>
+            <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[entry.level] }}</span>
+            <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
+            <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip qcm-chip-sm" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
+            <span v-else-if="remote.has(entry.key)" class="qcm-chip qcm-chip-sm">Dans la bibliothèque</span>
           </p>
-          <h2 class="text-xl leading-snug font-extrabold break-words">{{ entry.title }}</h2>
-          <p class="font-medium text-ink-soft">{{ entry.chapter }}</p>
+          <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="entry.title">{{ entry.title }}</h2>
+          <p class="truncate text-sm font-medium text-ink-soft" :title="entry.chapter">{{ entry.chapter }}</p>
           <p class="mt-auto pt-1 text-sm font-bold text-ink-soft">{{ countLabel(entry.questionCount) }} · ouvert {{ formatRelativeDay(entry.openedAt) }}</p>
-          <div class="flex items-center gap-2">
-            <button type="button" class="qcm-block qcm-block-primary qcm-block-sm flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
-            <button v-if="remote.get(entry.key)?.state === 'outdated'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm" :disabled="downloadingId !== ''" :aria-label="`Mettre à jour ${entry.title}`" @click="emit('updateLocal', entry)">Mettre à jour</button>
-<button type="button" class="qcm-icon-button flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+          <div class="mt-1 flex items-center gap-1.5">
+            <button type="button" class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1" :aria-label="`Ouvrir ${entry.title}`" @click="emit('openLocal', entry.key)">Ouvrir</button>
+            <button v-if="remote.get(entry.key)?.state === 'outdated'" type="button" class="qcm-block qcm-block-quiet qcm-block-sm qcm-block-xs" :disabled="downloadingId !== ''" :aria-label="`Mettre à jour ${entry.title}`" @click="emit('updateLocal', entry)">Mettre à jour</button>
+            <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :aria-label="`Télécharger ${entry.title}…`" title="Télécharger…" @click="emit('exportLocal', entry)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
             </button>
             <button type="button" class="qcm-text-button underline" :aria-label="`Retirer ${entry.title} de cet ordinateur`" @click="emit('removeLocal', entry)">Retirer</button>
           </div>
@@ -251,11 +251,12 @@ onBeforeUnmount(() => {
     </template>
 
     <!-- ───────────── En ligne ───────────── -->
-    <ul v-else-if="online === 'loading'" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Chargement de la bibliothèque">
-      <li v-for="n in 6" :key="n" class="qcm-panel flex flex-col gap-3 p-5">
-        <div class="qcm-skeleton h-6 w-1/3" />
-        <div class="qcm-skeleton h-7 w-3/4" />
-        <div class="qcm-skeleton h-12 w-full" />
+    <ul v-else-if="online === 'loading'" class="qcm-library-grid" role="status" aria-label="Chargement de la bibliothèque">
+      <li v-for="n in 8" :key="n" class="qcm-panel flex flex-col gap-1.5 p-3.5">
+        <div class="qcm-skeleton h-5 w-1/3" />
+        <div class="qcm-skeleton h-6 w-3/4" />
+        <div class="qcm-skeleton h-4 w-1/2" />
+        <div class="qcm-skeleton mt-2 h-10 w-full" />
       </li>
     </ul>
 
@@ -266,34 +267,34 @@ onBeforeUnmount(() => {
 
     <template v-else>
       <p class="text-base font-bold text-ink-soft" role="status">{{ totalItems === 1 ? '1 QCM' : `${totalItems} QCM` }}</p>
-      <ul class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <li v-for="item in items" :key="item.id" class="qcm-panel flex flex-col gap-3 p-5">
-          <p class="flex flex-wrap gap-1.5">
-            <span class="qcm-chip" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
-            <span class="qcm-chip">{{ LEVEL_LABELS[item.level] }}</span>
-            <span v-if="copyState(item) === 'outdated'" class="qcm-chip bg-selected">Mise à jour disponible</span>
-            <span v-else-if="copyState(item) !== 'none'" class="qcm-chip bg-correct text-correct-ink">Sur cet ordinateur</span>
+      <ul class="qcm-library-grid">
+        <li v-for="item in items" :key="item.id" class="qcm-panel flex flex-col gap-1.5 p-3.5">
+          <p class="flex flex-wrap gap-1">
+            <span class="qcm-chip qcm-chip-sm" :class="SUBJECT_TONES[item.subject]">{{ SUBJECT_LABELS[item.subject] }}</span>
+            <span class="qcm-chip qcm-chip-sm">{{ LEVEL_LABELS[item.level] }}</span>
+            <span v-if="copyState(item) === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
+            <span v-else-if="copyState(item) !== 'none'" class="qcm-chip qcm-chip-sm bg-correct text-correct-ink">Sur cet ordinateur</span>
           </p>
-          <h2 class="text-xl leading-snug font-extrabold break-words">{{ item.title }}</h2>
-          <p class="font-medium text-ink-soft">{{ item.chapter }}</p>
-          <p v-if="item.description" class="line-clamp-2 text-sm text-ink-soft">{{ item.description }}</p>
-          <p class="mt-auto flex flex-wrap gap-x-3 pt-1 text-sm font-bold text-ink-soft">
+          <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="item.title">{{ item.title }}</h2>
+          <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
+          <p v-if="item.description" class="line-clamp-2 text-sm text-ink-soft" :title="item.description">{{ item.description }}</p>
+          <p class="mt-auto flex flex-wrap gap-x-2.5 pt-1 text-sm font-bold text-ink-soft">
             <span>{{ countLabel(item.question_count) }}</span>
-            <span v-if="item.has_images">Avec images</span>
+            <span v-if="item.has_images">Images</span>
             <span v-if="item.rating_count > 0" :aria-label="`Note ${item.rating_avg.toFixed(1)} sur 5`">★ {{ item.rating_avg.toFixed(1) }}</span>
           </p>
-          <div class="flex items-center gap-2">
+          <div class="mt-1 flex items-center gap-1.5">
             <button
               type="button"
-              class="qcm-block qcm-block-primary qcm-block-sm flex-1"
+              class="qcm-block qcm-block-primary qcm-block-sm qcm-block-xs flex-1"
               :disabled="downloadingId !== ''"
               :aria-label="`Ouvrir ${item.title}`"
               @click="emit('openRecord', item)"
             >
               {{ downloadingId === item.id ? 'Téléchargement…' : copyState(item) === 'outdated' ? 'Mettre à jour' : 'Ouvrir' }}
             </button>
-            <button type="button" class="qcm-icon-button flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
+            <button type="button" class="qcm-icon-button qcm-icon-button-sm flex-none" :disabled="downloadingId !== ''" :aria-label="`Télécharger ${item.title}…`" title="Télécharger…" @click="emit('exportRecord', item)">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
             </button>
           </div>
         </li>
