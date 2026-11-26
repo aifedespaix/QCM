@@ -62,9 +62,7 @@ function applyFinder(choice: { subject: Subject | ''; chapter: string; level: Le
 function onSubjectChange(): void {
   filters.chapter = ''
 }
-/** Téléphone : le panneau de filtres (matière, niveau, tri) est replié dans la barre du bas. */
-const sheetOpen = ref(false)
-/** Filtres choisis dans le panneau (la recherche est toujours visible, elle ne compte pas). */
+/** Filtres choisis (la recherche est toujours visible, elle ne compte pas). */
 const activeFilters = computed(() =>
   [
     filters.subject ? SUBJECT_LABELS[filters.subject] : '',
@@ -75,26 +73,18 @@ const activeFilters = computed(() =>
 )
 /** Titre de la page : suit la matière et le niveau choisis (même texte que celui rendu par le serveur). */
 const heading = computed(() => libraryHeading(filters.subject, filters.level))
-const resultLabel = computed(() =>
-  state.value !== 'ready' ? 'Voir les résultats' : totalItems.value === 0 ? 'Aucun QCM' : totalItems.value === 1 ? 'Voir 1 QCM' : `Voir ${totalItems.value} QCM`,
-)
 
 /** Adresse d'une page de résultats (liens de pagination, lisibles sans JavaScript et par les moteurs). */
 function pageHref(target: number): string {
   return libraryHref({ ...filters, mine: mineActive.value, page: target })
 }
 
-/** Lance la recherche tout de suite, replie le panneau et range le clavier. */
+/** Lance la recherche tout de suite et range le clavier. */
 function submit(): void {
   clearTimeout(debounce)
   page.value = 1
   void load()
-  sheetOpen.value = false
   if (document.activeElement instanceof HTMLElement && document.activeElement.closest('[data-search-dock]')) document.activeElement.blur()
-}
-
-function onEscape(event: KeyboardEvent): void {
-  if (event.key === 'Escape' && sheetOpen.value) sheetOpen.value = false
 }
 
 const AUTO_RETRY_DELAYS_MS = [2000, 5000, 10000]
@@ -187,14 +177,12 @@ function onWake(): void {
 }
 
 onMounted(() => {
-  window.addEventListener('keydown', onEscape)
   window.addEventListener('online', onOnline)
   window.addEventListener('pageshow', onWake)
   document.addEventListener('visibilitychange', onWake)
   mounted.value = true
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('keydown', onEscape)
   window.removeEventListener('online', onOnline)
   window.removeEventListener('pageshow', onWake)
   document.removeEventListener('visibilitychange', onWake)
@@ -211,9 +199,6 @@ onBeforeUnmount(() => {
         <p class="mt-1 text-lg text-ink-soft">Des QCM relus avant publication, à essayer en ligne ou à télécharger.</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <button type="button" class="qcm-block qcm-block-primary qcm-block-sm" aria-haspopup="dialog" @click="finderOpen = true">
-          <UiIcon name="search" :size="18" /> Trouver un QCM
-        </button>
         <a href="/editeur" class="qcm-block qcm-block-quiet qcm-block-sm no-underline">+ Proposer un QCM</a>
       </div>
     </header>
@@ -251,12 +236,10 @@ onBeforeUnmount(() => {
 
 
     <!--
-      Téléphone : recherche et filtres dans une barre fixée en bas, juste au-dessus des onglets du site.
-      Repliée : le champ de recherche + un bouton « Filtres » (pastille = nombre de filtres actifs).
-      Dépliée : matière, niveau, tri, puis « Voir N QCM » qui lance la recherche et replie le panneau.
+      Téléphone : barre fixée en bas, juste au-dessus des onglets du site : le champ de recherche et une loupe
+      qui ouvre l'assistant (matière puis chapitre). Pastille = nombre de filtres actifs.
     -->
     <div class="sm:hidden" data-search-dock>
-      <div v-if="sheetOpen" class="fixed inset-0 z-30 bg-ink/40" aria-hidden="true" @click="sheetOpen = false" />
       <form
         class="fixed inset-x-0 z-40 flex flex-col gap-3 rounded-t-3xl border-t-2 border-line bg-surface px-4 py-3 shadow-soft"
         style="bottom: var(--site-tabbar)"
@@ -264,38 +247,8 @@ onBeforeUnmount(() => {
         aria-label="Rechercher dans la bibliothèque"
         @submit.prevent="submit"
       >
-        <div id="lib-sheet" v-show="sheetOpen" class="flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <h2 class="text-lg font-extrabold">Filtres</h2>
-            <button type="button" class="qcm-text-button" :disabled="activeFilters.length === 0" @click="Object.assign(filters, { subject: '', level: '', chapter: '', sort: 'recent' })">Effacer</button>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="qcm-label" for="lib-m-subject">Matière</label>
-              <select id="lib-m-subject" v-model="filters.subject" class="qcm-field" @change="onSubjectChange">
-                <option value="">Toutes</option>
-                <option v-for="subject in SUBJECTS" :key="subject" :value="subject">{{ SUBJECT_LABELS[subject] }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="qcm-label" for="lib-m-level">Niveau</label>
-              <select id="lib-m-level" v-model="filters.level" class="qcm-field">
-                <option value="">Tous</option>
-                <option v-for="level in LEVELS" :key="level" :value="level">{{ LEVEL_LABELS[level] }}</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label class="qcm-label" for="lib-m-sort">Trier par</label>
-            <select id="lib-m-sort" v-model="filters.sort" class="qcm-field">
-              <option v-for="(label, value) in SORT_LABELS" :key="value" :value="value">{{ label }}</option>
-            </select>
-          </div>
-          <button type="submit" class="qcm-block qcm-block-primary justify-center">{{ resultLabel }}</button>
-        </div>
-
-        <!-- Filtres actifs, lisibles sans ouvrir le panneau. -->
-        <p v-if="!sheetOpen && activeFilters.length > 0" class="flex items-center gap-2 text-sm font-bold text-ink-soft">
+        <!-- Filtres actifs, lisibles sans ouvrir l'assistant. -->
+        <p v-if="activeFilters.length > 0" class="flex items-center gap-2 text-sm font-bold text-ink-soft">
           <span class="min-w-0 flex-1 truncate">{{ activeFilters.join(' · ') }}</span>
           <button type="button" class="qcm-text-button min-h-9" @click="Object.assign(filters, { subject: '', level: '', chapter: '', sort: 'recent' })">Effacer</button>
         </p>
@@ -309,14 +262,12 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="qcm-icon-button relative flex-none"
-            :class="sheetOpen ? 'bg-selected' : ''"
-            :aria-expanded="sheetOpen"
-            aria-controls="lib-sheet"
-            :aria-label="activeFilters.length > 0 ? `Filtres, ${activeFilters.length} actif${activeFilters.length > 1 ? 's' : ''}` : 'Filtres'"
-            @click="sheetOpen = !sheetOpen"
+            aria-haspopup="dialog"
+            :aria-label="activeFilters.length > 0 ? `Trouver un QCM, ${activeFilters.length} filtre${activeFilters.length > 1 ? 's' : ''} actif${activeFilters.length > 1 ? 's' : ''}` : 'Trouver un QCM'"
+            @click="finderOpen = true"
           >
-            <UiIcon :name="sheetOpen ? 'close' : 'sliders'" />
-            <span v-if="activeFilters.length > 0 && !sheetOpen" class="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border-2 border-line bg-primary text-xs font-extrabold" aria-hidden="true">{{ activeFilters.length }}</span>
+            <UiIcon name="search" />
+            <span v-if="activeFilters.length > 0" class="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full border-2 border-line bg-primary text-xs font-extrabold" aria-hidden="true">{{ activeFilters.length }}</span>
           </button>
         </div>
       </form>
