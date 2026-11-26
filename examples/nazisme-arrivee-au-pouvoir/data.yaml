@@ -5,7 +5,7 @@ meta:
   level: 3e
   chapter: "Le nazisme en Allemagne"
   language: fr
-  description: "Douze questions sur la montée du parti nazi, l'arrivée de Hitler au pouvoir en 1933 et la mise en place de l'antisémitisme d'État."
+  description: "Quinze questions sur la montée du parti nazi, l'arrivée de Hitler au pouvoir en 1933 et la mise en place de l'antisémitisme d'État."
 questions:
   - id: q1
     prompt: "Que tente Hitler à Munich en 1923 ?"
@@ -18,6 +18,16 @@ questions:
     hint: "Cette tentative échoue et Hitler passe quelques mois en prison."
     explanation: "En 1923, Hitler tente un coup d'État à Munich. Il échoue et reste quelques mois en prison, où il rédige son livre Mein Kampf."
   - id: q2
+    prompt: "Quel livre Hitler rédige-t-il en prison après son coup d'État raté ?"
+    choices:
+      - text: "Le Prince"
+      - text: "Le Capital"
+      - text: "Mein Kampf"
+        correct: true
+      - text: "Les Misérables"
+    hint: "Ce livre volumineux présente les idées de Hitler."
+    explanation: "Hitler rédige Mein Kampf pendant les quelques mois passés en prison après l'échec de son coup d'État de 1923."
+  - id: q3
     prompt: "Quel traité les Allemands jugent-ils responsable de leurs difficultés après 1919 ?"
     choices:
       - text: "Le traité de Rome"
@@ -27,7 +37,7 @@ questions:
       - text: "Le traité de Vienne"
     hint: "Ce traité impose à l'Allemagne de payer des réparations."
     explanation: "Les Allemands accusent le traité de Versailles. Il oblige l'Allemagne à payer des réparations à ses anciens adversaires, et Hitler le dénonce."
-  - id: q3
+  - id: q4
     prompt: "Combien de chômeurs compte l'Allemagne en 1932 ?"
     choices:
       - text: "0,6 million"
@@ -37,7 +47,7 @@ questions:
       - text: "18 millions"
     hint: "Le graphique montre une forte hausse du chômage entre 1928 et 1932."
     explanation: "L'Allemagne compte 6 millions de chômeurs en 1932, contre 0,6 million en 1928. La crise économique frappe durement la population."
-  - id: q4
+  - id: q5
     prompt: "Quel pourcentage de voix le parti nazi obtient-il aux élections de 1932 ?"
     choices:
       - text: "18,3 %"
@@ -47,7 +57,7 @@ questions:
       - text: "60 %"
     hint: "Ce score est plus élevé qu'en 1930 et qu'en 1928."
     explanation: "Le parti nazi obtient 37,7 % des voix en 1932. Il avait obtenu 18,3 % en 1930 et 2,6 % en 1928."
-  - id: q5
+  - id: q6
     prompt: "Qui nomme Hitler chancelier le 30 janvier 1933 ?"
     choices:
       - text: "Le président Hindenburg"
@@ -57,7 +67,7 @@ questions:
       - text: "Le parti communiste"
     hint: "Cette personne est alors le président de l'Allemagne."
     explanation: "Le président Hindenburg nomme Hitler chancelier le 30 janvier 1933. Hitler arrive donc au pouvoir par la voie légale."
-  - id: q6
+  - id: q7
     prompt: "Qui le gouvernement de Hitler accuse-t-il d'avoir provoqué l'incendie du Reichstag en février 1933 ?"
     choices:
       - text: "Un étranger"
@@ -67,7 +77,7 @@ questions:
       - text: "Un juif"
     hint: "Le lendemain, les libertés individuelles sont suspendues."
     explanation: "Le gouvernement accuse un communiste. Il utilise cet incendie pour suspendre les libertés individuelles dès le 28 février 1933."
-  - id: q7
+  - id: q8
     prompt: "Que devient le parti nazi en juillet 1933 ?"
     choices:
       - text: "Un parti d'opposition"
@@ -77,7 +87,7 @@ questions:
         correct: true
     hint: "Les autres partis disparaissent."
     explanation: "En juillet 1933, le parti nazi devient le parti unique. Les opposants sont arrêtés et emprisonnés."
-  - id: q8
+  - id: q9
     prompt: "Quel camp de concentration ouvre en 1933 pour enfermer des opposants ?"
     choices:
       - text: "Dachau"
@@ -87,7 +97,7 @@ questions:
       - text: "Treblinka"
     hint: "Ce camp est situé près de Munich."
     explanation: "Le camp de Dachau ouvre dès 1933. Les opposants au parti nazi y sont enfermés."
-  - id: q9
+  - id: q10
     prompt: "Quel titre Hitler prend-il à la mort du président Hindenburg en août 1934 ?"
     choices:
       - text: "Maire de Munich"
@@ -97,7 +107,7 @@ questions:
         correct: true
     hint: "Hitler réunit alors tous les pouvoirs."
     explanation: "En août 1934, Hitler se proclame Reichsführer. Il dirige seul le régime."
-  - id: q10
+  - id: q11
     prompt: "Qu'interdisent les lois de Nuremberg de 1935 entre Juifs et citoyens de sang allemand ?"
     choices:
       - text: "Les voyages"
@@ -107,7 +117,7 @@ questions:
       - text: "Les échanges de lettres"
     hint: "L'article 1 de ces lois concerne la vie de famille."
     explanation: "Les lois de Nuremberg interdisent les mariages entre Juifs et citoyens de sang allemand. Elles réservent aussi les droits politiques aux citoyens de sang allemand."
-  - id: q11
+  - id: q12
     prompt: "Qu'interdisent les ordonnances du 12 novembre 1938 aux Juifs ?"
     choices:
       - text: "D'exploiter des magasins de vente au détail"
@@ -117,7 +127,7 @@ questions:
       - text: "De posséder une voiture"
     hint: "La police ferme les entreprises qui continuent leur activité."
     explanation: "Ces ordonnances interdisent aux Juifs d'exploiter des magasins de vente au détail et d'exercer un métier à leur compte. La police ferme les entreprises juives."
-  - id: q12
+  - id: q13
     prompt: "À quelle date a lieu la Nuit de Cristal ?"
     choices:
       - text: "Le 30 janvier 1933"
@@ -127,3 +137,23 @@ questions:
       - text: "En août 1934"
     hint: "Cette nuit suit les lois de Nuremberg et les ordonnances de 1938."
     explanation: "La Nuit de Cristal a lieu les 9 et 10 novembre 1938. La violence contre les Juifs s'y durcit."
+  - id: q14
+    prompt: "Que fait Hitler de l'armée allemande avant d'agresser les États voisins ?"
+    choices:
+      - text: "Il démobilise l'armée allemande"
+      - text: "Il remilitarise l'Allemagne"
+        correct: true
+      - text: "Il supprime le service militaire"
+      - text: "Il réduit le budget de l'armée"
+    hint: "Cette décision prépare la guerre."
+    explanation: "Hitler remilitarise l'Allemagne. Il prépare ainsi la conquête et l'agression des États voisins."
+  - id: q15
+    prompt: "Quel nom Hitler donne-t-il au territoire qu'il veut conquérir pour le peuple allemand ?"
+    choices:
+      - text: "Un espace colonial"
+      - text: "Un espace neutre"
+      - text: "Un espace public"
+      - text: "Un espace vital"
+        correct: true
+    hint: "Hitler juge le peuple allemand supérieur aux autres peuples."
+    explanation: "Hitler veut conquérir un espace vital pour le peuple allemand. Cette idée repose sur la vision raciste du monde du régime nazi."
