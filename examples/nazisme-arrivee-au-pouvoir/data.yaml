@@ -1,0 +1,129 @@
+version: 1
+meta:
+  title: "L'arrivée des nazis au pouvoir"
+  subject: histoire-geo
+  level: 3e
+  chapter: "Le nazisme en Allemagne"
+  language: fr
+  description: "Douze questions sur la montée du parti nazi, l'arrivée de Hitler au pouvoir en 1933 et la mise en place de l'antisémitisme d'État."
+questions:
+  - id: q1
+    prompt: "Que tente Hitler à Munich en 1923 ?"
+    choices:
+      - text: "Une élection"
+      - text: "Un coup d'État"
+        correct: true
+      - text: "Une grève générale"
+      - text: "Un référendum"
+    hint: "Cette tentative échoue et Hitler passe quelques mois en prison."
+    explanation: "En 1923, Hitler tente un coup d'État à Munich. Il échoue et reste quelques mois en prison, où il rédige son livre Mein Kampf."
+  - id: q2
+    prompt: "Quel traité les Allemands jugent-ils responsable de leurs difficultés après 1919 ?"
+    choices:
+      - text: "Le traité de Rome"
+      - text: "Le traité de Paris"
+      - text: "Le traité de Versailles"
+        correct: true
+      - text: "Le traité de Vienne"
+    hint: "Ce traité impose à l'Allemagne de payer des réparations."
+    explanation: "Les Allemands accusent le traité de Versailles. Il oblige l'Allemagne à payer des réparations à ses anciens adversaires, et Hitler le dénonce."
+  - id: q3
+    prompt: "Combien de chômeurs compte l'Allemagne en 1932 ?"
+    choices:
+      - text: "0,6 million"
+      - text: "3,7 millions"
+      - text: "6 millions"
+        correct: true
+      - text: "18 millions"
+    hint: "Le graphique montre une forte hausse du chômage entre 1928 et 1932."
+    explanation: "L'Allemagne compte 6 millions de chômeurs en 1932, contre 0,6 million en 1928. La crise économique frappe durement la population."
+  - id: q4
+    prompt: "Quel pourcentage de voix le parti nazi obtient-il aux élections de 1932 ?"
+    choices:
+      - text: "18,3 %"
+      - text: "37,7 %"
+        correct: true
+      - text: "2,6 %"
+      - text: "60 %"
+    hint: "Ce score est plus élevé qu'en 1930 et qu'en 1928."
+    explanation: "Le parti nazi obtient 37,7 % des voix en 1932. Il avait obtenu 18,3 % en 1930 et 2,6 % en 1928."
+  - id: q5
+    prompt: "Qui nomme Hitler chancelier le 30 janvier 1933 ?"
+    choices:
+      - text: "Le président Hindenburg"
+        correct: true
+      - text: "L'empereur Guillaume II"
+      - text: "Le dictateur Mussolini"
+      - text: "Le parti communiste"
+    hint: "Cette personne est alors le président de l'Allemagne."
+    explanation: "Le président Hindenburg nomme Hitler chancelier le 30 janvier 1933. Hitler arrive donc au pouvoir par la voie légale."
+  - id: q6
+    prompt: "Qui le gouvernement de Hitler accuse-t-il d'avoir provoqué l'incendie du Reichstag en février 1933 ?"
+    choices:
+      - text: "Un étranger"
+      - text: "Un soldat"
+      - text: "Un communiste"
+        correct: true
+      - text: "Un juif"
+    hint: "Le lendemain, les libertés individuelles sont suspendues."
+    explanation: "Le gouvernement accuse un communiste. Il utilise cet incendie pour suspendre les libertés individuelles dès le 28 février 1933."
+  - id: q7
+    prompt: "Que devient le parti nazi en juillet 1933 ?"
+    choices:
+      - text: "Un parti d'opposition"
+      - text: "Un parti interdit"
+      - text: "Un parti minoritaire"
+      - text: "Le parti unique"
+        correct: true
+    hint: "Les autres partis disparaissent."
+    explanation: "En juillet 1933, le parti nazi devient le parti unique. Les opposants sont arrêtés et emprisonnés."
+  - id: q8
+    prompt: "Quel camp de concentration ouvre en 1933 pour enfermer des opposants ?"
+    choices:
+      - text: "Dachau"
+        correct: true
+      - text: "Auschwitz"
+      - text: "Buchenwald"
+      - text: "Treblinka"
+    hint: "Ce camp est situé près de Munich."
+    explanation: "Le camp de Dachau ouvre dès 1933. Les opposants au parti nazi y sont enfermés."
+  - id: q9
+    prompt: "Quel titre Hitler prend-il à la mort du président Hindenburg en août 1934 ?"
+    choices:
+      - text: "Maire de Munich"
+      - text: "Chef du Parlement"
+      - text: "Ministre de la Guerre"
+      - text: "Reichsführer"
+        correct: true
+    hint: "Hitler réunit alors tous les pouvoirs."
+    explanation: "En août 1934, Hitler se proclame Reichsführer. Il dirige seul le régime."
+  - id: q10
+    prompt: "Qu'interdisent les lois de Nuremberg de 1935 entre Juifs et citoyens de sang allemand ?"
+    choices:
+      - text: "Les voyages"
+      - text: "Les mariages"
+        correct: true
+      - text: "Les études"
+      - text: "Les échanges de lettres"
+    hint: "L'article 1 de ces lois concerne la vie de famille."
+    explanation: "Les lois de Nuremberg interdisent les mariages entre Juifs et citoyens de sang allemand. Elles réservent aussi les droits politiques aux citoyens de sang allemand."
+  - id: q11
+    prompt: "Qu'interdisent les ordonnances du 12 novembre 1938 aux Juifs ?"
+    choices:
+      - text: "D'exploiter des magasins de vente au détail"
+        correct: true
+      - text: "D'habiter dans une grande ville"
+      - text: "D'aller à la synagogue"
+      - text: "De posséder une voiture"
+    hint: "La police ferme les entreprises qui continuent leur activité."
+    explanation: "Ces ordonnances interdisent aux Juifs d'exploiter des magasins de vente au détail et d'exercer un métier à leur compte. La police ferme les entreprises juives."
+  - id: q12
+    prompt: "À quelle date a lieu la Nuit de Cristal ?"
+    choices:
+      - text: "Le 30 janvier 1933"
+      - text: "Le 15 septembre 1935"
+      - text: "Les 9 et 10 novembre 1938"
+        correct: true
+      - text: "En août 1934"
+    hint: "Cette nuit suit les lois de Nuremberg et les ordonnances de 1938."
+    explanation: "La Nuit de Cristal a lieu les 9 et 10 novembre 1938. La violence contre les Juifs s'y durcit."
