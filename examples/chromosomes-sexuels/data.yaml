@@ -1,0 +1,160 @@
+version: 1
+meta:
+  title: "Chromosomes sexuels et hérédité"
+  subject: svt
+  level: 3e
+  chapter: "Hérédité : caryotype et détermination du sexe"
+  language: fr
+  author: "Équipe QCM"
+  description: "Seize questions avec schéma sur le caryotype, les chromosomes X et Y, la fécondation et le sexe de l'enfant. Complète le QCM Le chromosome."
+questions:
+  - id: q1
+    prompt: "Comment s'appelle l'image des chromosomes d'une cellule, classés par paires ?"
+    choices:
+      - text: "Le génome"
+      - text: "Le caryotype"
+        correct: true
+      - text: "Le noyau"
+      - text: "Le gène"
+    hint: "On photographie les chromosomes, puis on les range par paires de même taille et de même forme."
+    explanation: "Le caryotype est le classement des chromosomes d'une cellule en paires. Il permet de les compter et de repérer les chromosomes sexuels."
+  - id: q2
+    prompt: "Combien de paires de chromosomes contient le caryotype d'une cellule humaine du corps ?"
+    choices:
+      - text: "46"
+      - text: "12"
+      - text: "2"
+      - text: "23"
+        correct: true
+    hint: "Une cellule du corps contient 46 chromosomes."
+    explanation: "46 chromosomes forment 23 paires. Une des paires est celle des chromosomes sexuels."
+  - id: q3
+    prompt: "Quels chromosomes sexuels une cellule du corps d'une fille contient-elle ?"
+    choices:
+      - text: "Deux chromosomes X"
+        correct: true
+      - text: "Un chromosome X et un chromosome Y"
+      - text: "Deux chromosomes Y"
+    hint: "Les deux chromosomes de la paire sexuelle sont identiques chez la fille."
+    explanation: "Une fille a deux chromosomes X, notés XX."
+  - id: q4
+    prompt: "Quels chromosomes sexuels une cellule du corps d'un garçon contient-elle ?"
+    choices:
+      - text: "Deux chromosomes X"
+      - text: "Deux chromosomes Y"
+      - text: "Un chromosome X et un chromosome Y"
+        correct: true
+    hint: "Les deux chromosomes de la paire sexuelle sont différents chez le garçon."
+    explanation: "Un garçon a un chromosome X et un chromosome Y, notés XY."
+  - id: q5
+    prompt: "Sur le schéma, quel repère montre la paire de chromosomes sexuels d'une fille ?"
+    image: media/paires_chromosomes_sexuels.webp
+    choices:
+      - text: "Le repère A"
+        correct: true
+      - text: "Le repère B"
+    hint: "Chez la fille, les deux chromosomes de la paire ont la même taille."
+    explanation: "Le repère A montre deux chromosomes de même taille : deux chromosomes X, soit la paire XX d'une fille."
+  - id: q6
+    prompt: "Sur le même schéma, quel repère montre la paire de chromosomes sexuels d'un garçon ?"
+    image: media/paires_chromosomes_sexuels.webp
+    choices:
+      - text: "Le repère A"
+      - text: "Le repère B"
+        correct: true
+    hint: "Chez le garçon, un des deux chromosomes est plus petit que l'autre."
+    explanation: "Le repère B montre un grand chromosome X et un petit chromosome Y, soit la paire XY d'un garçon."
+  - id: q7
+    prompt: "Comment s'appelle une portion d'ADN qui commande un caractère héréditaire ?"
+    choices:
+      - text: "Une chromatide"
+      - text: "Un centromère"
+      - text: "Un gène"
+        correct: true
+      - text: "Un caryotype"
+    hint: "Un chromosome porte plusieurs milliers de ces portions d'ADN."
+    explanation: "Un gène est une portion d'ADN. Il détermine un caractère héréditaire, comme la couleur des yeux."
+  - id: q8
+    prompt: "Combien de chromosomes contient un spermatozoïde ?"
+    choices:
+      - text: "46"
+      - text: "23"
+        correct: true
+      - text: "92"
+      - text: "22"
+    hint: "Une cellule reproductrice contient la moitié des chromosomes d'une cellule du corps."
+    explanation: "Un spermatozoïde est une cellule reproductrice. Il contient 23 chromosomes, soit la moitié de 46."
+  - id: q9
+    prompt: "Quel chromosome sexuel contient chaque ovule ?"
+    choices:
+      - text: "Un chromosome Y"
+      - text: "Deux chromosomes X"
+      - text: "Un chromosome X ou un chromosome Y"
+      - text: "Un chromosome X"
+        correct: true
+    hint: "Une femme a seulement des chromosomes X."
+    explanation: "Une femme a les chromosomes XX. Chaque ovule reçoit un seul chromosome sexuel, et c'est toujours un X."
+  - id: q10
+    prompt: "Quel chromosome sexuel contient un spermatozoïde ?"
+    choices:
+      - text: "Un chromosome X ou un chromosome Y"
+        correct: true
+      - text: "Un chromosome X"
+      - text: "Deux chromosomes X et Y"
+      - text: "Un chromosome Y"
+    hint: "Un homme a un chromosome X et un chromosome Y. Chaque spermatozoïde reçoit un seul des deux."
+    explanation: "Un homme a les chromosomes XY. Un spermatozoïde reçoit soit le X, soit le Y."
+  - id: q11
+    prompt: "Comment s'appelle la rencontre d'un spermatozoïde et d'un ovule ?"
+    choices:
+      - text: "La mutation"
+      - text: "La fécondation"
+        correct: true
+      - text: "La puberté"
+      - text: "La division"
+    hint: "Elle forme la première cellule d'un nouvel être humain."
+    explanation: "La fécondation est l'union d'un spermatozoïde et d'un ovule. Elle forme la cellule-œuf."
+  - id: q12
+    prompt: "Combien de chromosomes contient la cellule-œuf formée à la fécondation ?"
+    choices:
+      - text: "23"
+      - text: "92"
+      - text: "46"
+        correct: true
+      - text: "69"
+    hint: "Elle reçoit 23 chromosomes de la mère et 23 chromosomes du père."
+    explanation: "23 chromosomes de l'ovule et 23 chromosomes du spermatozoïde donnent 46 chromosomes, soit 23 paires."
+  - id: q13
+    prompt: "Un spermatozoïde qui porte un chromosome X féconde un ovule. Quel est le sexe de l'enfant ?"
+    choices:
+      - text: "Un garçon"
+      - text: "Une fille"
+        correct: true
+    hint: "L'ovule apporte toujours un chromosome X."
+    explanation: "L'ovule apporte un X et le spermatozoïde apporte un X. La cellule-œuf est XX, donc l'enfant est une fille."
+  - id: q14
+    prompt: "Un spermatozoïde qui porte un chromosome Y féconde un ovule. Quel est le sexe de l'enfant ?"
+    choices:
+      - text: "Un garçon"
+        correct: true
+      - text: "Une fille"
+    hint: "L'ovule apporte toujours un chromosome X."
+    explanation: "L'ovule apporte un X et le spermatozoïde apporte un Y. La cellule-œuf est XY, donc l'enfant est un garçon."
+  - id: q15
+    prompt: "Quelle cellule reproductrice décide du sexe de l'enfant ?"
+    choices:
+      - text: "L'ovule"
+      - text: "Le spermatozoïde"
+        correct: true
+      - text: "Les deux de la même façon"
+    hint: "Une seule des deux cellules peut porter un chromosome Y."
+    explanation: "Tous les ovules portent un X. Le spermatozoïde porte un X ou un Y : c'est lui qui décide du sexe."
+  - id: q16
+    prompt: "Comment s'appelle un changement dans la séquence de l'ADN ?"
+    choices:
+      - text: "Une fécondation"
+      - text: "Un caryotype"
+      - text: "Une mutation"
+        correct: true
+    hint: "Ce changement peut modifier un gène."
+    explanation: "Une mutation est une modification de l'ADN. Elle peut créer une nouvelle version d'un gène."
