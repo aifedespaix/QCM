@@ -1,0 +1,102 @@
+version: 1
+meta:
+  title: "Fécondation et sexe de l'enfant"
+  subject: svt
+  level: 3e
+  chapter: "Hérédité : gamètes, fécondation et sexe de l'enfant"
+  language: fr
+  author: "Équipe QCM"
+  description: "Dix questions sur la fécondation, la cellule-œuf, les 23 chromosomes de chaque parent et le sexe de l'enfant."
+questions:
+  - id: q1
+    prompt: "Comment s'appelle la rencontre d'un spermatozoïde et d'un ovule ?"
+    choices:
+      - text: "La mutation"
+      - text: "La fécondation"
+        correct: true
+      - text: "La puberté"
+      - text: "La division"
+    hint: "Elle forme la première cellule d'un nouvel être humain."
+    explanation: "La fécondation est l'union d'un spermatozoïde et d'un ovule. Elle forme la cellule-œuf."
+  - id: q2
+    prompt: "Combien de chromosomes l'enfant reçoit-il de sa mère ?"
+    choices:
+      - text: "46"
+      - text: "12"
+      - text: "23"
+        correct: true
+      - text: "92"
+    hint: "L'ovule est un gamète."
+    explanation: "L'ovule contient 23 chromosomes. L'enfant reçoit donc 23 chromosomes de sa mère et 23 chromosomes de son père."
+  - id: q3
+    prompt: "Combien de chromosomes contient la cellule-œuf formée à la fécondation ?"
+    choices:
+      - text: "23"
+      - text: "92"
+      - text: "46"
+        correct: true
+      - text: "69"
+    hint: "Elle reçoit 23 chromosomes de la mère et 23 chromosomes du père."
+    explanation: "23 chromosomes de l'ovule et 23 chromosomes du spermatozoïde donnent 46 chromosomes, soit 23 paires."
+  - id: q4
+    prompt: "Combien d'ADN chaque gamète apporte-t-il à la cellule-œuf, par rapport à une cellule du corps ?"
+    choices:
+      - text: "Le double"
+      - text: "Le quart"
+      - text: "La moitié"
+        correct: true
+      - text: "La même quantité"
+    hint: "Un gamète a 23 chromosomes. Une cellule du corps en a 46."
+    explanation: "Un gamète contient la moitié de l'ADN d'une cellule du corps. Les deux gamètes réunis redonnent la quantité complète."
+  - id: q5
+    prompt: "Un spermatozoïde qui porte un chromosome X féconde un ovule. Quel est le sexe de l'enfant ?"
+    choices:
+      - text: "Un garçon"
+      - text: "Une fille"
+        correct: true
+    hint: "L'ovule apporte toujours un chromosome X."
+    explanation: "L'ovule apporte un X et le spermatozoïde apporte un X. La cellule-œuf est XX, donc l'enfant est une fille."
+  - id: q6
+    prompt: "Un spermatozoïde qui porte un chromosome Y féconde un ovule. Quel est le sexe de l'enfant ?"
+    choices:
+      - text: "Un garçon"
+        correct: true
+      - text: "Une fille"
+    hint: "L'ovule apporte toujours un chromosome X."
+    explanation: "L'ovule apporte un X et le spermatozoïde apporte un Y. La cellule-œuf est XY, donc l'enfant est un garçon."
+  - id: q7
+    prompt: "Quels chromosomes sexuels la cellule-œuf d'un garçon contient-elle ?"
+    choices:
+      - text: "Deux chromosomes X"
+      - text: "Un chromosome X et un chromosome Y"
+        correct: true
+      - text: "Deux chromosomes Y"
+    hint: "Le spermatozoïde qui féconde l'ovule porte un chromosome Y."
+    explanation: "L'ovule apporte un chromosome X et le spermatozoïde apporte un chromosome Y. La cellule-œuf est donc XY."
+  - id: q8
+    prompt: "Quelle cellule reproductrice décide du sexe de l'enfant ?"
+    choices:
+      - text: "L'ovule"
+      - text: "Le spermatozoïde"
+        correct: true
+      - text: "Les deux de la même façon"
+    hint: "Une seule des deux cellules peut porter un chromosome Y."
+    explanation: "Tous les ovules portent un X. Le spermatozoïde porte un X ou un Y : c'est lui qui décide du sexe."
+  - id: q9
+    prompt: "Pourquoi les enfants ressemblent-ils à leurs parents ?"
+    choices:
+      - text: "Ils reçoivent la moitié de leurs allèles de chaque parent"
+        correct: true
+      - text: "Ils reçoivent tous leurs allèles de leur mère"
+      - text: "Ils reçoivent tous leurs allèles de leur père"
+    hint: "Pense au rôle de l'ovule et du spermatozoïde."
+    explanation: "L'ovule et le spermatozoïde apportent chacun la moitié des allèles. L'enfant ressemble donc à ses deux parents."
+  - id: q10
+    prompt: "Qu'est-ce qui maintient le même nombre de chromosomes dans l'espèce humaine à chaque génération ?"
+    choices:
+      - text: "Chaque gamète apporte la moitié des chromosomes"
+        correct: true
+      - text: "Chaque gamète apporte tous les chromosomes"
+      - text: "Chaque gamète apporte un seul chromosome"
+    hint: "La cellule-œuf reçoit 23 chromosomes de chaque parent."
+    explanation: "Chaque gamète apporte 23 chromosomes. La fécondation donne 46 chromosomes, comme chez les parents."

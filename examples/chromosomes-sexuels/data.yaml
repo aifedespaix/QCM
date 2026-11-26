@@ -3,10 +3,10 @@ meta:
   title: "Chromosomes sexuels et hérédité"
   subject: svt
   level: 3e
-  chapter: "Hérédité : caryotype et détermination du sexe"
+  chapter: "Hérédité : caryotype et chromosomes sexuels"
   language: fr
   author: "Équipe QCM"
-  description: "Seize questions avec schéma sur le caryotype, les chromosomes X et Y, la fécondation et le sexe de l'enfant. Complète le QCM Le chromosome."
+  description: "Dix questions avec schéma sur le caryotype, les chromosomes X et Y, le gène et les chromosomes sexuels des gamètes. Suite du QCM Le chromosome."
 questions:
   - id: q1
     prompt: "Comment s'appelle l'image des chromosomes d'une cellule, classés par paires ?"
@@ -104,57 +104,3 @@ questions:
       - text: "Un chromosome Y"
     hint: "Un homme a un chromosome X et un chromosome Y. Chaque spermatozoïde reçoit un seul des deux."
     explanation: "Un homme a les chromosomes XY. Un spermatozoïde reçoit soit le X, soit le Y."
-  - id: q11
-    prompt: "Comment s'appelle la rencontre d'un spermatozoïde et d'un ovule ?"
-    choices:
-      - text: "La mutation"
-      - text: "La fécondation"
-        correct: true
-      - text: "La puberté"
-      - text: "La division"
-    hint: "Elle forme la première cellule d'un nouvel être humain."
-    explanation: "La fécondation est l'union d'un spermatozoïde et d'un ovule. Elle forme la cellule-œuf."
-  - id: q12
-    prompt: "Combien de chromosomes contient la cellule-œuf formée à la fécondation ?"
-    choices:
-      - text: "23"
-      - text: "92"
-      - text: "46"
-        correct: true
-      - text: "69"
-    hint: "Elle reçoit 23 chromosomes de la mère et 23 chromosomes du père."
-    explanation: "23 chromosomes de l'ovule et 23 chromosomes du spermatozoïde donnent 46 chromosomes, soit 23 paires."
-  - id: q13
-    prompt: "Un spermatozoïde qui porte un chromosome X féconde un ovule. Quel est le sexe de l'enfant ?"
-    choices:
-      - text: "Un garçon"
-      - text: "Une fille"
-        correct: true
-    hint: "L'ovule apporte toujours un chromosome X."
-    explanation: "L'ovule apporte un X et le spermatozoïde apporte un X. La cellule-œuf est XX, donc l'enfant est une fille."
-  - id: q14
-    prompt: "Un spermatozoïde qui porte un chromosome Y féconde un ovule. Quel est le sexe de l'enfant ?"
-    choices:
-      - text: "Un garçon"
-        correct: true
-      - text: "Une fille"
-    hint: "L'ovule apporte toujours un chromosome X."
-    explanation: "L'ovule apporte un X et le spermatozoïde apporte un Y. La cellule-œuf est XY, donc l'enfant est un garçon."
-  - id: q15
-    prompt: "Quelle cellule reproductrice décide du sexe de l'enfant ?"
-    choices:
-      - text: "L'ovule"
-      - text: "Le spermatozoïde"
-        correct: true
-      - text: "Les deux de la même façon"
-    hint: "Une seule des deux cellules peut porter un chromosome Y."
-    explanation: "Tous les ovules portent un X. Le spermatozoïde porte un X ou un Y : c'est lui qui décide du sexe."
-  - id: q16
-    prompt: "Comment s'appelle un changement dans la séquence de l'ADN ?"
-    choices:
-      - text: "Une fécondation"
-      - text: "Un caryotype"
-      - text: "Une mutation"
-        correct: true
-    hint: "Ce changement peut modifier un gène."
-    explanation: "Une mutation est une modification de l'ADN. Elle peut créer une nouvelle version d'un gène."
