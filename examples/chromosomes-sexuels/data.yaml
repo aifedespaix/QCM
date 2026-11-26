@@ -6,7 +6,7 @@ meta:
   chapter: "Hérédité : caryotype et chromosomes sexuels"
   language: fr
   author: "Équipe QCM"
-  description: "Dix questions avec schéma sur le caryotype, les chromosomes X et Y, le gène et les chromosomes sexuels des gamètes. Suite du QCM Le chromosome."
+  description: "Sept questions avec schéma sur le caryotype, la 23e paire, les chromosomes X et Y et le gène. Suite du QCM Le chromosome."
 questions:
   - id: q1
     prompt: "Comment s'appelle l'image des chromosomes d'une cellule, classés par paires ?"
@@ -29,24 +29,16 @@ questions:
     hint: "Une cellule du corps contient 46 chromosomes."
     explanation: "46 chromosomes forment 23 paires. Une des paires est celle des chromosomes sexuels."
   - id: q3
-    prompt: "Quels chromosomes sexuels une cellule du corps d'une fille contient-elle ?"
+    prompt: "Quelle paire du caryotype humain contient les chromosomes sexuels ?"
     choices:
-      - text: "Deux chromosomes X"
+      - text: "La 1re paire"
+      - text: "La 22e paire"
+      - text: "La 23e paire"
         correct: true
-      - text: "Un chromosome X et un chromosome Y"
-      - text: "Deux chromosomes Y"
-    hint: "Les deux chromosomes de la paire sexuelle sont identiques chez la fille."
-    explanation: "Une fille a deux chromosomes X, notés XX."
+      - text: "La 12e paire"
+    hint: "Le caryotype humain compte 23 paires."
+    explanation: "La 23e paire est la dernière du caryotype humain. C'est celle des chromosomes sexuels : XX chez la fille et XY chez le garçon."
   - id: q4
-    prompt: "Quels chromosomes sexuels une cellule du corps d'un garçon contient-elle ?"
-    choices:
-      - text: "Deux chromosomes X"
-      - text: "Deux chromosomes Y"
-      - text: "Un chromosome X et un chromosome Y"
-        correct: true
-    hint: "Les deux chromosomes de la paire sexuelle sont différents chez le garçon."
-    explanation: "Un garçon a un chromosome X et un chromosome Y, notés XY."
-  - id: q5
     prompt: "Sur le schéma, quel repère montre la paire de chromosomes sexuels d'une fille ?"
     image: media/paires_chromosomes_sexuels.webp
     choices:
@@ -55,7 +47,7 @@ questions:
       - text: "Le repère B"
     hint: "Chez la fille, les deux chromosomes de la paire ont la même taille."
     explanation: "Le repère A montre deux chromosomes de même taille : deux chromosomes X, soit la paire XX d'une fille."
-  - id: q6
+  - id: q5
     prompt: "Sur le même schéma, quel repère montre la paire de chromosomes sexuels d'un garçon ?"
     image: media/paires_chromosomes_sexuels.webp
     choices:
@@ -64,6 +56,14 @@ questions:
         correct: true
     hint: "Chez le garçon, un des deux chromosomes est plus petit que l'autre."
     explanation: "Le repère B montre un grand chromosome X et un petit chromosome Y, soit la paire XY d'un garçon."
+  - id: q6
+    prompt: "Quel chromosome sexuel est le plus petit ?"
+    choices:
+      - text: "Le chromosome X"
+      - text: "Le chromosome Y"
+        correct: true
+    hint: "Il est présent seulement chez le garçon."
+    explanation: "Le chromosome Y est plus petit que le chromosome X. Un garçon a un chromosome X et un chromosome Y."
   - id: q7
     prompt: "Comment s'appelle une portion d'ADN qui commande un caractère héréditaire ?"
     choices:
@@ -74,33 +74,3 @@ questions:
       - text: "Un caryotype"
     hint: "Un chromosome porte plusieurs milliers de ces portions d'ADN."
     explanation: "Un gène est une portion d'ADN. Il détermine un caractère héréditaire, comme la couleur des yeux."
-  - id: q8
-    prompt: "Combien de chromosomes contient un spermatozoïde ?"
-    choices:
-      - text: "46"
-      - text: "23"
-        correct: true
-      - text: "92"
-      - text: "22"
-    hint: "Une cellule reproductrice contient la moitié des chromosomes d'une cellule du corps."
-    explanation: "Un spermatozoïde est une cellule reproductrice. Il contient 23 chromosomes, soit la moitié de 46."
-  - id: q9
-    prompt: "Quel chromosome sexuel contient chaque ovule ?"
-    choices:
-      - text: "Un chromosome Y"
-      - text: "Deux chromosomes X"
-      - text: "Un chromosome X ou un chromosome Y"
-      - text: "Un chromosome X"
-        correct: true
-    hint: "Une femme a seulement des chromosomes X."
-    explanation: "Une femme a les chromosomes XX. Chaque ovule reçoit un seul chromosome sexuel, et c'est toujours un X."
-  - id: q10
-    prompt: "Quel chromosome sexuel contient un spermatozoïde ?"
-    choices:
-      - text: "Un chromosome X ou un chromosome Y"
-        correct: true
-      - text: "Un chromosome X"
-      - text: "Deux chromosomes X et Y"
-      - text: "Un chromosome Y"
-    hint: "Un homme a un chromosome X et un chromosome Y. Chaque spermatozoïde reçoit un seul des deux."
-    explanation: "Un homme a les chromosomes XY. Un spermatozoïde reçoit soit le X, soit le Y."
