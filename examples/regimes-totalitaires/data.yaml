@@ -1,0 +1,130 @@
+version: 1
+meta:
+  title: "Les régimes totalitaires"
+  subject: histoire-geo
+  level: 3e
+  chapter: "Qu'est-ce qu'un régime totalitaire ?"
+  language: fr
+  description: "Douze questions sur les régimes soviétique et nazi : caractéristiques communes, projets différents et antisémitisme nazi."
+questions:
+  - id: q1
+    prompt: "Quel nom porte un régime où un seul parti détient le pouvoir, avec un chef et un culte ?"
+    choices:
+      - text: "Un régime démocratique"
+      - text: "Un régime totalitaire"
+        correct: true
+      - text: "Un régime parlementaire"
+      - text: "Un régime fédéral"
+    hint: "Le pouvoir est concentré dans un parti et chez un chef."
+    explanation: "Un régime totalitaire est un régime où le pouvoir appartient à un seul parti dirigé par un chef. La population y est contrôlée par la violence, la terreur et la propagande."
+  - id: q2
+    prompt: "Comment appelle-t-on l'exaltation de la personnalité d'un dirigeant qui devient un modèle pour tous ?"
+    choices:
+      - text: "Le culte du chef"
+        correct: true
+      - text: "Le suffrage universel"
+      - text: "La séparation des pouvoirs"
+      - text: "Le pluralisme politique"
+    hint: "Staline et Hitler en sont deux exemples."
+    explanation: "Le culte du chef est une caractéristique commune des régimes soviétique et nazi. Staline et Hitler sont présentés comme des modèles pour tous."
+  - id: q3
+    prompt: "Combien de partis politiques exercent le pouvoir dans un régime totalitaire ?"
+    choices:
+      - text: "Deux partis"
+      - text: "Trois partis"
+      - text: "Un seul parti"
+        correct: true
+      - text: "Plusieurs partis"
+    hint: "Le régime soviétique avait le parti bolchevique, le régime nazi le parti nazi."
+    explanation: "Un régime totalitaire est dirigé par un parti unique : le parti bolchevique en URSS et le parti nazi en Allemagne."
+  - id: q4
+    prompt: "Qu'est-ce qu'une idéologie d'État ?"
+    choices:
+      - text: "Une loi votée par le Parlement"
+      - text: "Un programme de travaux publics"
+      - text: "Un traité signé avec un pays voisin"
+      - text: "Un ensemble d'idées propres à un groupe"
+        correct: true
+    hint: "Pense à un système d'idées que le régime impose à tous."
+    explanation: "Une idéologie est un ensemble d'idées propres à un groupe. Dans un régime totalitaire, elle devient l'idéologie de l'État."
+  - id: q5
+    prompt: "Contre qui un régime totalitaire utilise-t-il la violence et la terreur ?"
+    choices:
+      - text: "Les personnes qui obéissent au chef"
+      - text: "Les personnes considérées comme ennemies"
+        correct: true
+      - text: "Les membres de la police"
+      - text: "Les journalistes étrangers"
+    hint: "Le régime désigne des groupes comme ennemis à éliminer."
+    explanation: "La violence et la terreur visent ceux que le régime considère comme ses ennemis. C'est un instrument pour atteindre ses buts."
+  - id: q6
+    prompt: "Que sont les goulags en URSS ?"
+    choices:
+      - text: "Des camps de travaux forcés"
+        correct: true
+      - text: "Des écoles du parti"
+      - text: "Des groupes de jeunesse communiste"
+      - text: "Des journaux de propagande"
+    hint: "Ce sont des lieux réservés aux ennemis du régime soviétique."
+    explanation: "Les goulags sont des camps de concentration et de travaux forcés. Ils sont réservés à ceux que le régime soviétique considère comme ses ennemis."
+  - id: q7
+    prompt: "Quelle société l'idéologie communiste en URSS veut-elle instaurer ?"
+    choices:
+      - text: "Une société fondée sur la race"
+      - text: "Une société dirigée par un roi"
+      - text: "Une société sans classes sociales ni propriété privée"
+        correct: true
+      - text: "Une société où chacun possède des terres"
+    hint: "Pense aux mots classes sociales, État et propriété."
+    explanation: "Le communisme veut instaurer une société sans classes sociales, sans État et sans propriété privée."
+  - id: q8
+    prompt: "Quelles deux idées caractérisent le nazisme, régime fondé par Hitler ?"
+    choices:
+      - text: "L'internationalisme"
+      - text: "Le nationalisme"
+        correct: true
+      - text: "L'égalité entre les classes"
+      - text: "Le racisme"
+        correct: true
+    hint: "Le parti nazi défend la nation et une hiérarchie des races."
+    explanation: "Le nazisme est nationaliste, car il place la nation allemande au premier rang. Il est aussi raciste, car il distingue les personnes selon leur prétendue race."
+  - id: q9
+    prompt: "Selon K. Pomian, quelle idéologie se proclame internationaliste ?"
+    choices:
+      - text: "Le nazisme"
+      - text: "Le fascisme"
+      - text: "Le bolchevisme"
+        correct: true
+      - text: "La monarchie"
+    hint: "Les deux autres régimes totalitaires sont nationalistes."
+    explanation: "Le bolchevisme se proclame internationaliste. Le fascisme et le nazisme sont nationalistes."
+  - id: q10
+    prompt: "Où le nazisme cherche-t-il des modèles, selon K. Pomian ?"
+    choices:
+      - text: "Dans une société radicalement nouvelle"
+      - text: "Dans l'héritage de la Révolution française"
+      - text: "Dans le passé"
+        correct: true
+      - text: "Dans les idées des Lumières"
+    hint: "Le nazisme combat les Lumières et la Révolution française."
+    explanation: "Le nazisme prétend trouver des modèles dans le passé. Il combat les Lumières et l'héritage de la Révolution française."
+  - id: q11
+    prompt: "Quel objectif final Hitler fixe-t-il à l'antisémitisme dans sa lettre de 1919 ?"
+    choices:
+      - text: "L'élimination des juifs"
+        correct: true
+      - text: "L'égalité des juifs"
+      - text: "L'expulsion des étrangers"
+      - text: "La conversion des juifs"
+    hint: "Hitler parle d'une lutte méthodique contre les privilèges des juifs."
+    explanation: "Hitler écrit que l'objectif final doit être l'élimination des juifs en général. Pour lui, l'antisémitisme doit s'exprimer par une lutte méthodique."
+  - id: q12
+    prompt: "Selon le programme du parti nazi de 1920, qui peut être citoyen allemand ?"
+    choices:
+      - text: "Toute personne qui vit en Allemagne"
+      - text: "Celui qui est de sang allemand"
+        correct: true
+      - text: "Toute personne de confession chrétienne"
+      - text: "Celui qui adhère au parti nazi"
+    hint: "Le programme définit le citoyen par la race."
+    explanation: "Seul celui qui est de sang allemand peut être citoyen, sans considération de confession. Aucun juif ne peut donc être citoyen : le régime nazi est raciste."
