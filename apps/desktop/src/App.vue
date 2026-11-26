@@ -5,7 +5,6 @@ import { QcmFormatError, matchLibrary, qcmFingerprint, suggestNext, type Library
 import { QcmLogo, QcmPlayer, QcmSoundToggle, QcmStatsDashboard, QcmThemeToggle, useQcmHistory, type QcmSuggestion } from '@qcm/ui'
 import { LibraryError, downloadLibraryQcm, findLibraryRecords, getLibraryRecord, libraryAvailable, type LibraryRecord } from './lib/library.ts'
 import {
-  exportLibraryQcm,
   exportStoredQcm,
   listStoredQcms,
   loadQcm,
@@ -157,32 +156,50 @@ function play(qcm: OpenedQcm, extra: { recordId?: string; fileName?: string } = 
  * Ouvre un fichier `.qcm` (dialogue, glisser-déposer, double-clic, téléchargement) et en garde
  * une copie : il reste dans « Derniers QCM » même si le fichier est ensuite déplacé ou supprimé.
  */
+async function installPath(path: string, recordId?: string): Promise<{ qcm: OpenedQcm; key: string; kept: boolean; previous: string | undefined }> {
+  const qcm = await loadQcm(path)
+  const key = qcmFingerprint(qcm.data)
+  // La copie est faite AVANT d'écrire quoi que ce soit dans le suivi : on ne note « installé » que ce qui y est vraiment.
+  let kept = false
+  try {
+    await storeQcm(path, key)
+    kept = true
+    // « Installé » tout de suite, sans attendre la relecture du dossier.
+    stored.value = new Set([...stored.value, key])
+  } catch {
+    // Copie impossible (disque plein…) : le QCM se joue quand même, il ne sera pas dans la liste.
+  }
+  // Version précédente du même QCM en ligne : la nouvelle la remplace (suivi repris, ancienne copie retirée).
+  const previous = kept && recordId ? localQcms.value.find((entry) => entry.recordId === recordId && entry.key !== key)?.key : undefined
+  return { qcm, key, kept, previous }
+}
+
 async function openPath(path: string, recordId?: string): Promise<void> {
   overlay.value = 'loading'
   try {
-    const qcm = await loadQcm(path)
-    const key = qcmFingerprint(qcm.data)
-    // La copie est faite AVANT d'écrire quoi que ce soit dans le suivi : on ne note « sur cet ordinateur » que ce qui y est vraiment.
-    let kept = false
-    try {
-      await storeQcm(path, key)
-      kept = true
-      // « Sur cet ordinateur » tout de suite, sans attendre la relecture du dossier.
-      stored.value = new Set([...stored.value, key])
-    } catch {
-      // Copie impossible (disque plein…) : le QCM se joue quand même, il ne sera pas dans la liste.
-    }
-    // Version précédente du même QCM en ligne : la nouvelle la remplace (suivi repris, ancienne copie retirée).
-    const previous = kept && recordId ? localQcms.value.find((entry) => entry.recordId === recordId && entry.key !== key) : undefined
-    play(qcm, recordId ? { recordId } : { fileName: qcm.fileName }, previous?.key)
+    const { qcm, kept, previous } = await installPath(path, recordId)
+    play(qcm, recordId ? { recordId } : { fileName: qcm.fileName }, previous)
     if (kept) {
-      if (previous) await removeStoredQcm(previous.key).catch(() => {})
+      if (previous) await removeStoredQcm(previous).catch(() => {})
       await refreshStored()
       void syncLibrary()
     }
   } catch (error) {
     showError(error)
   }
+}
+
+/** Installe un QCM de la bibliothèque sans le lancer : copie locale + suivi. Renvoie son empreinte. */
+async function installRecord(record: Pick<LibraryRecord, 'id' | 'file'>): Promise<string> {
+  const path = await downloadLibraryQcm(record)
+  const { qcm, key, kept, previous } = await installPath(path, record.id)
+  if (!kept) throw new Error('E_OPEN')
+  if (previous) recordUpdate(previous, qcm.data, { recordId: record.id })
+  else recordOpen(qcm.data, { recordId: record.id })
+  if (previous) await removeStoredQcm(previous).catch(() => {})
+  await refreshStored()
+  void syncLibrary()
+  return key
 }
 
 /** Rouvre la copie conservée d'un QCM. */
@@ -300,11 +317,13 @@ async function exportQcm(target: { title: string; key?: string; record?: Pick<Li
   try {
     const dest = await pickSaveLocation(target.title)
     if (!dest) return
-    const key = target.key ?? localQcms.value.find((entry) => entry.recordId === target.record?.id)?.key
-    if (key) await exportStoredQcm(key, dest)
-    else if (target.record) await exportLibraryQcm(target.record.id, target.record.file, dest)
-    else return
-    exportNotice.value = `« ${target.title} » est enregistré.`
+    let key = target.key ?? localQcms.value.find((entry) => entry.recordId === target.record?.id)?.key
+    // Télécharger = installer : le QCM rejoint aussi la bibliothèque de l'application.
+    const installedNow = !key && !!target.record
+    if (!key && target.record) key = await installRecord(target.record)
+    if (!key) return
+    await exportStoredQcm(key, dest)
+    exportNotice.value = installedNow ? `« ${target.title} » est enregistré et installé.` : `« ${target.title} » est enregistré.`
   } catch {
     downloadError.value = 'Le fichier n\'a pas pu être enregistré à cet endroit. Choisis un autre dossier, ou vérifie la connexion à Internet.'
   }

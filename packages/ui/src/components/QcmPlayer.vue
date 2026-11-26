@@ -66,7 +66,10 @@ const answerCount = computed(() => (multiple.value ? correctIndexes.value.length
 const segmented = computed(() => total.value <= 12)
 
 // Le bouton principal ne bouge pas entre « Valider » et « Continuer » : un double-clic
-// involontaire ne doit pas faire sauter l'explication. Court délai après chaque changement d'état.
+// involontaire ne doit pas faire sauter l'explication. Le verrou ne joue que juste après
+// « Valider » (passage à bonne réponse / réponse montrée), et reste court : un clic
+// volontaire sur « Continuer » n'est jamais retardé, même pendant l'animation.
+const DOUBLE_CLICK_GUARD_MS = 250
 let lockedUntil = 0
 function guarded(action: () => void): void {
   if (Date.now() < lockedUntil) return
@@ -87,7 +90,7 @@ watch(() => props.qcm, () => {
   player.restart()
 })
 watch(phase, (value, previous) => {
-  lockedUntil = Date.now() + 450
+  lockedUntil = value === 'correct' || value === 'revealed' ? Date.now() + DOUBLE_CLICK_GUARD_MS : 0
   if (previous === 'intro') reported = false
   if (value === 'done') {
     report(true)

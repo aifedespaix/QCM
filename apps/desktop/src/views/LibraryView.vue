@@ -168,7 +168,7 @@ onBeforeUnmount(() => {
         <button
           v-for="option in [
             { id: 'online', label: 'En ligne' },
-            { id: 'local', label: `Sur cet ordinateur (${local.length})` },
+            { id: 'local', label: `Installés (${local.length})` },
           ] as const"
           :key="option.id"
           type="button"
@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
           <div class="flex flex-1 flex-col gap-1.5 p-3.5 pt-3">
             <p v-if="remote.has(entry.key)" class="flex flex-wrap gap-1">
               <span v-if="remote.get(entry.key)?.state === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
-              <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip qcm-chip-sm" title="Ta copie reste disponible sur cet ordinateur.">Retiré de la bibliothèque</span>
+              <span v-else-if="remote.get(entry.key)?.state === 'removed'" class="qcm-chip qcm-chip-sm" title="Ta copie reste installée sur cet ordinateur.">Retiré de la bibliothèque</span>
               <span v-else class="qcm-chip qcm-chip-sm">Dans la bibliothèque</span>
             </p>
             <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="entry.title">{{ entry.title }}</h2>
@@ -285,7 +285,7 @@ onBeforeUnmount(() => {
           <div class="flex flex-1 flex-col gap-1.5 p-3.5 pt-3">
             <p v-if="copyState(item) !== 'none'" class="flex flex-wrap gap-1">
               <span v-if="copyState(item) === 'outdated'" class="qcm-chip qcm-chip-sm bg-selected">Mise à jour disponible</span>
-              <span v-else class="qcm-chip qcm-chip-sm bg-correct text-correct-ink">Sur cet ordinateur</span>
+              <span v-else class="qcm-chip qcm-chip-sm bg-correct text-correct-ink">Installé</span>
             </p>
             <h2 class="line-clamp-2 text-lg leading-snug font-extrabold break-words" :title="item.title">{{ item.title }}</h2>
             <p class="truncate text-sm font-medium text-ink-soft" :title="item.chapter">{{ item.chapter }}</p>
