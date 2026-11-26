@@ -1,0 +1,149 @@
+version: 1
+meta:
+  title: "Molière : vie, vocabulaire et Monsieur Jourdain"
+  subject: francais
+  level: 4e
+  chapter: "Biographie de Molière"
+  language: fr
+  description: "Quatorze questions sur la vie de Molière, le vocabulaire de ses pièces et le personnage de Monsieur Jourdain."
+questions:
+  - id: q1
+    prompt: "Quelle comédie Molière et Armande Béjart jouent-ils après leur mariage en 1662 ?"
+    choices:
+      - text: "Tartuffe"
+      - text: "L'école des femmes"
+        correct: true
+      - text: "Le Malade imaginaire"
+      - text: "Les Précieuses ridicules"
+    hint: "Cette pièce remporte un grand succès."
+    explanation: "En 1662, Molière épouse Armande Béjart et ils jouent L'école des femmes. La pièce remporte un grand succès."
+  - id: q2
+    prompt: "Que devient la comédie grâce à Molière ?"
+    choices:
+      - text: "Un genre abandonné"
+      - text: "Un genre réservé aux enfants"
+      - text: "Un genre interdit"
+      - text: "Un genre qui acquiert ses lettres de noblesse"
+        correct: true
+    hint: "À l'époque, seule la tragédie est considérée comme un genre noble."
+    explanation: "Grâce à Molière, la comédie acquiert ses lettres de noblesse. Avant lui, seule la tragédie est considérée comme un genre noble."
+  - id: q3
+    prompt: "Que font les pièces de Molière en plus de faire rire ?"
+    choices:
+      - text: "Elles critiquent les mœurs de son époque"
+        correct: true
+      - text: "Elles racontent la vie des rois"
+      - text: "Elles décrivent des voyages lointains"
+      - text: "Elles expliquent des lois nouvelles"
+    hint: "Les mœurs désignent les habitudes d'une société."
+    explanation: "Les pièces de Molière font rire, mais elles critiquent aussi les mœurs de son époque."
+  - id: q4
+    prompt: "Quelle pièce de Molière est interdite à son époque ?"
+    choices:
+      - text: "L'école des femmes"
+      - text: "Le Malade imaginaire"
+      - text: "Tartuffe"
+        correct: true
+      - text: "Le Bourgeois gentilhomme"
+    hint: "Cette pièce critique les mœurs de son époque."
+    explanation: "Tartuffe fait partie des pièces de Molière qui sont interdites."
+  - id: q5
+    prompt: "Pendant quelle pièce Molière fait-il un malaise en 1673 ?"
+    choices:
+      - text: "Tartuffe"
+      - text: "L'école des femmes"
+      - text: "Le Bourgeois gentilhomme"
+      - text: "Le Malade imaginaire"
+        correct: true
+    hint: "Le titre de cette pièce évoque la maladie."
+    explanation: "En 1673, pendant une représentation du Malade imaginaire, Molière fait un malaise. Il est transporté chez lui, où il meurt peu après."
+  - id: q6
+    prompt: "Pourquoi Molière est-il enterré discrètement près de l'église Saint-Eustache ?"
+    choices:
+      - text: "Les funérailles chrétiennes étaient refusées aux comédiens"
+        correct: true
+      - text: "Sa famille souhaitait une cérémonie privée"
+      - text: "Le roi voulait cacher sa mort"
+      - text: "Molière avait quitté la France"
+    hint: "Pense au métier de Molière."
+    explanation: "À l'époque, les comédiens ne pouvaient pas recevoir de funérailles chrétiennes. Louis XIV obtient de l'évêque de Paris un enterrement discret."
+  - id: q7
+    prompt: "Quel mot désigne une disposition au mal, grave et réprouvée par la morale ?"
+    choices:
+      - text: "Une vertu"
+      - text: "Un vice"
+        correct: true
+      - text: "Une livrée"
+      - text: "Une camisole"
+    hint: "L'avarice, la paresse et la luxure en sont des exemples."
+    explanation: "Un vice est une tendance grave réprouvée par la morale sociale ou religieuse. L'avarice, la paresse et la luxure sont des vices."
+  - id: q8
+    prompt: "Que désigne l'expression « gens de qualité » dans son sens ancien ?"
+    choices:
+      - text: "Des artisans très habiles"
+      - text: "Des personnes de haute condition sociale"
+        correct: true
+      - text: "Des domestiques de confiance"
+      - text: "Des commerçants très riches"
+    hint: "Ces personnes sont issues de la noblesse ou de l'aristocratie."
+    explanation: "Les gens de qualité sont des personnes de haute condition sociale, issues de la noblesse ou de l'aristocratie."
+  - id: q9
+    prompt: "Qui est un laquais ?"
+    choices:
+      - text: "Un noble de la cour"
+      - text: "Un maître de danse"
+      - text: "Un valet de pied"
+        correct: true
+      - text: "Un marchand de tissu"
+    hint: "Il suit son maître et porte souvent une livrée."
+    explanation: "Un laquais est un valet de pied portant une livrée. Il escorte ou suit son maître."
+  - id: q10
+    prompt: "Comment s'appelle le costume distinctif que portent certains domestiques ?"
+    choices:
+      - text: "Une camisole"
+      - text: "Une livrée"
+        correct: true
+      - text: "Un haut-de-chausses"
+      - text: "Une perruque"
+    hint: "Les laquais portent ce costume."
+    explanation: "La livrée est le costume distinctif que portent certains domestiques, par exemple les laquais."
+  - id: q11
+    prompt: "Quel vêtement masculin ancien couvre le corps de la ceinture jusqu'aux genoux ?"
+    choices:
+      - text: "La camisole"
+      - text: "La livrée"
+      - text: "Le haut-de-chausses"
+        correct: true
+      - text: "La perruque"
+    hint: "Ce vêtement a évolué ensuite vers la culotte."
+    explanation: "Le haut-de-chausses couvre le corps depuis la ceinture jusqu'aux genoux. Il a évolué vers la culotte, puis vers le pantalon."
+  - id: q12
+    prompt: "Qui est Monsieur Jourdain dans Le Bourgeois gentilhomme ?"
+    choices:
+      - text: "Un valet de pied"
+      - text: "Un riche bourgeois"
+        correct: true
+      - text: "Un roi"
+      - text: "Un médecin"
+    hint: "Le titre de la pièce contient un indice."
+    explanation: "Monsieur Jourdain est un riche bourgeois. Il rêve de devenir un gentilhomme, c'est-à-dire de ressembler aux nobles."
+  - id: q13
+    prompt: "Que souhaite Monsieur Jourdain dans la pièce ?"
+    choices:
+      - text: "Devenir comédien"
+      - text: "Devenir roi"
+      - text: "Être pris pour un noble"
+        correct: true
+      - text: "Devenir médecin"
+    hint: "Il imite les manières des gens de qualité."
+    explanation: "Monsieur Jourdain veut être pris pour un noble. Ce désir de paraître le rend ridicule, et Molière s'en sert pour faire rire."
+  - id: q14
+    prompt: "Quel genre de texte est Le Bourgeois gentilhomme ?"
+    choices:
+      - text: "Une comédie"
+        correct: true
+      - text: "Une tragédie"
+      - text: "Un roman"
+      - text: "Un poème"
+    hint: "C'est une pièce de Molière, qui fait rire."
+    explanation: "Le Bourgeois gentilhomme est une comédie de Molière. C'est une pièce de théâtre qui fait rire et qui critique les mœurs de son époque."
