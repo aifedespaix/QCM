@@ -1,0 +1,159 @@
+version: 1
+meta:
+  title: "Hérédité : gènes, allèles et brassage"
+  subject: svt
+  level: 3e
+  chapter: "Hérédité : allèles, phénotype et diversité des individus"
+  language: fr
+  author: "Équipe QCM"
+  description: "Seize questions sur les allèles, le génotype et le phénotype, le brassage génétique, les mutations et l'arbre généalogique. Suite des QCM Le chromosome et Chromosomes sexuels."
+questions:
+  - id: q1
+    prompt: "Comment s'appelle chaque version possible d'un même gène ?"
+    choices:
+      - text: "Un chromosome"
+      - text: "Une mutation"
+      - text: "Un caryotype"
+      - text: "Un allèle"
+        correct: true
+    hint: "Le gène de la couleur des yeux existe en plusieurs versions."
+    explanation: "Un allèle est une version d'un gène. Un même gène peut avoir plusieurs allèles."
+  - id: q2
+    prompt: "Combien d'allèles d'un même gène une cellule du corps humain contient-elle ?"
+    choices:
+      - text: "Deux"
+        correct: true
+      - text: "Un"
+      - text: "Quatre"
+    hint: "Les chromosomes vont par paires."
+    explanation: "Les chromosomes forment des paires. Une cellule du corps a donc deux allèles de chaque gène, un sur chaque chromosome de la paire."
+  - id: q3
+    prompt: "D'où viennent les deux allèles d'un gène chez un enfant ?"
+    choices:
+      - text: "Les deux de la mère"
+      - text: "Un du père et un de la mère"
+        correct: true
+      - text: "Les deux du père"
+    hint: "Chaque parent donne un gamète."
+    explanation: "Le spermatozoïde du père apporte un allèle et l'ovule de la mère apporte l'autre."
+  - id: q4
+    prompt: "Comment s'appelle l'ensemble des caractères observables d'un individu ?"
+    choices:
+      - text: "Le génotype"
+      - text: "Le caryotype"
+      - text: "Le phénotype"
+        correct: true
+      - text: "Le génome"
+    hint: "La couleur du pelage ou la taille sont des exemples."
+    explanation: "Le phénotype est l'ensemble des caractères visibles ou mesurables d'un individu."
+  - id: q5
+    prompt: "Comment s'appelle l'ensemble des allèles d'un individu ?"
+    choices:
+      - text: "Le génotype"
+        correct: true
+      - text: "Le phénotype"
+      - text: "Le brassage"
+      - text: "La mutation"
+    hint: "Ce mot parle des gènes, pas de ce qu'on voit."
+    explanation: "Le génotype est l'ensemble des allèles d'un individu. Il ne se voit pas à l'œil nu."
+  - id: q6
+    prompt: "Un lapin a un pelage blanc. Ce pelage blanc fait partie de quoi ?"
+    choices:
+      - text: "Du caryotype"
+      - text: "Du phénotype"
+        correct: true
+      - text: "Du génotype"
+    hint: "Le pelage se voit."
+    explanation: "Le pelage blanc est un caractère observable. Il fait partie du phénotype du lapin."
+  - id: q7
+    prompt: "Quel facteur modifie le phénotype d'un individu, en plus de ses gènes ?"
+    choices:
+      - text: "Son environnement"
+        correct: true
+      - text: "Son caryotype"
+      - text: "Le nombre de ses chromosomes"
+    hint: "Une plante reste petite quand elle reçoit peu de lumière."
+    explanation: "Le phénotype dépend des gènes et de l'environnement. La lumière, l'alimentation ou l'entraînement le modifient."
+  - id: q8
+    prompt: "Combien d'ADN chaque gamète apporte-t-il à la cellule-œuf, par rapport à une cellule du corps ?"
+    choices:
+      - text: "Le double"
+      - text: "Le quart"
+      - text: "La moitié"
+        correct: true
+      - text: "La même quantité"
+    hint: "Un gamète a 23 chromosomes. Une cellule du corps en a 46."
+    explanation: "Un gamète contient la moitié de l'ADN d'une cellule du corps. Les deux gamètes réunis redonnent la quantité complète."
+  - id: q9
+    prompt: "Pourquoi les enfants ressemblent-ils à leurs parents ?"
+    choices:
+      - text: "Ils reçoivent la moitié de leurs allèles de chaque parent"
+        correct: true
+      - text: "Ils reçoivent tous leurs allèles de leur mère"
+      - text: "Ils reçoivent tous leurs allèles de leur père"
+    hint: "Pense au rôle de l'ovule et du spermatozoïde."
+    explanation: "L'ovule et le spermatozoïde apportent chacun la moitié des allèles. L'enfant ressemble donc à ses deux parents."
+  - id: q10
+    prompt: "Des lapereaux ont des combinaisons de caractères absentes chez leurs parents. Quel nom porte ce mélange ?"
+    choices:
+      - text: "La mutation"
+      - text: "La fécondation"
+      - text: "Le caryotype"
+      - text: "Le brassage génétique"
+        correct: true
+    hint: "Les allèles des deux parents sont mélangés de façon nouvelle."
+    explanation: "Le brassage génétique crée de nouvelles combinaisons d'allèles. Les lapereaux peuvent donc différer de leurs parents."
+  - id: q11
+    prompt: "Pourquoi deux enfants des mêmes parents sont-ils différents ?"
+    choices:
+      - text: "Chaque gamète porte une combinaison d'allèles différente"
+        correct: true
+      - text: "Chaque parent change de génotype à chaque enfant"
+      - text: "Chaque enfant reçoit un nombre de chromosomes différent"
+    hint: "Un parent produit des millions de gamètes."
+    explanation: "Les gamètes d'un même parent portent des combinaisons d'allèles différentes. Chaque fécondation crée donc un génotype nouveau."
+  - id: q12
+    prompt: "Qu'est-ce qui maintient le même nombre de chromosomes dans l'espèce humaine à chaque génération ?"
+    choices:
+      - text: "Chaque gamète apporte la moitié des chromosomes"
+        correct: true
+      - text: "Chaque gamète apporte tous les chromosomes"
+      - text: "Chaque gamète apporte un seul chromosome"
+    hint: "La cellule-œuf reçoit 23 chromosomes de chaque parent."
+    explanation: "Chaque gamète apporte 23 chromosomes. La fécondation donne 46 chromosomes, comme chez les parents."
+  - id: q13
+    prompt: "Quel phénomène crée un nouvel allèle ?"
+    choices:
+      - text: "Le brassage"
+      - text: "La mutation"
+        correct: true
+      - text: "La fécondation"
+    hint: "L'ADN change à un endroit."
+    explanation: "Une mutation modifie l'ADN d'un gène. Elle peut donner un nouvel allèle qui n'existait pas avant."
+  - id: q14
+    prompt: "Dans quelles cellules une mutation doit-elle se trouver pour passer d'un parent à son enfant ?"
+    choices:
+      - text: "Dans les cellules de la peau"
+      - text: "Dans les cellules des os"
+      - text: "Dans les cellules du foie"
+      - text: "Dans un ovule ou un spermatozoïde"
+        correct: true
+    hint: "Seules certaines cellules transmettent leurs chromosomes à l'enfant."
+    explanation: "Les gamètes sont les seules cellules transmises à l'enfant. Une mutation héréditaire se trouve donc dans un ovule ou un spermatozoïde."
+  - id: q15
+    prompt: "Que montre un arbre généalogique ?"
+    choices:
+      - text: "Les liens de parenté et la transmission d'un caractère"
+        correct: true
+      - text: "Le nombre de chromosomes de chaque personne"
+      - text: "La position des gènes sur les chromosomes"
+    hint: "Il relie des parents, des enfants et des grands-parents."
+    explanation: "Un arbre généalogique relie les personnes d'une famille. Il permet de suivre un caractère d'une génération à l'autre."
+  - id: q16
+    prompt: "Quelle reproduction donne un individu qui a les mêmes allèles que son parent ?"
+    choices:
+      - text: "La reproduction sexuée"
+      - text: "La reproduction asexuée"
+        correct: true
+    hint: "Un seul parent suffit, sans gamètes ni fécondation."
+    explanation: "Dans la reproduction asexuée, un seul parent donne un individu identique à lui. Il n'y a ni gamètes ni brassage."
