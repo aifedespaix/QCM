@@ -1,0 +1,130 @@
+version: 1
+meta:
+  title: "Notation scientifique et particules"
+  subject: physique-chimie
+  level: 3e
+  chapter: "Constitution de la matière : notation scientifique et calculs"
+  language: fr
+  description: "Douze questions : écrire en notation scientifique, calculer avec les puissances de 10, masse d'un atome et nombre de particules."
+questions:
+  - id: q1
+    prompt: "Quelle écriture est en notation scientifique ?"
+    choices:
+      - text: "32 × 10⁴"
+      - text: "0,32 × 10⁶"
+      - text: "3,2 × 10⁵"
+        correct: true
+      - text: "3,2 + 10⁵"
+    hint: "Le premier nombre a un seul chiffre non nul avant la virgule."
+    explanation: "La notation scientifique s'écrit a × 10ⁿ avec a compris entre 1 et 10. Ici a = 3,2."
+  - id: q2
+    prompt: "Quelle est l'écriture scientifique de 4 500 000 ?"
+    choices:
+      - text: "4,5 × 10⁶"
+        correct: true
+      - text: "4,5 × 10⁵"
+      - text: "45 × 10⁵"
+      - text: "4,5 × 10⁷"
+    hint: "Compte de combien de rangs la virgule se déplace pour obtenir 4,5."
+    explanation: "Pour passer de 4 500 000 à 4,5, la virgule se déplace de 6 rangs vers la gauche. On écrit 4,5 × 10⁶."
+  - id: q3
+    prompt: "Quelle est la valeur décimale de 10⁻³ ?"
+    choices:
+      - text: "−1 000"
+      - text: "0,01"
+      - text: "0,0001"
+      - text: "0,001"
+        correct: true
+    hint: "Un exposant négatif donne un nombre plus petit que 1."
+    explanation: "10⁻³ = 1 ÷ 1 000 = 0,001. Le chiffre 1 est au troisième rang après la virgule."
+  - id: q4
+    prompt: "Quelle est l'écriture scientifique de 0,00032 ?"
+    choices:
+      - text: "3,2 × 10⁴"
+      - text: "3,2 × 10⁻⁴"
+        correct: true
+      - text: "3,2 × 10⁻³"
+      - text: "32 × 10⁻⁵"
+    hint: "Compte de combien de rangs la virgule se déplace vers la droite pour obtenir 3,2."
+    explanation: "La virgule se déplace de 4 rangs vers la droite pour obtenir 3,2. L'exposant est négatif : 3,2 × 10⁻⁴."
+  - id: q5
+    prompt: "Combien vaut (2 × 10³) × (3 × 10⁴) ?"
+    choices:
+      - text: "6 × 10¹²"
+      - text: "5 × 10⁷"
+      - text: "6 × 10⁷"
+        correct: true
+      - text: "6 × 10⁻¹"
+    hint: "Multiplie les nombres entre eux, puis additionne les exposants."
+    explanation: "2 × 3 = 6 et 10³ × 10⁴ = 10⁷. Le résultat est 6 × 10⁷."
+  - id: q6
+    prompt: "Combien vaut (6 × 10⁸) ÷ (2 × 10³) ?"
+    choices:
+      - text: "3 × 10⁵"
+        correct: true
+      - text: "3 × 10¹¹"
+      - text: "4 × 10⁵"
+      - text: "3 × 10⁸"
+    hint: "Divise les nombres entre eux, puis soustrais les exposants."
+    explanation: "6 ÷ 2 = 3 et 10⁸ ÷ 10³ = 10⁵. Le résultat est 3 × 10⁵."
+  - id: q7
+    prompt: "Quelle masse est la plus petite : 1,67 × 10⁻²⁷ kg, 9,1 × 10⁻³¹ kg, 2,0 × 10⁻²⁶ kg ou 1,0 × 10⁻²⁷ kg ?"
+    choices:
+      - text: "1,67 × 10⁻²⁷ kg"
+      - text: "2,0 × 10⁻²⁶ kg"
+      - text: "1,0 × 10⁻²⁷ kg"
+      - text: "9,1 × 10⁻³¹ kg"
+        correct: true
+    hint: "Compare d'abord les exposants : le plus petit exposant donne le plus petit nombre."
+    explanation: "L'exposant −31 est le plus petit des quatre. La masse 9,1 × 10⁻³¹ kg, celle d'un électron, est donc la plus petite."
+  - id: q8
+    prompt: "Un nucléon a une masse de 1,67 × 10⁻²⁷ kg. Quelle est la masse d'un atome de carbone de 12 nucléons, en négligeant les électrons ?"
+    choices:
+      - text: "2,0 × 10⁻²⁶ kg"
+        correct: true
+      - text: "2,0 × 10⁻²⁵ kg"
+      - text: "2,0 × 10⁻²⁸ kg"
+      - text: "1,4 × 10⁻²⁸ kg"
+    hint: "Multiplie la masse d'un nucléon par 12."
+    explanation: "12 × 1,67 × 10⁻²⁷ = 20,04 × 10⁻²⁷ kg, soit environ 2,0 × 10⁻²⁶ kg."
+  - id: q9
+    prompt: "Quelle opération donne le nombre d'atomes dans un échantillon ?"
+    choices:
+      - text: "Masse de l'échantillon × masse d'un atome"
+      - text: "Masse d'un atome ÷ masse de l'échantillon"
+      - text: "Masse de l'échantillon + masse d'un atome"
+      - text: "Masse de l'échantillon ÷ masse d'un atome"
+        correct: true
+    hint: "On cherche combien de fois la masse d'un atome rentre dans la masse totale."
+    explanation: "Le nombre d'atomes est la masse de l'échantillon divisée par la masse d'un atome."
+  - id: q10
+    prompt: "Un échantillon de carbone pèse 2,0 × 10⁻³ kg. Un atome de carbone pèse 2,0 × 10⁻²⁶ kg. Combien d'atomes contient l'échantillon ?"
+    choices:
+      - text: "1,0 × 10²³"
+        correct: true
+      - text: "1,0 × 10²⁹"
+      - text: "4,0 × 10⁻²⁹"
+      - text: "1,0 × 10⁻²³"
+    hint: "Divise la masse de l'échantillon par la masse d'un atome."
+    explanation: "(2,0 × 10⁻³) ÷ (2,0 × 10⁻²⁶) = 1,0 × 10⁻³⁻⁽⁻²⁶⁾ = 1,0 × 10²³ atomes."
+  - id: q11
+    prompt: "Quelle opération donne la masse d'un échantillon de particules identiques ?"
+    choices:
+      - text: "Nombre de particules + masse d'une particule"
+      - text: "Nombre de particules × masse d'une particule"
+        correct: true
+      - text: "Nombre de particules ÷ masse d'une particule"
+      - text: "Masse d'une particule − nombre de particules"
+    hint: "Pense à 10 objets qui pèsent chacun 3 g."
+    explanation: "La masse totale est le nombre de particules multiplié par la masse d'une particule."
+  - id: q12
+    prompt: "Un échantillon contient 3,0 × 10²⁰ atomes d'hydrogène de masse 1,67 × 10⁻²⁷ kg chacun. Quelle est sa masse ?"
+    choices:
+      - text: "5,0 × 10⁷ kg"
+      - text: "5,6 × 10⁻⁴⁸ kg"
+      - text: "5,0 × 10⁻⁴⁷ kg"
+      - text: "5,0 × 10⁻⁷ kg"
+        correct: true
+    hint: "Multiplie le nombre d'atomes par la masse d'un atome."
+    explanation: "3,0 × 10²⁰ × 1,67 × 10⁻²⁷ = 5,01 × 10⁻⁷ kg, soit environ 5,0 × 10⁻⁷ kg."
+  

@@ -1,0 +1,109 @@
+version: 1
+meta:
+  title: "Le symbole d'un atome : A, Z et X"
+  subject: physique-chimie
+  level: 3e
+  chapter: "Constitution de la matière : composition de l'atome et symbole"
+  language: fr
+  description: "Dix questions sur le symbole ᴬ_ZX : lire A et Z, calculer protons, neutrons, nucléons et électrons."
+questions:
+  - id: q1
+    prompt: "Dans le symbole d'un atome, que représente le nombre Z écrit en bas à gauche ?"
+    choices:
+      - text: "Le nombre de nucléons"
+      - text: "Le nombre de protons"
+        correct: true
+      - text: "Le nombre de neutrons"
+      - text: "La masse de l'atome"
+    hint: "Z s'appelle aussi le numéro atomique."
+    explanation: "Z est le numéro atomique : c'est le nombre de protons du noyau. Il identifie l'élément chimique."
+  - id: q2
+    prompt: "Dans le symbole d'un atome, que représente le nombre A écrit en haut à gauche ?"
+    choices:
+      - text: "Le nombre de nucléons"
+        correct: true
+      - text: "Le nombre de protons"
+      - text: "Le nombre d'électrons"
+      - text: "Le nombre de neutrons"
+    hint: "Les nucléons sont les particules du noyau."
+    explanation: "A est le nombre de nucléons : il compte les protons et les neutrons du noyau."
+  - id: q3
+    prompt: "Un noyau est noté ¹²₆C. Combien de protons contient-il ?"
+    choices:
+      - text: "12"
+      - text: "18"
+      - text: "6"
+        correct: true
+      - text: "2"
+    hint: "Le nombre en bas est le nombre de protons."
+    explanation: "Le nombre en bas est Z = 6. Le noyau contient donc 6 protons."
+  - id: q4
+    prompt: "Un noyau est noté ³⁵₁₇Cl. Combien de nucléons contient-il ?"
+    choices:
+      - text: "17"
+      - text: "35"
+        correct: true
+      - text: "18"
+      - text: "52"
+    hint: "Les nucléons correspondent au nombre écrit en haut."
+    explanation: "Le nombre en haut est A = 35. Le noyau contient donc 35 nucléons."
+  - id: q5
+    prompt: "Quelle opération donne le nombre de neutrons d'un noyau ᴬ_ZX ?"
+    choices:
+      - text: "A + Z"
+      - text: "Z − A"
+      - text: "A − Z"
+        correct: true
+      - text: "A × Z"
+    hint: "Les nucléons sont des protons et des neutrons."
+    explanation: "Nucléons = protons + neutrons. Le nombre de neutrons est donc A − Z."
+  - id: q6
+    prompt: "Un noyau est noté ²³₁₁Na. Combien de neutrons contient-il ?"
+    choices:
+      - text: "11"
+      - text: "34"
+      - text: "23"
+      - text: "12"
+        correct: true
+    hint: "Soustrais le nombre de protons au nombre de nucléons."
+    explanation: "Le nombre de neutrons est A − Z = 23 − 11 = 12."
+  - id: q7
+    prompt: "Un atome d'oxygène est noté ¹⁶₈O. Combien d'électrons contient-il ?"
+    choices:
+      - text: "8"
+        correct: true
+      - text: "16"
+      - text: "24"
+      - text: "0"
+    hint: "Un atome est électriquement neutre."
+    explanation: "Un atome est neutre : il a autant d'électrons que de protons. Ici Z = 8, donc l'atome contient 8 électrons."
+  - id: q8
+    prompt: "Un atome contient 20 électrons. Quelle est la valeur de Z ?"
+    choices:
+      - text: "10"
+      - text: "40"
+      - text: "19"
+      - text: "20"
+        correct: true
+    hint: "Compare le nombre d'électrons et le nombre de protons dans un atome."
+    explanation: "Un atome est neutre : le nombre de protons est égal au nombre d'électrons. Z vaut donc 20."
+  - id: q9
+    prompt: "Un noyau de fer ⁵⁶₂₆Fe contient combien de neutrons ?"
+    choices:
+      - text: "30"
+        correct: true
+      - text: "26"
+      - text: "82"
+      - text: "56"
+    hint: "Utilise A − Z."
+    explanation: "Le nombre de neutrons est A − Z = 56 − 26 = 30."
+  - id: q10
+    prompt: "Un noyau d'aluminium (symbole Al) contient 13 protons et 14 neutrons. Quel est son symbole complet ?"
+    choices:
+      - text: "²⁷₁₃Al"
+        correct: true
+      - text: "¹³₂₇Al"
+      - text: "¹⁴₁₃Al"
+      - text: "¹³₁₄Al"
+    hint: "A se calcule en additionnant protons et neutrons. Z est le nombre de protons."
+    explanation: "A = 13 + 14 = 27 et Z = 13. A s'écrit en haut et Z en bas : ²⁷₁₃Al."
